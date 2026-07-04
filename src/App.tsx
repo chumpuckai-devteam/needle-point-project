@@ -1,7 +1,6 @@
 import { FormEvent, useMemo, useState } from "react";
 import {
   Bookmark,
-  BookOpen,
   CalendarDays,
   ExternalLink,
   Filter,
