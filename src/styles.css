@@ -118,14 +118,14 @@ main {
   margin-bottom: 26px;
   color: #fffdf9;
   background:
-    linear-gradient(90deg, rgba(32, 37, 31, 0.92), rgba(32, 37, 31, 0.35)),
-    url("https://images.unsplash.com/photo-1452860606245-08befc0ff44b?auto=format&fit=crop&w=1800&q=82") center/cover;
+    linear-gradient(90deg, rgba(32, 37, 31, 0.92), rgba(32, 37, 31, 0.18)),
+    url("/assets/needlepoint-hero.png") center/cover;
 }
 
 .stitch-hero {
   background:
-    linear-gradient(90deg, rgba(34, 35, 42, 0.88), rgba(34, 35, 42, 0.25)),
-    url("https://images.unsplash.com/photo-1524578271613-d550eacf6090?auto=format&fit=crop&w=1800&q=82") center/cover;
+    linear-gradient(90deg, rgba(34, 35, 42, 0.9), rgba(34, 35, 42, 0.2)),
+    url("/assets/needlepoint-hero.png") center/cover;
 }
 
 h1,
