@@ -60,9 +60,10 @@ const statusOptions: Status[] = ["planned", "in progress", "finished", "paused"]
 const difficultyOptions: Difficulty[] = ["beginner", "confident beginner", "intermediate", "advanced"];
 
 const fallbackImages = [
-  "https://images.unsplash.com/photo-1452860606245-08befc0ff44b?auto=format&fit=crop&w=1200&q=82",
-  "https://images.unsplash.com/photo-1459908676235-d5f02a50184b?auto=format&fit=crop&w=1200&q=82",
-  "https://images.unsplash.com/photo-1499744937866-d7e566a20a61?auto=format&fit=crop&w=1200&q=82",
+  "/assets/persimmon-garden-pillow.jpg",
+  "/assets/tiny-ski-lodge-ornament.jpg",
+  "/assets/bookshop-door-canvas.jpg",
+  "/assets/blue-hydrangea-belt.jpg",
 ];
 
 function App() {
