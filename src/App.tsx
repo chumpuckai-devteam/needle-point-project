@@ -26,6 +26,7 @@ type View =
 
 type DraftProject = {
   title: string;
+  image: string;
   status: Status;
   difficulty: Difficulty;
   category: string;
@@ -35,10 +36,13 @@ type DraftProject = {
   colors: string;
   notes: string;
   patternSource: string;
+  patternUrl: string;
+  visibility: "public" | "private";
 };
 
 const blankDraft: DraftProject = {
   title: "",
+  image: "",
   status: "in progress",
   difficulty: "confident beginner",
   category: "ornament",
@@ -48,6 +52,8 @@ const blankDraft: DraftProject = {
   colors: "rose, cream",
   notes: "",
   patternSource: "Personal stash",
+  patternUrl: "",
+  visibility: "public",
 };
 
 const statusOptions: Status[] = ["planned", "in progress", "finished", "paused"];
@@ -75,6 +81,8 @@ function App() {
   const projectById = (id: string) => projects.find((project) => project.id === id);
   const savedProjects = projects.filter((project) => project.isSaved);
   const myProjects = projects.filter((project) => project.creatorId === "c2");
+  const activeProjects = projects.filter((project) => project.status === "in progress").length;
+  const totalComments = projects.reduce((count, project) => count + project.updates.reduce((sum, update) => sum + update.comments.length, 0), 0);
 
   const categories = unique(projects.map((project) => project.category));
   const stitches = unique(projects.flatMap((project) => project.stitchTypes));
@@ -148,7 +156,7 @@ function App() {
       id: `p${Date.now()}`,
       title: draft.title.trim(),
       creatorId: "c2",
-      image: fallbackImages[projects.length % fallbackImages.length],
+      image: draft.image.trim() || fallbackImages[projects.length % fallbackImages.length],
       status: draft.status,
       difficulty: draft.difficulty,
       category: draft.category.trim() || "journal",
@@ -157,12 +165,12 @@ function App() {
       materials: splitList(draft.materials),
       colors: splitList(draft.colors),
       patternSource: draft.patternSource.trim() || "Personal stash",
-      patternUrl: "https://example.com/new-project",
+      patternUrl: draft.patternUrl.trim() || "https://example.com/new-project",
       notes: draft.notes.trim(),
       likes: 0,
       isLiked: false,
       isSaved: false,
-      visibility: "public",
+      visibility: draft.visibility,
       progress: draft.status === "finished" ? 100 : draft.status === "planned" ? 5 : 20,
       updates: [
         {
@@ -256,6 +264,9 @@ function App() {
             projects={projects}
             stitchAlong={stitchAlong}
             followedCreators={followedCreators}
+            activeProjects={activeProjects}
+            savedCount={savedProjects.length}
+            totalComments={totalComments}
             creatorById={creatorById}
             setView={setView}
             toggleLike={toggleLike}
@@ -272,6 +283,10 @@ function App() {
             filters={filters}
             setQuery={setQuery}
             setFilters={setFilters}
+            clearFilters={() => {
+              setQuery("");
+              setFilters({ category: "all", difficulty: "all", stitch: "all", color: "all", status: "all" });
+            }}
             creatorById={creatorById}
             setView={setView}
             toggleLike={toggleLike}
@@ -363,6 +378,9 @@ function HomeView(props: {
   projects: Project[];
   stitchAlong: StitchAlong;
   followedCreators: string[];
+  activeProjects: number;
+  savedCount: number;
+  totalComments: number;
   creatorById: (id: string) => Creator;
   setView: (view: View) => void;
   toggleLike: (id: string) => void;
@@ -384,6 +402,12 @@ function HomeView(props: {
       </div>
       <div className="two-column">
         <div className="stack">
+          <div className="stats-row" aria-label="Project activity summary">
+            <Metric label="Projects" value={props.projects.length.toString()} />
+            <Metric label="Active" value={props.activeProjects.toString()} />
+            <Metric label="Saved" value={props.savedCount.toString()} />
+            <Metric label="Comments" value={props.totalComments.toString()} />
+          </div>
           <SectionTitle title="Discovery Feed" action="View all" onAction={() => props.setView({ name: "discover" })} />
           {props.projects.map((project) => (
             <ProjectCard key={project.id} project={project} creator={props.creatorById(project.creatorId)} {...props} />
@@ -429,6 +453,7 @@ function DiscoverView(props: {
   filters: { category: string; difficulty: string; stitch: string; color: string; status: string };
   setQuery: (query: string) => void;
   setFilters: (filters: { category: string; difficulty: string; stitch: string; color: string; status: string }) => void;
+  clearFilters: () => void;
   creatorById: (id: string) => Creator;
   setView: (view: View) => void;
   toggleLike: (id: string) => void;
@@ -448,12 +473,17 @@ function DiscoverView(props: {
         <Select label="Stitch" value={props.filters.stitch} options={props.stitches} onChange={(stitch) => props.setFilters({ ...props.filters, stitch })} />
         <Select label="Color" value={props.filters.color} options={props.colors} onChange={(color) => props.setFilters({ ...props.filters, color })} />
         <Select label="Status" value={props.filters.status} options={statusOptions} onChange={(status) => props.setFilters({ ...props.filters, status })} />
+        <button className="secondary" onClick={props.clearFilters}>Clear</button>
       </div>
-      <div className="project-grid">
-        {props.projects.map((project) => (
-          <ProjectCard key={project.id} project={project} creator={props.creatorById(project.creatorId)} {...props} compact />
-        ))}
-      </div>
+      {props.projects.length > 0 ? (
+        <div className="project-grid">
+          {props.projects.map((project) => (
+            <ProjectCard key={project.id} project={project} creator={props.creatorById(project.creatorId)} {...props} compact />
+          ))}
+        </div>
+      ) : (
+        <EmptyState title="No matching projects" body="Try a broader stitch, color, status, or creator search." action="Reset filters" onAction={props.clearFilters} />
+      )}
     </section>
   );
 }
@@ -601,6 +631,7 @@ function JournalView({
       <div className="editor-layout">
         <form className="panel form-grid" onSubmit={submitProject}>
           <Field label="Title" value={draft.title} onChange={(title) => setDraft({ ...draft, title })} placeholder="Monogram clutch canvas" />
+          <Field label="Image URL" value={draft.image} onChange={(image) => setDraft({ ...draft, image })} placeholder="Optional photo URL" />
           <label>Status<select value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as Status })}>{statusOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
           <label>Difficulty<select value={draft.difficulty} onChange={(event) => setDraft({ ...draft, difficulty: event.target.value as Difficulty })}>{difficultyOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
           <Field label="Category" value={draft.category} onChange={(category) => setDraft({ ...draft, category })} />
@@ -609,17 +640,23 @@ function JournalView({
           <Field label="Stitch types" value={draft.stitchTypes} onChange={(stitchTypes) => setDraft({ ...draft, stitchTypes })} />
           <Field label="Colors" value={draft.colors} onChange={(colors) => setDraft({ ...draft, colors })} />
           <Field label="Pattern source" value={draft.patternSource} onChange={(patternSource) => setDraft({ ...draft, patternSource })} />
+          <Field label="Pattern URL" value={draft.patternUrl} onChange={(patternUrl) => setDraft({ ...draft, patternUrl })} placeholder="Optional source link" />
+          <label>Visibility<select value={draft.visibility} onChange={(event) => setDraft({ ...draft, visibility: event.target.value as "public" | "private" })}><option>public</option><option>private</option></select></label>
           <label className="full-field">Notes<textarea value={draft.notes} onChange={(event) => setDraft({ ...draft, notes: event.target.value })} placeholder="What are you stitching, what are you testing, and what should future you remember?" /></label>
-          <button className="primary full-field" type="submit"><Plus size={18} /> Save project</button>
+          <button className="primary full-field" type="submit" disabled={!draft.title.trim() || !draft.notes.trim()}><Plus size={18} /> Save project</button>
         </form>
         <div className="panel">
           <SectionTitle title="Your journal" />
-          {myProjects.map((project) => (
-            <button className="mini-update" key={project.id} onClick={() => setView({ name: "project", id: project.id })}>
-              <img src={project.image} alt="" />
-              <span><strong>{project.title}</strong><small>{project.status} · {project.progress}%</small></span>
-            </button>
-          ))}
+          {myProjects.length > 0 ? (
+            myProjects.map((project) => (
+              <button className="mini-update" key={project.id} onClick={() => setView({ name: "project", id: project.id })}>
+                <img src={project.image} alt="" />
+                <span><strong>{project.title}</strong><small>{project.status} · {project.progress}% · {project.visibility}</small></span>
+              </button>
+            ))
+          ) : (
+            <EmptyState title="No journal entries yet" body="Save a project to start tracking progress." />
+          )}
         </div>
       </div>
     </section>
@@ -655,6 +692,7 @@ function CollectionsView({
                     <span>{project.title}<small>{creatorById(project.creatorId).name}</small></span>
                   </button>
                 ))}
+              {collection.projectIds.length === 0 && <EmptyState title="Nothing saved here yet" body="Save projects from discovery to build this board." />}
             </div>
           </article>
         ))}
@@ -755,15 +793,15 @@ function StitchAlongView({
         </div>
         <div className="panel">
           <h2>Submit a project</h2>
-          {myProjects.map((project) => (
-            <button className="mini-update" key={project.id} onClick={() => submitToStitchAlong(project.id)}>
+          {myProjects.length > 0 ? myProjects.map((project) => (
+            <button className={`mini-update ${stitchAlong.participantProjectIds.includes(project.id) ? "submitted" : ""}`} key={project.id} onClick={() => submitToStitchAlong(project.id)}>
               <img src={project.image} alt="" />
               <span>
                 <strong>{project.title}</strong>
                 <small>{stitchAlong.participantProjectIds.includes(project.id) ? "Submitted" : "Tap to submit"}</small>
               </span>
             </button>
-          ))}
+          )) : <EmptyState title="No projects to submit" body="Create a journal entry first, then submit it here." action="New project" onAction={() => setView({ name: "journal" })} />}
         </div>
       </div>
       <SectionTitle title="Participant projects" />
@@ -798,6 +836,20 @@ function Field({ label, value, onChange, placeholder = "" }: { label: string; va
 
 function Meta({ label, value }: { label: string; value: string }) {
   return <div className="meta"><span>{label}</span><strong>{value}</strong></div>;
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return <div className="metric-card"><strong>{value}</strong><span>{label}</span></div>;
+}
+
+function EmptyState({ title, body, action, onAction }: { title: string; body: string; action?: string; onAction?: () => void }) {
+  return (
+    <div className="empty-state">
+      <strong>{title}</strong>
+      <p>{body}</p>
+      {action && <button className="secondary" onClick={onAction}>{action}</button>}
+    </div>
+  );
 }
 
 function SectionHeader({ eyebrow, title }: { eyebrow: string; title: string }) {

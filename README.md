@@ -29,6 +29,12 @@ Build for production:
 npm run build
 ```
 
+Run the MVP smoke test:
+
+```bash
+npm run test:smoke
+```
+
 Preview the production build:
 
 ```bash
@@ -53,5 +59,6 @@ This repo now contains a Vite + React + TypeScript web app with seeded local con
 - Creator/stitcher profile pages with external links.
 - Saved project collections.
 - A join-and-submit stitch-along flow.
+- A Playwright smoke test for the core MVP path.
 
 Persistence is intentionally local-state only in this first runnable slice. Payments, marketplace checkout, direct messages, auth, and native mobile are out of scope.

@@ -185,8 +185,31 @@ p {
   gap: 18px;
 }
 
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.metric-card {
+  padding: 16px;
+}
+
+.metric-card strong {
+  display: block;
+  font-size: 1.7rem;
+}
+
+.metric-card span {
+  color: #766a61;
+  font-size: 0.84rem;
+  font-weight: 750;
+}
+
 .panel,
-.project-card {
+.project-card,
+.metric-card,
+.empty-state {
   border: 1px solid #e1d8cd;
   border-radius: 8px;
   background: #fffdf9;
@@ -310,6 +333,12 @@ p {
   background: #fffdf9;
 }
 
+.primary:disabled,
+.secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .selected,
 .card-actions button.selected {
   border-color: #b15643;
@@ -431,6 +460,11 @@ label textarea,
   background: #f4ece2;
 }
 
+.mini-update.submitted {
+  background: #ecf4ef;
+  outline: 1px solid #b9d6c7;
+}
+
 .profile-chip img,
 .mini-update img {
   width: 54px;
@@ -507,6 +541,16 @@ label textarea,
   gap: 14px;
 }
 
+.empty-state {
+  padding: 22px;
+  text-align: center;
+}
+
+.empty-state p {
+  margin-bottom: 14px;
+  color: #74675d;
+}
+
 .full-field {
   grid-column: 1 / -1;
 }
@@ -573,6 +617,7 @@ ul {
   .hero-panel,
   .stitch-hero,
   .two-column,
+  .stats-row,
   .detail-layout,
   .editor-layout,
   .project-card,
