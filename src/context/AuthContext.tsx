@@ -27,6 +27,7 @@ type AuthContextValue = {
   signUp: (email: string, password: string, meta?: { name?: string; handle?: string }) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshUser: (patch?: Partial<AuthUser>) => void;
 };
 
 const demoUser: AuthUser = {
@@ -135,6 +136,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(demoUser);
   }, []);
 
+  const refreshUser = useCallback((patch?: Partial<AuthUser>) => {
+    setUser((current) => {
+      if (!current && !patch) return current;
+      if (!current) {
+        return {
+          id: patch?.id || "unknown",
+          email: patch?.email,
+          handle: patch?.handle || "stitcher",
+          name: patch?.name || "Stitcher",
+        };
+      }
+      return { ...current, ...patch };
+    });
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       session,
@@ -145,8 +161,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signIn,
       signOut,
+      refreshUser,
     }),
-    [session, user, loading, signUp, signIn, signOut],
+    [session, user, loading, signUp, signIn, signOut, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
