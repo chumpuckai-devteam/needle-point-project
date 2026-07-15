@@ -538,7 +538,7 @@ function AccountSettings({
   const [location, setLocation] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [isCreator, setIsCreator] = useState(false);
-  const [linksText, setLinksText] = useState("Pattern shop | https://example.com");
+  const [linksText, setLinksText] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -556,12 +556,12 @@ function AccountSettings({
         setBio(profile.bio);
         setSkillLevel(profile.skillLevel || "confident beginner");
         setLocation(profile.location || "");
-        setAvatarUrl(profile.avatar.startsWith("http") || profile.avatar.startsWith("/") ? profile.avatar : "");
+        setAvatarUrl(profile.avatar.startsWith("http") ? profile.avatar : "");
         setIsCreator(profile.isCreator);
         setLinksText(
           profile.links.length
             ? profile.links.map((link) => `${link.label} | ${link.url}`).join("\n")
-            : "Pattern shop | https://example.com",
+            : "",
         );
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Could not load profile");
@@ -639,12 +639,8 @@ function AccountSettings({
       <SectionHeader eyebrow="Account settings" title={name || "Your profile"} />
       <div className="editor-layout">
         <form className="panel form-grid" onSubmit={(event) => void save(event)}>
-          <div className="full-field" style={{ display: "flex", gap: 16, alignItems: "center" }}>
-            <img
-              src={avatarUrl || "/assets/needlepoint-hero.png"}
-              alt=""
-              style={{ width: 72, height: 72, borderRadius: 12, objectFit: "cover", background: "#ddd" }}
-            />
+          <div className="full-field account-identity">
+            <img src={avatarUrl || "/assets/needlepoint-hero.png"} alt="" />
             <div>
               <strong>@{handle || "handle"}</strong>
               <p style={{ margin: "4px 0 0" }}>{email || "No email on file"}</p>
@@ -652,7 +648,7 @@ function AccountSettings({
           </div>
           <label htmlFor="account-name">
             Display name
-            <input id="account-name" value={name} onChange={(event) => setName(event.target.value)} required />
+            <input id="account-name" value={name} onChange={(event) => setName(event.target.value)} required autoComplete="name" />
           </label>
           <label htmlFor="account-handle">
             Handle
@@ -663,6 +659,7 @@ function AccountSettings({
               required
               minLength={3}
               maxLength={32}
+              autoComplete="username"
             />
           </label>
           <label htmlFor="account-location">
@@ -682,15 +679,15 @@ function AccountSettings({
           </label>
           <label htmlFor="account-avatar" className="full-field">
             Avatar image URL
-            <input id="account-avatar" value={avatarUrl} onChange={(event) => setAvatarUrl(event.target.value)} placeholder="https://…" />
+            <input id="account-avatar" value={avatarUrl} onChange={(event) => setAvatarUrl(event.target.value)} placeholder="https://…" inputMode="url" />
           </label>
           <label htmlFor="account-bio" className="full-field">
             Bio
             <textarea id="account-bio" value={bio} onChange={(event) => setBio(event.target.value)} placeholder="What do you stitch?" rows={4} />
           </label>
-          <label className="full-field" htmlFor="account-creator" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <label className="checkbox-field" htmlFor="account-creator">
             <input id="account-creator" type="checkbox" checked={isCreator} onChange={(event) => setIsCreator(event.target.checked)} />
-            Creator / shop profile
+            <span>Creator / shop profile</span>
           </label>
           <label htmlFor="account-links" className="full-field">
             External links (one per line: Label | https://…)

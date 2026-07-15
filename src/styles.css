@@ -16,6 +16,8 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
 }
 
 button,
@@ -375,7 +377,7 @@ p {
 
 .searchbar input,
 .comment-box input,
-label input,
+label input:not([type="checkbox"]):not([type="radio"]),
 label textarea,
 label select,
 .update-composer textarea {
@@ -403,7 +405,7 @@ label {
   font-weight: 750;
 }
 
-label input,
+label input:not([type="checkbox"]):not([type="radio"]),
 label select {
   min-height: 42px;
   padding: 0 10px;
@@ -414,6 +416,63 @@ label textarea,
   min-height: 120px;
   padding: 12px;
   resize: vertical;
+}
+
+label input[type="checkbox"],
+label input[type="radio"] {
+  width: 1.15rem;
+  height: 1.15rem;
+  min-height: 0;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: #2f6f59;
+}
+
+.checkbox-field {
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  grid-column: 1 / -1;
+  min-height: 44px;
+  padding: 4px 0;
+}
+
+.checkbox-field span {
+  color: #241f21;
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.account-identity {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  min-width: 0;
+}
+
+.account-identity img {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #ddd5ca;
+  flex-shrink: 0;
+}
+
+.account-identity > div {
+  min-width: 0;
+}
+
+.account-identity strong,
+.account-identity p {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.form-grid .primary.full-field {
+  width: 100%;
 }
 
 .project-grid {
@@ -601,17 +660,46 @@ ul {
   }
 
   .sidebar {
-    position: static;
+    position: sticky;
+    top: 0;
+    z-index: 20;
     height: auto;
+    padding: 12px 12px calc(12px + env(safe-area-inset-top, 0px));
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  }
+
+  .brand {
+    margin-bottom: 12px;
   }
 
   .sidebar nav {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .sidebar nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sidebar nav button {
+    width: auto;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    min-height: 40px;
+    padding: 0 12px;
   }
 
   .page {
-    width: min(100% - 28px, 720px);
-    padding-top: 22px;
+    width: min(100% - 24px, 720px);
+    padding: 18px 0 calc(40px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .panel {
+    padding: 16px;
   }
 
   .hero-panel,
@@ -628,22 +716,56 @@ ul {
 
   .hero-panel,
   .stitch-hero {
-    min-height: 420px;
-    padding: 24px;
+    min-height: 320px;
+    padding: 20px;
   }
 
   .detail-image {
-    height: 360px;
+    height: min(52vw, 320px);
   }
 
   .sticky {
     position: static;
   }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card-actions {
+    gap: 8px;
+  }
+
+  .card-actions button,
+  .primary,
+  .secondary {
+    min-height: 44px;
+  }
 }
 
 @media (max-width: 560px) {
-  .sidebar nav {
-    grid-template-columns: 1fr;
+  .sidebar {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .brand-mark {
+    width: 38px;
+    height: 38px;
+  }
+
+  .page {
+    width: calc(100% - 20px);
+    padding-top: 14px;
+  }
+
+  .section-header {
+    margin-bottom: 14px;
+  }
+
+  .section-title {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .form-grid,
@@ -651,7 +773,47 @@ ul {
     grid-template-columns: 1fr;
   }
 
+  .comment-box {
+    display: grid;
+  }
+
   h1 {
-    font-size: 2.1rem;
+    font-size: 1.85rem;
+    line-height: 1.05;
+  }
+
+  .project-card img,
+  .project-card.compact img {
+    min-height: 180px;
+    height: 200px;
+  }
+
+  .timeline {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .timeline img {
+    width: 72px;
+    height: 72px;
+  }
+
+  .profile-header > img {
+    width: 96px;
+    height: 96px;
+  }
+
+  .panel,
+  .project-card,
+  .metric-card,
+  .empty-state {
+    box-shadow: 0 8px 20px rgba(54, 46, 39, 0.06);
+  }
+
+  label input:not([type="checkbox"]):not([type="radio"]),
+  label select,
+  label textarea,
+  .update-composer textarea,
+  .searchbar {
+    font-size: 16px; /* prevent iOS zoom on focus */
   }
 }
