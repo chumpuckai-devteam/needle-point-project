@@ -1,18 +1,25 @@
 import { expect, test } from "@playwright/test";
 
-test("core MVP flows are usable", async ({ page }) => {
+async function navigateByLabel(page: import("@playwright/test").Page, label: RegExp) {
+  await page.locator("button,a").filter({ hasText: label }).first().click();
+}
+
+test("core MVP flows are usable through router paths", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: /Track the work/ })).toBeVisible();
 
-  await page.getByRole("button", { name: /Discover/ }).click();
+  await navigateByLabel(page, /Discover/);
+  await expect(page).toHaveURL(/\/discover$/);
   await page.getByPlaceholder(/Try florals/).fill("bookshop");
   await expect(page.getByText("Bookshop Door Canvas").first()).toBeVisible();
 
-  await page.getByRole("button", { name: /Journal/ }).click();
+  await navigateByLabel(page, /Journal/);
+  await expect(page).toHaveURL(/\/journal$/);
   await page.getByLabel("Title").fill("Sampler Test Canvas");
   await page.getByLabel("Notes").fill("Testing a new progress journal entry during smoke testing.");
   await page.getByRole("button", { name: /Save project/ }).click();
+  await expect(page).toHaveURL(/\/projects\/p\d+$/);
   await expect(page.getByRole("heading", { name: "Sampler Test Canvas" })).toBeVisible();
 
   await page.getByPlaceholder(/Log a stitch choice/).fill("Added the first row and chose a calmer green.");
@@ -23,8 +30,12 @@ test("core MVP flows are usable", async ({ page }) => {
   await page.getByRole("button", { name: /^Comment$/ }).click();
   await expect(page.getByText("Looks ready for the next pass.")).toBeVisible();
 
-  await page.getByRole("button", { name: /Stitch-along/ }).click();
+  await navigateByLabel(page, /Stitch-along/);
+  await expect(page).toHaveURL(/\/stitch-along$/);
   await page.getByRole("button", { name: /Join stitch-along/ }).click();
   await page.getByRole("button", { name: /Sampler Test Canvas/ }).click();
+  await expect(page.getByRole("button", { name: /Sampler Test Canvas.*Submitted/ })).toBeVisible();
+
+  await page.reload();
   await expect(page.getByRole("button", { name: /Sampler Test Canvas.*Submitted/ })).toBeVisible();
 });
