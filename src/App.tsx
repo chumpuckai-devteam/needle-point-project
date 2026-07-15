@@ -67,13 +67,13 @@ function AppShell() {
   useEffect(() => saveToStorage(STORAGE_KEYS.stitchAlong, stitchAlong), [stitchAlong]);
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !user) return;
+    if (!isSupabaseConfigured) return;
     let cancelled = false;
     setHydrating(true);
     (async () => {
       try {
         const [remoteProjects, remoteProfiles] = await Promise.all([
-          fetchPublicProjects(user.id),
+          fetchPublicProjects(user?.id ?? null),
           fetchProfiles(),
         ]);
         if (cancelled) return;
@@ -91,7 +91,7 @@ function AppShell() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user?.id]);
 
   const creatorById = useCallback(
     (id: string) => creators.find((creator) => creator.id === id) ?? creators[0] ?? seedCreators[0],
