@@ -63,7 +63,6 @@ function AppShell() {
   const [updateNote, setUpdateNote] = useState("");
   const [commentText, setCommentText] = useState("");
   const [remoteError, setRemoteError] = useState("");
-  const [hydrating, setHydrating] = useState(false);
 
   const meCreatorId = isDemoMode ? DEMO_CREATOR_ID : user?.id ?? DEMO_CREATOR_ID;
 
@@ -75,7 +74,6 @@ function AppShell() {
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     let cancelled = false;
-    setHydrating(true);
     (async () => {
       try {
         const [remoteProjects, remoteProfiles] = await Promise.all([
@@ -90,8 +88,6 @@ function AppShell() {
         if (!cancelled) {
           setRemoteError(error instanceof Error ? error.message : "Failed to load remote data");
         }
-      } finally {
-        if (!cancelled) setHydrating(false);
       }
     })();
     return () => {
@@ -395,10 +391,11 @@ function AppShell() {
     <div className="app-shell">
       <Sidebar view={viewNameForPath(location.pathname)} setView={setView} savedCount={savedProjects.length} />
       <main>
-        {(hydrating || remoteError) && (
+        {remoteError && (
           <div className="page" style={{ paddingBottom: 0 }}>
-            {hydrating && <p className="eyebrow">Syncing with Supabase…</p>}
-            {remoteError && <p className="eyebrow" style={{ color: "#8a2f2f" }}>{remoteError}</p>}
+            <p className="eyebrow" style={{ color: "#8a2f2f" }}>
+              {remoteError}
+            </p>
           </div>
         )}
         <Routes>
