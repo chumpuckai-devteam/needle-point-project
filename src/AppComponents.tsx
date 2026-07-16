@@ -435,7 +435,6 @@ export function JournalView({
               id={fileInputId}
               type="file"
               accept="image/*"
-              capture="environment"
               className="visually-hidden"
               disabled={!canUpload || uploadBusy}
               onChange={(event) => {
