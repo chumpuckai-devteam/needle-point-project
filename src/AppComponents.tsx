@@ -380,22 +380,99 @@ export function JournalView({
   submitProject,
   myProjects,
   setView,
+  canUpload,
+  uploadBusy,
+  uploadError,
+  imagePreview,
+  onPickImage,
+  onClearImage,
 }: {
   draft: DraftProject;
   setDraft: (draft: DraftProject) => void;
   submitProject: (event: FormEvent<HTMLFormElement>) => void;
   myProjects: Project[];
   setView: (view: View) => void;
+  canUpload: boolean;
+  uploadBusy: boolean;
+  uploadError: string;
+  imagePreview: string;
+  onPickImage: (file: File | null) => void;
+  onClearImage: () => void;
 }) {
+  const fileInputId = useId();
+  const preview = imagePreview || draft.image;
+
   return (
     <section className="page">
       <SectionHeader eyebrow="Project journal" title="Create a public project entry" />
       <div className="editor-layout">
         <form className="panel form-grid" onSubmit={submitProject}>
           <Field label="Title" value={draft.title} onChange={(title) => setDraft({ ...draft, title })} placeholder="Monogram clutch canvas" />
-          <Field label="Image URL" value={draft.image} onChange={(image) => setDraft({ ...draft, image })} placeholder="Optional photo URL" />
-          <label htmlFor="project-status">Status<select id="project-status" value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as Status })}>{statusOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
-          <label htmlFor="project-difficulty">Difficulty<select id="project-difficulty" value={draft.difficulty} onChange={(event) => setDraft({ ...draft, difficulty: event.target.value as Difficulty })}>{difficultyOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+          <div className="full-field image-upload-field">
+            <span className="field-label">Project photo</span>
+            {preview ? (
+              <div className="image-upload-preview">
+                <img src={preview} alt="Project preview" />
+                <div className="card-actions wrap">
+                  <label className="secondary file-button" htmlFor={fileInputId}>
+                    Replace photo
+                  </label>
+                  <button className="secondary" type="button" onClick={onClearImage}>
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <label className="image-upload-dropzone" htmlFor={fileInputId}>
+                <span className="action-card-icon">
+                  <Plus size={18} />
+                </span>
+                <strong>{canUpload ? "Upload a photo" : "Add a photo URL"}</strong>
+                <span>{canUpload ? "JPG, PNG, or WebP up to 8MB. You can also paste a URL below." : "Sign in with Supabase to upload files, or paste a URL."}</span>
+              </label>
+            )}
+            <input
+              id={fileInputId}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="visually-hidden"
+              disabled={!canUpload || uploadBusy}
+              onChange={(event) => {
+                const file = event.target.files?.[0] ?? null;
+                onPickImage(file);
+                event.target.value = "";
+              }}
+            />
+            <Field
+              label="Or image URL"
+              value={draft.image}
+              onChange={(image) => setDraft({ ...draft, image })}
+              placeholder="Optional photo URL"
+            />
+            {uploadBusy && <p className="field-help">Uploading photo…</p>}
+            {uploadError && (
+              <p className="field-help" style={{ color: "#8a2f2f" }}>
+                {uploadError}
+              </p>
+            )}
+          </div>
+          <label htmlFor="project-status">
+            Status
+            <select id="project-status" value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as Status })}>
+              {statusOptions.map((option) => (
+                <option key={option}>{option}</option>
+              ))}
+            </select>
+          </label>
+          <label htmlFor="project-difficulty">
+            Difficulty
+            <select id="project-difficulty" value={draft.difficulty} onChange={(event) => setDraft({ ...draft, difficulty: event.target.value as Difficulty })}>
+              {difficultyOptions.map((option) => (
+                <option key={option}>{option}</option>
+              ))}
+            </select>
+          </label>
           <Field label="Category" value={draft.category} onChange={(category) => setDraft({ ...draft, category })} />
           <Field label="Canvas type" value={draft.canvasType} onChange={(canvasType) => setDraft({ ...draft, canvasType })} />
           <Field label="Materials" value={draft.materials} onChange={(materials) => setDraft({ ...draft, materials })} />
@@ -403,9 +480,25 @@ export function JournalView({
           <Field label="Colors" value={draft.colors} onChange={(colors) => setDraft({ ...draft, colors })} />
           <Field label="Pattern source" value={draft.patternSource} onChange={(patternSource) => setDraft({ ...draft, patternSource })} />
           <Field label="Pattern URL" value={draft.patternUrl} onChange={(patternUrl) => setDraft({ ...draft, patternUrl })} placeholder="Optional source link" />
-          <label htmlFor="project-visibility">Visibility<select id="project-visibility" value={draft.visibility} onChange={(event) => setDraft({ ...draft, visibility: event.target.value as "public" | "private" })}><option>public</option><option>private</option></select></label>
-          <label className="full-field" htmlFor="project-notes">Notes<textarea id="project-notes" value={draft.notes} onChange={(event) => setDraft({ ...draft, notes: event.target.value })} placeholder="What are you stitching, what are you testing, and what should future you remember?" /></label>
-          <button className="primary full-field" type="submit" disabled={!draft.title.trim() || !draft.notes.trim()}><Plus size={18} /> Save project</button>
+          <label htmlFor="project-visibility">
+            Visibility
+            <select id="project-visibility" value={draft.visibility} onChange={(event) => setDraft({ ...draft, visibility: event.target.value as "public" | "private" })}>
+              <option>public</option>
+              <option>private</option>
+            </select>
+          </label>
+          <label className="full-field" htmlFor="project-notes">
+            Notes
+            <textarea
+              id="project-notes"
+              value={draft.notes}
+              onChange={(event) => setDraft({ ...draft, notes: event.target.value })}
+              placeholder="What are you stitching, what are you testing, and what should future you remember?"
+            />
+          </label>
+          <button className="primary full-field" type="submit" disabled={!draft.title.trim() || !draft.notes.trim() || uploadBusy}>
+            <Plus size={18} /> {uploadBusy ? "Saving…" : "Save project"}
+          </button>
         </form>
         <div className="panel">
           <SectionTitle title="Your journal" />
@@ -413,7 +506,12 @@ export function JournalView({
             myProjects.map((project) => (
               <button className="mini-update" key={project.id} onClick={() => setView({ name: "project", id: project.id })}>
                 <img src={project.image} alt="" />
-                <span><strong>{project.title}</strong><small>{project.status} · {project.progress}% · {project.visibility}</small></span>
+                <span>
+                  <strong>{project.title}</strong>
+                  <small>
+                    {project.status} · {project.progress}% · {project.visibility}
+                  </small>
+                </span>
               </button>
             ))
           ) : (

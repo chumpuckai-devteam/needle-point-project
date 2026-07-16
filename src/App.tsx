@@ -1,6 +1,7 @@
 import { createProjectOnline, fetchPublicProjects, addProgressUpdateOnline } from "./api/projects";
 import { completeOnboarding, fetchProfileById, fetchProfiles, toggleFollowOnline, updateProfile } from "./api/profiles";
 import { addCommentOnline, toggleProjectLikeOnline, toggleSaveOnline } from "./api/social";
+import { uploadProjectImage, validateImageFile } from "./api/images";
 import { creators as seedCreators, initialCollections, initialProjects, stitchAlong as seedStitchAlong } from "./data";
 import type { Collection, Creator, Project, StitchAlong } from "./types";
 import {
@@ -55,6 +56,10 @@ function AppShell() {
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState({ category: "all", difficulty: "all", stitch: "all", color: "all", status: "all" });
   const [draft, setDraft] = useState<DraftProject>(blankDraft);
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [uploadBusy, setUploadBusy] = useState(false);
+  const [uploadError, setUploadError] = useState("");
   const [updateNote, setUpdateNote] = useState("");
   const [commentText, setCommentText] = useState("");
   const [remoteError, setRemoteError] = useState("");
@@ -199,33 +204,66 @@ function AppShell() {
     }
   }
 
+  function clearDraftImage() {
+    if (imagePreview.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+    setPendingImageFile(null);
+    setImagePreview("");
+    setUploadError("");
+    setDraft((current) => ({ ...current, image: "" }));
+  }
+
+  function pickDraftImage(file: File | null) {
+    if (!file) return;
+    const invalid = validateImageFile(file);
+    if (invalid) {
+      setUploadError(invalid);
+      return;
+    }
+    if (imagePreview.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+    setPendingImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+    setUploadError("");
+    // Prefer uploaded file over a previous pasted URL until save
+    setDraft((current) => ({ ...current, image: "" }));
+  }
+
   async function submitProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!draft.title.trim() || !draft.notes.trim()) return;
+    if (!draft.title.trim() || !draft.notes.trim() || uploadBusy) return;
 
-    const image = draft.image.trim() || fallbackImages[projects.length % fallbackImages.length];
-    const progress = draft.status === "finished" ? 100 : draft.status === "planned" ? 5 : 20;
-    const materials = splitList(draft.materials);
-    const stitchTypes = splitList(draft.stitchTypes);
-    const colors = splitList(draft.colors);
-    const payload = {
-      title: draft.title.trim(),
-      notes: draft.notes.trim(),
-      image,
-      status: draft.status,
-      difficulty: draft.difficulty,
-      category: draft.category.trim() || "journal",
-      canvasType: draft.canvasType.trim() || "18 mesh canvas",
-      materials,
-      stitchTypes,
-      colors,
-      patternSource: draft.patternSource.trim() || "Personal stash",
-      patternUrl: draft.patternUrl.trim() || "https://example.com/new-project",
-      visibility: draft.visibility,
-      progress,
-    };
-
+    setUploadBusy(true);
+    setUploadError("");
     try {
+      let image = draft.image.trim();
+      if (pendingImageFile) {
+        if (!user && isSupabaseConfigured) {
+          throw new Error("Sign in to upload photos.");
+        }
+        image = await uploadProjectImage(user?.id || "demo-user", pendingImageFile);
+      }
+      if (!image) image = fallbackImages[projects.length % fallbackImages.length];
+
+      const progress = draft.status === "finished" ? 100 : draft.status === "planned" ? 5 : 20;
+      const materials = splitList(draft.materials);
+      const stitchTypes = splitList(draft.stitchTypes);
+      const colors = splitList(draft.colors);
+      const payload = {
+        title: draft.title.trim(),
+        notes: draft.notes.trim(),
+        image,
+        status: draft.status,
+        difficulty: draft.difficulty,
+        category: draft.category.trim() || "journal",
+        canvasType: draft.canvasType.trim() || "18 mesh canvas",
+        materials,
+        stitchTypes,
+        colors,
+        patternSource: draft.patternSource.trim() || "Personal stash",
+        patternUrl: draft.patternUrl.trim() || "https://example.com/new-project",
+        visibility: draft.visibility,
+        progress,
+      };
+
       let project: Project;
       if (isSupabaseConfigured && user) {
         project = await createProjectOnline({ userId: user.id, ...payload });
@@ -242,7 +280,7 @@ function AppShell() {
               date: "Today",
               milestone: "Project started",
               note: payload.notes,
-              image: fallbackImages[(projects.length + 1) % fallbackImages.length],
+              image,
               likes: 0,
               comments: [],
             },
@@ -252,11 +290,18 @@ function AppShell() {
       }
 
       setProjects((current) => [project, ...current]);
+      if (imagePreview.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+      setPendingImageFile(null);
+      setImagePreview("");
       setDraft(blankDraft);
       setView({ name: "project", id: project.id });
       setRemoteError("");
     } catch (error) {
-      setRemoteError(error instanceof Error ? error.message : "Could not save project");
+      const message = error instanceof Error ? error.message : "Could not save project";
+      setUploadError(message);
+      setRemoteError(message);
+    } finally {
+      setUploadBusy(false);
     }
   }
 
@@ -393,7 +438,24 @@ function AppShell() {
             }
           />
           <Route path="/collections" element={<CollectionsView collections={collections} projects={projects} creatorById={creatorById} setView={setView} />} />
-          <Route path="/journal" element={<JournalView draft={draft} setDraft={setDraft} submitProject={submitProject} myProjects={myProjects} setView={setView} />} />
+          <Route
+            path="/journal"
+            element={
+              <JournalView
+                draft={draft}
+                setDraft={setDraft}
+                submitProject={(event) => void submitProject(event)}
+                myProjects={myProjects}
+                setView={setView}
+                canUpload={Boolean(user) || !isSupabaseConfigured}
+                uploadBusy={uploadBusy}
+                uploadError={uploadError}
+                imagePreview={imagePreview}
+                onPickImage={pickDraftImage}
+                onClearImage={clearDraftImage}
+              />
+            }
+          />
           <Route
             path="/stitch-along"
             element={
