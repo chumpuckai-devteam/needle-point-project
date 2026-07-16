@@ -1,4 +1,4 @@
-import { createProjectOnline, fetchPublicProjects, addProgressUpdateOnline } from "./api/projects";
+import { createProjectOnline, fetchPublicProjects, addProgressUpdateOnline, updateProjectOnline } from "./api/projects";
 import { completeOnboarding, fetchProfileById, fetchProfiles, toggleFollowOnline, updateProfile } from "./api/profiles";
 import { addCommentOnline, toggleProjectLikeOnline, toggleSaveOnline } from "./api/social";
 import { uploadProjectImage, validateImageFile } from "./api/images";
@@ -61,6 +61,12 @@ function AppShell() {
   const [uploadBusy, setUploadBusy] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [updateNote, setUpdateNote] = useState("");
+  const [updateMilestone, setUpdateMilestone] = useState("");
+  const [updateImageUrl, setUpdateImageUrl] = useState("");
+  const [updateImageFile, setUpdateImageFile] = useState<File | null>(null);
+  const [updateImagePreview, setUpdateImagePreview] = useState("");
+  const [updateBusy, setUpdateBusy] = useState(false);
+  const [updateError, setUpdateError] = useState("");
   const [commentText, setCommentText] = useState("");
   const [remoteError, setRemoteError] = useState("");
 
@@ -302,38 +308,159 @@ function AppShell() {
     }
   }
 
-  function addProgressUpdate(projectId: string) {
-    if (!updateNote.trim()) return;
-    const note = updateNote.trim();
+  function clearUpdateImage() {
+    if (updateImagePreview.startsWith("blob:")) URL.revokeObjectURL(updateImagePreview);
+    setUpdateImageFile(null);
+    setUpdateImagePreview("");
+    setUpdateImageUrl("");
+    setUpdateError("");
+  }
+
+  function pickUpdateImage(file: File | null) {
+    if (!file) return;
+    const invalid = validateImageFile(file);
+    if (invalid) {
+      setUpdateError(invalid);
+      return;
+    }
+    if (updateImagePreview.startsWith("blob:")) URL.revokeObjectURL(updateImagePreview);
+    setUpdateImageFile(file);
+    setUpdateImagePreview(URL.createObjectURL(file));
+    setUpdateImageUrl("");
+    setUpdateError("");
+  }
+
+  async function saveProjectEdits(projectId: string, draft: DraftProject & { progress: number }, imageFile?: File | null) {
     const project = projects.find((item) => item.id === projectId);
+    if (!project) throw new Error("Project not found");
+    if (isSupabaseConfigured && user && project.creatorId !== user.id) {
+      throw new Error("Only the owner can edit this project.");
+    }
+
+    let image = draft.image.trim() || project.image;
+    if (imageFile) {
+      if (!user && isSupabaseConfigured) throw new Error("Sign in to upload photos.");
+      image = await uploadProjectImage(user?.id || meCreatorId, imageFile);
+    }
+
+    const materials = splitList(draft.materials);
+    const stitchTypes = splitList(draft.stitchTypes);
+    const colors = splitList(draft.colors);
+    const progress = Math.max(0, Math.min(100, Number(draft.progress) || 0));
+    const status: Project["status"] = progress >= 100 ? "finished" : draft.status;
+
+    if (isSupabaseConfigured && user) {
+      await updateProjectOnline(projectId, {
+        title: draft.title.trim(),
+        notes: draft.notes.trim(),
+        image,
+        status,
+        difficulty: draft.difficulty,
+        category: draft.category.trim() || project.category,
+        canvasType: draft.canvasType.trim() || project.canvasType,
+        materials,
+        stitchTypes,
+        colors,
+        patternSource: draft.patternSource.trim() || project.patternSource,
+        patternUrl: draft.patternUrl.trim() || project.patternUrl,
+        visibility: draft.visibility,
+        progress,
+      });
+    }
+
     setProjects((current) =>
       current.map((item) =>
         item.id === projectId
           ? {
               ...item,
-              progress: Math.min(100, item.progress + 12),
-              status: item.status === "planned" ? "in progress" : item.status,
-              updates: [
-                {
-                  id: `u${Date.now()}`,
-                  date: "Today",
-                  milestone: "Progress logged",
-                  note,
-                  image: item.image,
-                  likes: 0,
-                  comments: [],
-                },
-                ...item.updates,
-              ],
+              title: draft.title.trim(),
+              notes: draft.notes.trim(),
+              image,
+              status,
+              difficulty: draft.difficulty,
+              category: draft.category.trim() || item.category,
+              canvasType: draft.canvasType.trim() || item.canvasType,
+              materials,
+              stitchTypes,
+              colors,
+              patternSource: draft.patternSource.trim() || item.patternSource,
+              patternUrl: draft.patternUrl.trim() || item.patternUrl,
+              visibility: draft.visibility,
+              progress,
             }
           : item,
       ),
     );
-    setUpdateNote("");
-    if (isSupabaseConfigured && user && project) {
-      void addProgressUpdateOnline(projectId, user.id, note, project.image).catch((error) => {
-        setRemoteError(error instanceof Error ? error.message : "Update failed");
-      });
+    setRemoteError("");
+  }
+
+  async function addProgressUpdate(projectId: string) {
+    if (updateBusy) return;
+    const note = updateNote.trim();
+    const milestone = updateMilestone.trim() || "Progress logged";
+    const project = projects.find((item) => item.id === projectId);
+    if (!project) return;
+    if (!note && !updateImageFile && !updateImageUrl.trim()) return;
+    if (isSupabaseConfigured && user && project.creatorId !== user.id) {
+      setUpdateError("Only the owner can post progress updates.");
+      return;
+    }
+
+    setUpdateBusy(true);
+    setUpdateError("");
+    try {
+      let image = updateImageUrl.trim() || project.image;
+      if (updateImageFile) {
+        if (!user && isSupabaseConfigured) throw new Error("Sign in to upload photos.");
+        image = await uploadProjectImage(user?.id || meCreatorId, updateImageFile);
+      }
+
+      const nextProgress = Math.min(100, project.progress + 12);
+      const nextStatus: Project["status"] = nextProgress >= 100 ? "finished" : project.status === "planned" ? "in progress" : project.status;
+      let updateId = `u${Date.now()}`;
+
+      if (isSupabaseConfigured && user) {
+        const remote = await addProgressUpdateOnline(projectId, user.id, note || milestone, image, {
+          milestone,
+          progress: nextProgress,
+        });
+        updateId = remote.id;
+      }
+
+      setProjects((current) =>
+        current.map((item) =>
+          item.id === projectId
+            ? {
+                ...item,
+                progress: nextProgress,
+                status: nextStatus,
+                updates: [
+                  {
+                    id: updateId,
+                    date: "Today",
+                    milestone,
+                    note: note || milestone,
+                    image,
+                    likes: 0,
+                    comments: [],
+                  },
+                  ...item.updates,
+                ],
+              }
+            : item,
+        ),
+      );
+
+      setUpdateNote("");
+      setUpdateMilestone("");
+      clearUpdateImage();
+      setRemoteError("");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Update failed";
+      setUpdateError(message);
+      setRemoteError(message);
+    } finally {
+      setUpdateBusy(false);
     }
   }
 
@@ -476,14 +603,26 @@ function AppShell() {
                 creatorById={creatorById}
                 followedCreators={followedCreators}
                 updateNote={updateNote}
+                updateMilestone={updateMilestone}
                 commentText={commentText}
+                updateBusy={updateBusy}
+                updateError={updateError}
+                updateImagePreview={updateImagePreview}
+                updateImageUrl={updateImageUrl}
                 setUpdateNote={setUpdateNote}
+                setUpdateMilestone={setUpdateMilestone}
                 setCommentText={setCommentText}
-                addProgressUpdate={addProgressUpdate}
+                setUpdateImageUrl={setUpdateImageUrl}
+                onPickUpdateImage={pickUpdateImage}
+                onClearUpdateImage={clearUpdateImage}
+                addProgressUpdate={(id) => void addProgressUpdate(id)}
                 addComment={addComment}
                 toggleFollow={toggleFollow}
                 toggleLike={toggleLike}
                 toggleSave={toggleSave}
+                saveProjectEdits={saveProjectEdits}
+                isOwnerFor={(project) => (isDemoMode ? project.creatorId === meCreatorId : Boolean(user && project.creatorId === user.id))}
+                canUpload={Boolean(user) || !isSupabaseConfigured}
                 setView={setView}
               />
             }
@@ -503,21 +642,71 @@ function ProjectRoute(props: {
   creatorById: (id: string) => Creator;
   followedCreators: string[];
   updateNote: string;
+  updateMilestone: string;
   commentText: string;
+  updateBusy: boolean;
+  updateError: string;
+  updateImagePreview: string;
+  updateImageUrl: string;
   setUpdateNote: (value: string) => void;
+  setUpdateMilestone: (value: string) => void;
   setCommentText: (value: string) => void;
+  setUpdateImageUrl: (value: string) => void;
+  onPickUpdateImage: (file: File | null) => void;
+  onClearUpdateImage: () => void;
   addProgressUpdate: (id: string) => void;
   addComment: (id: string) => void;
   toggleFollow: (id: string) => void;
   toggleLike: (id: string) => void;
   toggleSave: (id: string) => void;
+  saveProjectEdits: (id: string, draft: DraftProject & { progress: number }, imageFile?: File | null) => Promise<void>;
+  isOwnerFor: (project: Project) => boolean;
+  canUpload: boolean;
   setView: (view: View) => void;
 }) {
   const { id = "" } = useParams();
   const project = props.projectById(id);
-  if (!project) return <EmptyState title="Project not found" body="That project may have been moved or removed." action="Back to discover" onAction={() => props.setView({ name: "discover" })} />;
+  if (!project) {
+    return (
+      <EmptyState
+        title="Project not found"
+        body="That project may have been moved or removed."
+        action="Back to discover"
+        onAction={() => props.setView({ name: "discover" })}
+      />
+    );
+  }
 
-  return <ProjectDetail project={project} creator={props.creatorById(project.creatorId)} {...props} />;
+  const { isOwnerFor } = props;
+  return (
+    <ProjectDetail
+      project={project}
+      creator={props.creatorById(project.creatorId)}
+      isOwner={isOwnerFor(project)}
+      canUpload={props.canUpload}
+      followedCreators={props.followedCreators}
+      updateNote={props.updateNote}
+      updateMilestone={props.updateMilestone}
+      commentText={props.commentText}
+      updateBusy={props.updateBusy}
+      updateError={props.updateError}
+      updateImagePreview={props.updateImagePreview}
+      updateImageUrl={props.updateImageUrl}
+      setUpdateNote={props.setUpdateNote}
+      setUpdateMilestone={props.setUpdateMilestone}
+      setCommentText={props.setCommentText}
+      setUpdateImageUrl={props.setUpdateImageUrl}
+      onPickUpdateImage={props.onPickUpdateImage}
+      onClearUpdateImage={props.onClearUpdateImage}
+      addProgressUpdate={props.addProgressUpdate}
+      addComment={props.addComment}
+      toggleFollow={props.toggleFollow}
+      toggleLike={props.toggleLike}
+      toggleSave={props.toggleSave}
+      saveProjectEdits={props.saveProjectEdits}
+      setView={props.setView}
+    />
+  );
 }
 
 function ProfileRoute({

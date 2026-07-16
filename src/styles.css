@@ -716,11 +716,29 @@ label input[type="radio"] {
   font-weight: 750;
 }
 
-.update-composer,
-.comment-box {
+.image-upload-preview.compact img,
+.image-upload-dropzone.compact {
+  max-height: 180px;
+}
+
+.image-upload-dropzone.compact {
+  min-height: 96px;
+  padding: 14px;
+}
+
+.update-composer {
   display: grid;
   gap: 10px;
   margin-bottom: 18px;
+}
+
+.update-composer label input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid #d8cec2;
+  border-radius: 8px;
+  background: #fffdf9;
 }
 
 .timeline {
@@ -750,7 +768,10 @@ label input[type="radio"] {
 }
 
 .comment-box {
+  display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  margin-bottom: 18px;
 }
 
 .comment-box input {

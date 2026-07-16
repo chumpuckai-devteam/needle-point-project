@@ -244,7 +244,13 @@ export async function createProjectOnline(input: {
   ], { likes: 0, isLiked: false, isSaved: false });
 }
 
-export async function addProgressUpdateOnline(projectId: string, userId: string, note: string, image: string) {
+export async function addProgressUpdateOnline(
+  projectId: string,
+  userId: string,
+  note: string,
+  image: string,
+  options?: { milestone?: string; progress?: number },
+) {
   const client = requireSupabase();
   const { data, error } = await client
     .from("project_updates")
@@ -252,7 +258,7 @@ export async function addProgressUpdateOnline(projectId: string, userId: string,
       project_id: projectId,
       user_id: userId,
       body: note,
-      milestone: "Progress logged",
+      milestone: options?.milestone || "Progress logged",
       image_url: image,
     })
     .select("*")
@@ -261,12 +267,78 @@ export async function addProgressUpdateOnline(projectId: string, userId: string,
 
   const { data: project } = await client.from("projects").select("progress,status").eq("id", projectId).single();
   if (project) {
-    const nextProgress = Math.min(100, (project.progress as number) + 12);
-    const nextStatus = project.status === "planned" ? "in_progress" : project.status;
+    const nextProgress =
+      typeof options?.progress === "number"
+        ? Math.max(0, Math.min(100, options.progress))
+        : Math.min(100, (project.progress as number) + 12);
+    const nextStatus =
+      nextProgress >= 100 ? "finished" : project.status === "planned" ? "in_progress" : project.status;
     await client.from("projects").update({ progress: nextProgress, status: nextStatus }).eq("id", projectId);
   }
 
   return mapUpdate(data as DbUpdateRow);
+}
+
+export async function updateProjectOnline(
+  projectId: string,
+  input: {
+    title: string;
+    notes: string;
+    image: string;
+    status: Status;
+    difficulty: Difficulty;
+    category: string;
+    canvasType: string;
+    materials: string[];
+    stitchTypes: string[];
+    colors: string[];
+    patternSource: string;
+    patternUrl: string;
+    visibility: "public" | "private";
+    progress: number;
+  },
+): Promise<void> {
+  const client = requireSupabase();
+  const progress = Math.max(0, Math.min(100, input.progress));
+  const status =
+    progress >= 100 && input.status !== "finished"
+      ? "finished"
+      : statusToDb[input.status];
+
+  const { error } = await client
+    .from("projects")
+    .update({
+      title: input.title,
+      description: input.notes,
+      status,
+      difficulty: difficultyToDb[input.difficulty],
+      category: input.category,
+      canvas_type: input.canvasType,
+      pattern_source_name: input.patternSource,
+      pattern_source_url: input.patternUrl,
+      primary_image_url: input.image,
+      visibility: input.visibility,
+      progress,
+    })
+    .eq("id", projectId);
+  if (error) throw error;
+
+  await client.from("materials").delete().eq("project_id", projectId);
+  if (input.materials.length) {
+    await client.from("materials").insert(
+      input.materials.map((m) => ({
+        project_id: projectId,
+        type: m,
+        brand: "",
+        color_name: "",
+        notes: "",
+      })),
+    );
+  }
+
+  await client.from("project_tags").delete().eq("project_id", projectId);
+  await upsertTags(projectId, input.stitchTypes, "stitch");
+  await upsertTags(projectId, input.colors, "color");
 }
 
 async function upsertTags(projectId: string, names: string[], category: string) {
