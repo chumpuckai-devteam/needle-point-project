@@ -407,7 +407,7 @@ export function JournalView({
       <SectionHeader eyebrow="Project journal" title="Create a public project entry" />
       <div className="editor-layout">
         <form className="panel form-grid" onSubmit={submitProject}>
-          <Field label="Title" value={draft.title} onChange={(title) => setDraft({ ...draft, title })} placeholder="Monogram clutch canvas" />
+          <Field label="Title" value={draft.title} onChange={(title) => setDraft({ ...draft, title })} placeholder="Monogram clutch canvas" required />
           <div className="full-field image-upload-field">
             <span className="field-label">Project photo</span>
             {preview ? (
@@ -443,12 +443,7 @@ export function JournalView({
                 event.target.value = "";
               }}
             />
-            <Field
-              label="Or image URL"
-              value={draft.image}
-              onChange={(image) => setDraft({ ...draft, image })}
-              placeholder="Optional photo URL"
-            />
+            <Field label="Or image URL" value={draft.image} onChange={(image) => setDraft({ ...draft, image })} placeholder="https://…" />
             {uploadBusy && <p className="field-help">Uploading photo…</p>}
             {uploadError && (
               <p className="field-help" style={{ color: "#8a2f2f" }}>
@@ -457,7 +452,7 @@ export function JournalView({
             )}
           </div>
           <label htmlFor="project-status">
-            Status
+            <span className="label-text">Status</span>
             <select id="project-status" value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as Status })}>
               {statusOptions.map((option) => (
                 <option key={option}>{option}</option>
@@ -465,7 +460,7 @@ export function JournalView({
             </select>
           </label>
           <label htmlFor="project-difficulty">
-            Difficulty
+            <span className="label-text">Difficulty</span>
             <select id="project-difficulty" value={draft.difficulty} onChange={(event) => setDraft({ ...draft, difficulty: event.target.value as Difficulty })}>
               {difficultyOptions.map((option) => (
                 <option key={option}>{option}</option>
@@ -478,16 +473,16 @@ export function JournalView({
           <Field label="Stitch types" value={draft.stitchTypes} onChange={(stitchTypes) => setDraft({ ...draft, stitchTypes })} />
           <Field label="Colors" value={draft.colors} onChange={(colors) => setDraft({ ...draft, colors })} />
           <Field label="Pattern source" value={draft.patternSource} onChange={(patternSource) => setDraft({ ...draft, patternSource })} />
-          <Field label="Pattern URL" value={draft.patternUrl} onChange={(patternUrl) => setDraft({ ...draft, patternUrl })} placeholder="Optional source link" />
+          <Field label="Pattern URL" value={draft.patternUrl} onChange={(patternUrl) => setDraft({ ...draft, patternUrl })} placeholder="https://…" />
           <label htmlFor="project-visibility">
-            Visibility
+            <span className="label-text">Visibility</span>
             <select id="project-visibility" value={draft.visibility} onChange={(event) => setDraft({ ...draft, visibility: event.target.value as "public" | "private" })}>
               <option>public</option>
               <option>private</option>
             </select>
           </label>
           <label className="full-field" htmlFor="project-notes">
-            Notes
+            <span className="label-text">Notes</span>
             <textarea
               id="project-notes"
               value={draft.notes}
@@ -495,7 +490,7 @@ export function JournalView({
               placeholder="What are you stitching, what are you testing, and what should future you remember?"
             />
           </label>
-          <button className="primary full-field" type="submit" disabled={!draft.title.trim() || !draft.notes.trim() || uploadBusy}>
+          <button className="primary full-field" type="submit" disabled={!draft.title.trim() || uploadBusy}>
             <Plus size={18} /> {uploadBusy ? "Saving…" : "Save project"}
           </button>
         </form>
@@ -690,9 +685,31 @@ export function Select({ label, value, options, onChange }: { label: string; val
   );
 }
 
-export function Field({ label, value, onChange, placeholder = "" }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string }) {
+export function Field({
+  label,
+  value,
+  onChange,
+  placeholder = "",
+  required = false,
+  className = "",
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  required?: boolean;
+  className?: string;
+}) {
   const id = useId();
-  return <label htmlFor={id}>{label}<input id={id} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} /></label>;
+  return (
+    <label htmlFor={id} className={className}>
+      <span className="label-text">
+        {label}
+        {required ? <span className="required-mark"> Required</span> : null}
+      </span>
+      <input id={id} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} required={required} />
+    </label>
+  );
 }
 
 export function Meta({ label, value }: { label: string; value: string }) {

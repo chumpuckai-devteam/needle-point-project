@@ -226,7 +226,7 @@ export async function createProjectOnline(input: {
   await client.from("project_updates").insert({
     project_id: projectId,
     user_id: input.userId,
-    body: input.notes,
+    body: input.notes || "Project started",
     milestone: "Project started",
     image_url: input.image,
   });
@@ -236,7 +236,7 @@ export async function createProjectOnline(input: {
       id: `local-${Date.now()}`,
       date: "Today",
       milestone: "Project started",
-      note: input.notes,
+      note: input.notes || "Project started",
       image: input.image,
       likes: 0,
       comments: [],

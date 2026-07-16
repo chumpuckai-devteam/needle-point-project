@@ -225,7 +225,7 @@ function AppShell() {
 
   async function submitProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!draft.title.trim() || !draft.notes.trim() || uploadBusy) return;
+    if (!draft.title.trim() || uploadBusy) return;
 
     setUploadBusy(true);
     setUploadError("");
@@ -243,9 +243,10 @@ function AppShell() {
       const materials = splitList(draft.materials);
       const stitchTypes = splitList(draft.stitchTypes);
       const colors = splitList(draft.colors);
+      const notes = draft.notes.trim();
       const payload = {
         title: draft.title.trim(),
-        notes: draft.notes.trim(),
+        notes,
         image,
         status: draft.status,
         difficulty: draft.difficulty,

@@ -478,6 +478,21 @@ label {
   font-weight: 750;
 }
 
+.label-text {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.required-mark {
+  color: #9b543f;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
 label input:not([type="checkbox"]):not([type="radio"]),
 label select {
   min-height: 42px;
