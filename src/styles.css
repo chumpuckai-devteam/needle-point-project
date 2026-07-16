@@ -193,6 +193,79 @@ p {
   gap: 12px;
 }
 
+.action-grid,
+.browse-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.action-card,
+.browse-card {
+  width: 100%;
+  border: 1px solid #e1d8cd;
+  border-radius: 10px;
+  background: #fffdf9;
+  box-shadow: 0 10px 24px rgba(54, 46, 39, 0.06);
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.action-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  min-height: 128px;
+  align-content: start;
+}
+
+.action-card-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #ecf4ef;
+  color: #2f6f59;
+}
+
+.action-card strong,
+.browse-card strong {
+  display: block;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.action-card > span:last-child,
+.browse-card > span {
+  color: #766a61;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.browse-card {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  min-height: 104px;
+  align-content: start;
+}
+
+.browse-card small {
+  color: #9b543f;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.action-card:hover,
+.browse-card:hover {
+  border-color: #c9b9a8;
+  background: #fff9f2;
+}
+
 .metric-card {
   padding: 16px;
 }
@@ -714,6 +787,11 @@ ul {
     grid-template-columns: 1fr;
   }
 
+  .action-grid,
+  .browse-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .hero-panel,
   .stitch-hero {
     min-height: 320px;
@@ -780,6 +858,16 @@ ul {
   h1 {
     font-size: 1.85rem;
     line-height: 1.05;
+  }
+
+  .action-grid,
+  .browse-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .action-card,
+  .browse-card {
+    min-height: 0;
   }
 
   .project-card img,

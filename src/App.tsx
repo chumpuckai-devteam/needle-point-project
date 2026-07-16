@@ -102,8 +102,6 @@ function AppShell() {
   const projectById = (id: string) => projects.find((project) => project.id === id);
   const savedProjects = projects.filter((project) => project.isSaved);
   const myProjects = projects.filter((project) => project.creatorId === meCreatorId);
-  const activeProjects = projects.filter((project) => project.status === "in progress").length;
-  const totalComments = projects.reduce((count, project) => count + project.updates.reduce((sum, update) => sum + update.comments.length, 0), 0);
 
   const categories = unique(projects.map((project) => project.category));
   const stitches = unique(projects.flatMap((project) => project.stitchTypes));
@@ -141,6 +139,18 @@ function AppShell() {
 
   function setView(view: View) {
     navigate(pathForView(view));
+  }
+
+  function openDiscover(patch?: Partial<{ category: string; stitch: string; color: string; status: string; query: string }>) {
+    setFilters({
+      category: patch?.category ?? "all",
+      difficulty: "all",
+      stitch: patch?.stitch ?? "all",
+      color: patch?.color ?? "all",
+      status: patch?.status ?? "all",
+    });
+    setQuery(patch?.query ?? "");
+    navigate("/discover");
   }
 
   function toggleLike(id: string) {
@@ -354,9 +364,11 @@ function AppShell() {
                 {...sharedProps}
                 stitchAlong={stitchAlong}
                 followedCreators={followedCreators}
-                activeProjects={activeProjects}
                 savedCount={savedProjects.length}
-                totalComments={totalComments}
+                categories={categories}
+                stitches={stitches}
+                colors={colors}
+                openDiscover={openDiscover}
               />
             }
           />

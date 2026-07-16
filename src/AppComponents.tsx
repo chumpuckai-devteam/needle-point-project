@@ -1,4 +1,4 @@
-import { FormEvent, useId } from "react";
+import { FormEvent, useId, useMemo } from "react";
 import { Bookmark, CalendarDays, ExternalLink, Filter, Heart, Home, MessageCircle, Plus, Search, Sparkles, UserRound } from "lucide-react";
 import type { Collection, Creator, Difficulty, Project, Status, StitchAlong } from "./types";
 import type { DraftProject, View } from "./appModel";
@@ -43,15 +43,70 @@ export function HomeView(props: {
   projects: Project[];
   stitchAlong: StitchAlong;
   followedCreators: string[];
-  activeProjects: number;
   savedCount: number;
-  totalComments: number;
+  categories: string[];
+  stitches: string[];
+  colors: string[];
   creatorById: (id: string) => Creator;
   setView: (view: View) => void;
+  openDiscover: (patch?: Partial<{ category: string; stitch: string; color: string; status: string; query: string }>) => void;
   toggleLike: (id: string) => void;
   toggleSave: (id: string) => void;
 }) {
   const followedUpdates = props.projects.filter((project) => props.followedCreators.includes(project.creatorId));
+
+  const categoryCards = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const project of props.projects) {
+      const key = project.category?.trim();
+      if (!key) continue;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .slice(0, 8)
+      .map(([label, count]) => ({ kind: "category" as const, label, count }));
+  }, [props.projects]);
+
+  const tagCards = useMemo(() => {
+    const counts = new Map<string, { count: number; kind: "stitch" | "color" }>();
+    for (const project of props.projects) {
+      for (const stitch of project.stitchTypes) {
+        const key = stitch.trim();
+        if (!key) continue;
+        const current = counts.get(key) ?? { count: 0, kind: "stitch" as const };
+        counts.set(key, { count: current.count + 1, kind: "stitch" });
+      }
+      for (const color of project.colors) {
+        const key = color.trim();
+        if (!key) continue;
+        const current = counts.get(key) ?? { count: 0, kind: "color" as const };
+        counts.set(key, { count: current.count + 1, kind: current.kind === "stitch" ? "stitch" : "color" });
+      }
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1].count - a[1].count || a[0].localeCompare(b[0]))
+      .slice(0, 8)
+      .map(([label, meta]) => ({ kind: meta.kind, label, count: meta.count }));
+  }, [props.projects]);
+
+  const browseCards = categoryCards.length
+    ? categoryCards
+    : tagCards.length
+      ? tagCards
+      : [
+          { kind: "category" as const, label: "ornament", count: 0 },
+          { kind: "category" as const, label: "pillow", count: 0 },
+          { kind: "category" as const, label: "framed piece", count: 0 },
+          { kind: "stitch" as const, label: "basketweave", count: 0 },
+        ];
+
+  const actions = [
+    { id: "journal", title: "Log a project", body: "Start a journal entry with materials and progress.", icon: Plus, run: () => props.setView({ name: "journal" }) },
+    { id: "discover", title: "Browse projects", body: "Search by stitch, color, pattern, or creator.", icon: Search, run: () => props.openDiscover() },
+    { id: "stitch", title: "Join stitch-along", body: "See the current theme and share your canvas.", icon: CalendarDays, run: () => props.setView({ name: "stitchAlong" }) },
+    { id: "saved", title: "Open saved", body: props.savedCount ? `${props.savedCount} saved for later.` : "Bookmark projects as you browse.", icon: Bookmark, run: () => props.setView({ name: "collections" }) },
+  ];
 
   return (
     <section className="page">
@@ -67,13 +122,51 @@ export function HomeView(props: {
       </div>
       <div className="two-column">
         <div className="stack">
-          <div className="stats-row" aria-label="Project activity summary">
-            <Metric label="Projects" value={props.projects.length.toString()} />
-            <Metric label="Active" value={props.activeProjects.toString()} />
-            <Metric label="Saved" value={props.savedCount.toString()} />
-            <Metric label="Comments" value={props.totalComments.toString()} />
+          <div>
+            <SectionTitle title="Quick actions" />
+            <div className="action-grid" aria-label="Quick actions">
+              {actions.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <button key={action.id} type="button" className="action-card" onClick={action.run}>
+                    <span className="action-card-icon">
+                      <Icon size={18} />
+                    </span>
+                    <strong>{action.title}</strong>
+                    <span>{action.body}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          <SectionTitle title="Discovery Feed" action="View all" onAction={() => props.setView({ name: "discover" })} />
+
+          <div>
+            <SectionTitle title="Browse by theme" action="Open discover" onAction={() => props.openDiscover()} />
+            <div className="browse-grid" aria-label="Top categories and tags">
+              {browseCards.map((card) => (
+                <button
+                  key={`${card.kind}-${card.label}`}
+                  type="button"
+                  className="browse-card"
+                  onClick={() =>
+                    props.openDiscover(
+                      card.kind === "category"
+                        ? { category: card.label }
+                        : card.kind === "stitch"
+                          ? { stitch: card.label }
+                          : { color: card.label },
+                    )
+                  }
+                >
+                  <small>{card.kind}</small>
+                  <strong>{card.label}</strong>
+                  <span>{card.count ? `${card.count} project${card.count === 1 ? "" : "s"}` : "Explore"}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <SectionTitle title="Discovery Feed" action="View all" onAction={() => props.openDiscover()} />
           {props.projects.map((project) => (
             <ProjectCard key={project.id} project={project} creator={props.creatorById(project.creatorId)} {...props} />
           ))}
@@ -93,15 +186,19 @@ export function HomeView(props: {
           </div>
           <div className="panel">
             <p className="eyebrow">Followed updates</p>
-            {followedUpdates.map((project) => (
-              <button key={project.id} className="mini-update" onClick={() => props.setView({ name: "project", id: project.id })}>
-                <img src={project.image} alt="" />
-                <span>
-                  <strong>{project.title}</strong>
-                  <small>{project.updates[0]?.milestone}</small>
-                </span>
-              </button>
-            ))}
+            {followedUpdates.length ? (
+              followedUpdates.map((project) => (
+                <button key={project.id} className="mini-update" onClick={() => props.setView({ name: "project", id: project.id })}>
+                  <img src={project.image} alt="" />
+                  <span>
+                    <strong>{project.title}</strong>
+                    <small>{project.updates[0]?.milestone}</small>
+                  </span>
+                </button>
+              ))
+            ) : (
+              <p style={{ marginBottom: 0, color: "#74675d" }}>Follow creators to see their latest milestones here.</p>
+            )}
           </div>
         </div>
       </div>
