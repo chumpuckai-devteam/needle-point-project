@@ -1,6 +1,6 @@
-import { FormEvent, useEffect, useId, useMemo, useState } from "react";
-import { Bookmark, CalendarDays, ExternalLink, Filter, Heart, Home, MessageCircle, Plus, Search, Sparkles, UserRound } from "lucide-react";
-import type { Collection, Creator, Difficulty, Project, Status, StitchAlong } from "./types";
+import { FormEvent, useEffect, useId, useState } from "react";
+import { Bookmark, CalendarDays, ExternalLink, Filter, Heart, Home, MapPin, MessageCircle, Plus, Search, Sparkles, Store as StoreIcon, UserRound } from "lucide-react";
+import type { Collection, Creator, Difficulty, Project, Status, StitchAlong, Store } from "./types";
 import type { DraftProject, View } from "./appModel";
 import { difficultyOptions, statusOptions } from "./appModel";
 
@@ -8,6 +8,7 @@ export function Sidebar({ view, setView, savedCount }: { view: string; setView: 
   const items = [
     { id: "home", label: "Home", icon: Home, action: () => setView({ name: "home" }) },
     { id: "discover", label: "Discover", icon: Search, action: () => setView({ name: "discover" }) },
+    { id: "stores", label: "Stores", icon: StoreIcon, action: () => setView({ name: "stores" }) },
     { id: "journal", label: "Journal", icon: Plus, action: () => setView({ name: "journal" }) },
     { id: "collections", label: `Saved (${savedCount})`, icon: Bookmark, action: () => setView({ name: "collections" }) },
     { id: "stitchAlong", label: "Stitch-along", icon: CalendarDays, action: () => setView({ name: "stitchAlong" }) },
@@ -21,7 +22,7 @@ export function Sidebar({ view, setView, savedCount }: { view: string; setView: 
         <span className="brand-mark">NP</span>
         <span>
           <strong>Needlepoint</strong>
-          <small>project studio</small>
+          <small>visual studio</small>
         </span>
       </button>
       <nav aria-label="Primary navigation">
@@ -44,164 +45,89 @@ export function HomeView(props: {
   stitchAlong: StitchAlong;
   followedCreators: string[];
   savedCount: number;
-  categories: string[];
-  stitches: string[];
-  colors: string[];
+  stores: Store[];
   creatorById: (id: string) => Creator;
   setView: (view: View) => void;
   openDiscover: (patch?: Partial<{ category: string; stitch: string; color: string; status: string; query: string }>) => void;
   toggleLike: (id: string) => void;
   toggleSave: (id: string) => void;
 }) {
-  const followedUpdates = props.projects.filter((project) => props.followedCreators.includes(project.creatorId));
-
-  const categoryCards = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const project of props.projects) {
-      const key = project.category?.trim();
-      if (!key) continue;
-      counts.set(key, (counts.get(key) ?? 0) + 1);
-    }
-    return [...counts.entries()]
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-      .slice(0, 8)
-      .map(([label, count]) => ({ kind: "category" as const, label, count }));
-  }, [props.projects]);
-
-  const tagCards = useMemo(() => {
-    const counts = new Map<string, { count: number; kind: "stitch" | "color" }>();
-    for (const project of props.projects) {
-      for (const stitch of project.stitchTypes) {
-        const key = stitch.trim();
-        if (!key) continue;
-        const current = counts.get(key) ?? { count: 0, kind: "stitch" as const };
-        counts.set(key, { count: current.count + 1, kind: "stitch" });
-      }
-      for (const color of project.colors) {
-        const key = color.trim();
-        if (!key) continue;
-        const current = counts.get(key) ?? { count: 0, kind: "color" as const };
-        counts.set(key, { count: current.count + 1, kind: current.kind === "stitch" ? "stitch" : "color" });
-      }
-    }
-    return [...counts.entries()]
-      .sort((a, b) => b[1].count - a[1].count || a[0].localeCompare(b[0]))
-      .slice(0, 8)
-      .map(([label, meta]) => ({ kind: meta.kind, label, count: meta.count }));
-  }, [props.projects]);
-
-  const browseCards = categoryCards.length
-    ? categoryCards
-    : tagCards.length
-      ? tagCards
-      : [
-          { kind: "category" as const, label: "ornament", count: 0 },
-          { kind: "category" as const, label: "pillow", count: 0 },
-          { kind: "category" as const, label: "framed piece", count: 0 },
-          { kind: "stitch" as const, label: "basketweave", count: 0 },
-        ];
-
-  const actions = [
-    { id: "journal", title: "Log a project", body: "Start a journal entry with materials and progress.", icon: Plus, run: () => props.setView({ name: "journal" }) },
-    { id: "discover", title: "Browse projects", body: "Search by stitch, color, pattern, or creator.", icon: Search, run: () => props.openDiscover() },
-    { id: "stitch", title: "Join stitch-along", body: "See the current theme and share your canvas.", icon: CalendarDays, run: () => props.setView({ name: "stitchAlong" }) },
-    { id: "saved", title: "Open saved", body: props.savedCount ? `${props.savedCount} saved for later.` : "Bookmark projects as you browse.", icon: Bookmark, run: () => props.setView({ name: "collections" }) },
-  ];
+  void props.stitchAlong;
+  const followedFeed = props.projects.filter((project) => props.followedCreators.includes(project.creatorId));
+  const feed = followedFeed.length ? followedFeed : props.projects;
 
   return (
-    <section className="page">
-      <div className="hero-panel">
+    <section className="page visual-home">
+      <div className="visual-home-header">
         <div>
-          <p className="eyebrow">Today in your hoop</p>
-          <h1>Track the work, find the thread, join the stitchers.</h1>
-          <p>Log project notes, browse craft-specific inspiration, and keep creator links close to the canvas.</p>
+          <p className="eyebrow">Visual studio</p>
+          <h1>Promote your projects. Connect with shops.</h1>
+          <p>A photo-first feed for stitchers — and a place for local & online stores to show up where the work is shared.</p>
         </div>
-        <button className="primary" onClick={() => props.setView({ name: "journal" })}>
-          <Plus size={18} /> New project
+        <div className="card-actions wrap">
+          <button className="primary" type="button" onClick={() => props.setView({ name: "journal" })}>
+            <Plus size={18} /> Post project
+          </button>
+          <button className="secondary" type="button" onClick={() => props.setView({ name: "stores" })}>
+            <StoreIcon size={17} /> Browse stores
+          </button>
+        </div>
+      </div>
+
+      <div className="visual-action-row" aria-label="Quick actions">
+        <button type="button" className="chip-action" onClick={() => props.setView({ name: "journal" })}>
+          <Plus size={16} /> New post
+        </button>
+        <button type="button" className="chip-action" onClick={() => props.openDiscover()}>
+          <Search size={16} /> Discover
+        </button>
+        <button type="button" className="chip-action" onClick={() => props.setView({ name: "stores" })}>
+          <MapPin size={16} /> Stores
+        </button>
+        <button type="button" className="chip-action" onClick={() => props.setView({ name: "collections" })}>
+          <Bookmark size={16} /> Saved {props.savedCount ? `(${props.savedCount})` : ""}
         </button>
       </div>
-      <div className="two-column">
-        <div className="stack">
-          <div>
-            <SectionTitle title="Quick actions" />
-            <div className="action-grid" aria-label="Quick actions">
-              {actions.map((action) => {
-                const Icon = action.icon;
-                return (
-                  <button key={action.id} type="button" className="action-card" onClick={action.run}>
-                    <span className="action-card-icon">
-                      <Icon size={18} />
-                    </span>
-                    <strong>{action.title}</strong>
-                    <span>{action.body}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
 
-          <div>
-            <SectionTitle title="Browse by theme" action="Open discover" onAction={() => props.openDiscover()} />
-            <div className="browse-grid" aria-label="Top categories and tags">
-              {browseCards.map((card) => (
-                <button
-                  key={`${card.kind}-${card.label}`}
-                  type="button"
-                  className="browse-card"
-                  onClick={() =>
-                    props.openDiscover(
-                      card.kind === "category"
-                        ? { category: card.label }
-                        : card.kind === "stitch"
-                          ? { stitch: card.label }
-                          : { color: card.label },
-                    )
-                  }
-                >
-                  <small>{card.kind}</small>
-                  <strong>{card.label}</strong>
-                  <span>{card.count ? `${card.count} project${card.count === 1 ? "" : "s"}` : "Explore"}</span>
-                </button>
-              ))}
-            </div>
+      {props.stores.length > 0 && (
+        <div className="store-rail panel">
+          <SectionTitle title="Shops on Needlepoint" action="See all" onAction={() => props.setView({ name: "stores" })} />
+          <div className="store-rail-scroll">
+            {props.stores.slice(0, 8).map((store) => (
+              <button key={store.id} type="button" className="store-rail-card" onClick={() => props.setView({ name: "store", handle: store.handle })}>
+                <img src={store.avatar} alt="" />
+                <strong>{store.name}</strong>
+                <small>
+                  {store.storeType === "local" ? "Local" : store.storeType === "both" ? "Local + ships" : "Ships"}
+                  {store.location ? ` · ${store.location}` : ""}
+                </small>
+              </button>
+            ))}
           </div>
+        </div>
+      )}
 
-          <SectionTitle title="Discovery Feed" action="View all" onAction={() => props.openDiscover()} />
-          {props.projects.map((project) => (
-            <ProjectCard key={project.id} project={project} creator={props.creatorById(project.creatorId)} {...props} />
+      <SectionTitle
+        title={followedFeed.length ? "From people you follow" : "Project feed"}
+        action="Open discover"
+        onAction={() => props.openDiscover()}
+      />
+      {feed.length ? (
+        <div className="visual-grid" aria-label="Project feed">
+          {feed.map((project) => (
+            <VisualProjectTile
+              key={project.id}
+              project={project}
+              creator={props.creatorById(project.creatorId)}
+              setView={props.setView}
+              toggleLike={props.toggleLike}
+              toggleSave={props.toggleSave}
+            />
           ))}
         </div>
-        <div className="stack">
-          <div className="panel">
-            <p className="eyebrow">Featured stitch-along</p>
-            <h2>{props.stitchAlong.title}</h2>
-            <p>{props.stitchAlong.description}</p>
-            <div className="metric-row">
-              <span>{props.stitchAlong.dates}</span>
-              <span>{props.stitchAlong.participantProjectIds.length} projects</span>
-            </div>
-            <button className="secondary full" onClick={() => props.setView({ name: "stitchAlong" })}>
-              <Sparkles size={17} /> Open stitch-along
-            </button>
-          </div>
-          <div className="panel">
-            <p className="eyebrow">Followed updates</p>
-            {followedUpdates.length ? (
-              followedUpdates.map((project) => (
-                <button key={project.id} className="mini-update" onClick={() => props.setView({ name: "project", id: project.id })}>
-                  <img src={project.image} alt="" />
-                  <span>
-                    <strong>{project.title}</strong>
-                    <small>{project.updates[0]?.milestone}</small>
-                  </span>
-                </button>
-              ))
-            ) : (
-              <p style={{ marginBottom: 0, color: "#74675d" }}>Follow creators to see their latest milestones here.</p>
-            )}
-          </div>
-        </div>
-      </div>
+      ) : (
+        <EmptyState title="No projects yet" body="Be the first to post a canvas photo." action="Post project" onAction={() => props.setView({ name: "journal" })} />
+      )}
     </section>
   );
 }
@@ -223,7 +149,7 @@ export function DiscoverView(props: {
 }) {
   return (
     <section className="page">
-      <SectionHeader eyebrow="Discover" title="Search by pattern, thread, stitch, color, or creator" />
+      <SectionHeader eyebrow="Discover" title="Explore canvases, stitches, and creators" />
       <div className="searchbar">
         <Search size={18} />
         <input value={props.query} onChange={(event) => props.setQuery(event.target.value)} placeholder="Try florals, velvet, basketweave..." />
@@ -238,15 +164,61 @@ export function DiscoverView(props: {
         <button className="secondary" onClick={props.clearFilters}>Clear</button>
       </div>
       {props.projects.length > 0 ? (
-        <div className="project-grid">
+        <div className="visual-grid" aria-label="Discover grid">
           {props.projects.map((project) => (
-            <ProjectCard key={project.id} project={project} creator={props.creatorById(project.creatorId)} {...props} compact />
+            <VisualProjectTile
+              key={project.id}
+              project={project}
+              creator={props.creatorById(project.creatorId)}
+              setView={props.setView}
+              toggleLike={props.toggleLike}
+              toggleSave={props.toggleSave}
+            />
           ))}
         </div>
       ) : (
         <EmptyState title="No matching projects" body="Try a broader stitch, color, status, or creator search." action="Reset filters" onAction={props.clearFilters} />
       )}
     </section>
+  );
+}
+
+export function VisualProjectTile({
+  project,
+  creator,
+  setView,
+  toggleLike,
+  toggleSave,
+}: {
+  project: Project;
+  creator: Creator;
+  setView: (view: View) => void;
+  toggleLike: (id: string) => void;
+  toggleSave: (id: string) => void;
+}) {
+  return (
+    <article className="visual-tile">
+      <button type="button" className="visual-tile-media" onClick={() => setView({ name: "project", id: project.id })}>
+        <img src={project.image} alt={project.title} />
+      </button>
+      <div className="visual-tile-meta">
+        <button type="button" className="linklike" onClick={() => setView({ name: "profile", id: creator.id })}>
+          @{creator.handle}
+        </button>
+        <strong className="visual-tile-title">{project.title}</strong>
+        <div className="card-actions">
+          <button type="button" onClick={() => toggleLike(project.id)} className={project.isLiked ? "selected" : ""}>
+            <Heart size={16} /> {project.likes}
+          </button>
+          <button type="button" onClick={() => toggleSave(project.id)} className={project.isSaved ? "selected" : ""}>
+            <Bookmark size={16} />
+          </button>
+          <button type="button" onClick={() => setView({ name: "project", id: project.id })}>
+            <MessageCircle size={16} />
+          </button>
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -265,8 +237,13 @@ export function ProjectCard({
   toggleSave: (id: string) => void;
   compact?: boolean;
 }) {
+  if (compact) {
+    return (
+      <VisualProjectTile project={project} creator={creator} setView={setView} toggleLike={toggleLike} toggleSave={toggleSave} />
+    );
+  }
   return (
-    <article className={`project-card ${compact ? "compact" : ""}`}>
+    <article className="project-card">
       <button className="image-button" onClick={() => setView({ name: "project", id: project.id })}>
         <img src={project.image} alt={project.title} />
       </button>
@@ -325,6 +302,8 @@ export function ProjectDetail(props: {
   toggleLike: (id: string) => void;
   toggleSave: (id: string) => void;
   saveProjectEdits: (id: string, draft: DraftProject & { progress: number }, imageFile?: File | null) => Promise<void>;
+  stores: Store[];
+  projectStores: Store[];
   setView: (view: View) => void;
 }) {
   const isFollowed = props.followedCreators.includes(props.creator.id);
@@ -558,6 +537,34 @@ export function ProjectDetail(props: {
                 <span className="label-text">Notes</span>
                 <textarea id="edit-notes" value={editDraft.notes} onChange={(event) => setEditDraft({ ...editDraft, notes: event.target.value })} rows={4} />
               </label>
+              {props.stores.length > 0 && (
+                <div className="full-field store-picker">
+                  <span className="field-label">Available at (stores)</span>
+                  <div className="store-picker-options">
+                    {props.stores.map((store) => {
+                      const checked = editDraft.storeIds.includes(store.id);
+                      return (
+                        <label key={store.id} className="checkbox-field">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() =>
+                              setEditDraft((current) => ({
+                                ...current,
+                                storeIds: checked ? current.storeIds.filter((id) => id !== store.id) : [...current.storeIds, store.id],
+                              }))
+                            }
+                          />
+                          <span>
+                            {store.name}
+                            <small> @{store.handle}</small>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
               {editError && (
                 <p className="full-field field-help" style={{ color: "#8a2f2f" }}>
                   {editError}
@@ -609,6 +616,24 @@ export function ProjectDetail(props: {
               <Meta label="Stitches" value={props.project.stitchTypes.join(", ") || "—"} />
               <Meta label="Colors" value={props.project.colors.join(", ") || "—"} />
               <Meta label="Visibility" value={props.project.visibility} />
+              {props.projectStores.length > 0 && (
+                <div className="available-at">
+                  <Meta label="Available at" value="" />
+                  <div className="store-chip-list">
+                    {props.projectStores.map((store) => (
+                      <button
+                        key={store.id}
+                        type="button"
+                        className="store-chip"
+                        onClick={() => props.setView({ name: "store", handle: store.handle })}
+                      >
+                        <StoreIcon size={14} />
+                        {store.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <a className="external" href={props.project.patternUrl} target="_blank" rel="noreferrer">
                 Pattern source: {props.project.patternSource} <ExternalLink size={15} />
               </a>
@@ -635,6 +660,7 @@ function projectToDraft(project: Project): DraftProject & { progress: number } {
     patternSource: project.patternSource,
     patternUrl: project.patternUrl,
     visibility: project.visibility,
+    storeIds: project.storeIds ?? [],
     progress: project.progress,
   };
 }
@@ -651,6 +677,7 @@ export function JournalView({
   imagePreview,
   onPickImage,
   onClearImage,
+  stores,
 }: {
   draft: DraftProject;
   setDraft: (draft: DraftProject) => void;
@@ -663,6 +690,7 @@ export function JournalView({
   imagePreview: string;
   onPickImage: (file: File | null) => void;
   onClearImage: () => void;
+  stores: Store[];
 }) {
   const fileInputId = useId();
   const preview = imagePreview || draft.image;
@@ -755,6 +783,35 @@ export function JournalView({
               placeholder="What are you stitching, what are you testing, and what should future you remember?"
             />
           </label>
+          {stores.length > 0 && (
+            <div className="full-field store-picker">
+              <span className="field-label">Available at (stores)</span>
+              <div className="store-picker-options">
+                {stores.map((store) => {
+                  const checked = draft.storeIds.includes(store.id);
+                  return (
+                    <label key={store.id} className="checkbox-field">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() =>
+                          setDraft({
+                            ...draft,
+                            storeIds: checked ? draft.storeIds.filter((id) => id !== store.id) : [...draft.storeIds, store.id],
+                          })
+                        }
+                      />
+                      <span>
+                        {store.name}
+                        <small> @{store.handle}</small>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+              <p className="field-help">Tag local or online shops that supply this canvas / kit / finishing.</p>
+            </div>
+          )}
           <button className="primary full-field" type="submit" disabled={!draft.title.trim() || uploadBusy}>
             <Plus size={18} /> {uploadBusy ? "Saving…" : "Save project"}
           </button>
@@ -835,12 +892,15 @@ export function ProfileView({
 }) {
   return (
     <section className="page">
-      <div className="profile-header">
+      <div className="profile-header ig-profile-header">
         <img src={creator.avatar} alt="" />
         <div>
-          <p className="eyebrow">{creator.isCreator ? "Creator profile" : "Stitcher profile"}</p>
+          <p className="eyebrow">{creator.isCreator ? "Creator" : "Stitcher"}</p>
           <h1>{creator.name}</h1>
-          <p>@{creator.handle} · {creator.location} · {creator.followers.toLocaleString()} followers</p>
+          <p>
+            @{creator.handle}
+            {creator.location ? ` · ${creator.location}` : ""} · {creator.followers.toLocaleString()} followers · {projects.length} projects
+          </p>
           <p>{creator.bio}</p>
           <div className="tag-row">{creator.specialties.map((tag) => <span key={tag}>{tag}</span>)}</div>
         </div>
@@ -850,18 +910,138 @@ export function ProfileView({
       </div>
       <div className="link-strip">
         {creator.links.map((link) => (
-          <a href={link.url} target="_blank" rel="noreferrer" key={link.label}>{link.label} <ExternalLink size={14} /></a>
+          <a href={link.url} target="_blank" rel="noreferrer" key={link.label}>
+            {link.label} <ExternalLink size={14} />
+          </a>
         ))}
       </div>
-      <div className="project-grid">
-        {projects.map((project) => (
-          <button className="profile-project" key={project.id} onClick={() => setView({ name: "project", id: project.id })}>
-            <img src={project.image} alt="" />
-            <strong>{project.title}</strong>
-            <small>{project.difficulty} · {project.status}</small>
-          </button>
-        ))}
+      <SectionTitle title="Projects" />
+      {projects.length ? (
+        <div className="ig-grid" aria-label="Profile project grid">
+          {projects.map((project) => (
+            <button type="button" className="ig-grid-cell" key={project.id} onClick={() => setView({ name: "project", id: project.id })}>
+              <img src={project.image} alt={project.title} />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <EmptyState title="No projects yet" body="When this stitcher posts, their photos will fill this grid." />
+      )}
+    </section>
+  );
+}
+
+export function StoresView({ stores, setView }: { stores: Store[]; setView: (view: View) => void }) {
+  return (
+    <section className="page">
+      <SectionHeader eyebrow="Stores" title="Local shops and online suppliers" />
+      <p className="lede">
+        Stores connect with stitchers who promote canvases and finishes — no marketplace checkout yet, just presence and supply links.
+      </p>
+      {stores.length ? (
+        <div className="store-grid">
+          {stores.map((store) => (
+            <button key={store.id} type="button" className="store-card panel" onClick={() => setView({ name: "store", handle: store.handle })}>
+              <img className="store-card-cover" src={store.coverImage || store.avatar} alt="" />
+              <div className="store-card-body">
+                <img className="store-card-avatar" src={store.avatar} alt="" />
+                <strong>{store.name}</strong>
+                <small>@{store.handle}</small>
+                <p>{store.description || "Needlepoint supplier"}</p>
+                <div className="tag-row">
+                  <span>{store.storeType === "local" ? "Local" : store.storeType === "both" ? "Local + ships" : "Online"}</span>
+                  {store.location ? <span>{store.location}</span> : null}
+                  {store.shipsNationwide ? <span>Ships</span> : null}
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <EmptyState title="No stores yet" body="Shop profiles will appear here once seeded or claimed." />
+      )}
+    </section>
+  );
+}
+
+export function StoreDetailView({
+  store,
+  projects,
+  setView,
+}: {
+  store: Store;
+  projects: Project[];
+  setView: (view: View) => void;
+}) {
+  return (
+    <section className="page">
+      <div className="store-detail-hero panel">
+        <img className="store-detail-cover" src={store.coverImage || store.avatar} alt="" />
+        <div className="store-detail-head">
+          <img src={store.avatar} alt="" />
+          <div>
+            <p className="eyebrow">Store</p>
+            <h1>{store.name}</h1>
+            <p>
+              @{store.handle}
+              {store.location ? ` · ${store.location}` : ""}
+              {store.shipsNationwide ? " · Ships nationwide" : ""}
+            </p>
+            <p>{store.description}</p>
+            <div className="tag-row">
+              {store.specialties.map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
+            </div>
+            <div className="card-actions wrap" style={{ marginTop: 12 }}>
+              {store.websiteUrl ? (
+                <a className="secondary" href={store.websiteUrl} target="_blank" rel="noreferrer">
+                  Visit website <ExternalLink size={14} />
+                </a>
+              ) : null}
+              <button type="button" className="secondary" onClick={() => setView({ name: "stores" })}>
+                All stores
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {store.products.length > 0 && (
+        <>
+          <SectionTitle title="Catalog" />
+          <div className="product-grid">
+            {store.products.map((product) => (
+              <article key={product.id} className="product-card panel">
+                <img src={product.image} alt={product.name} />
+                <strong>{product.name}</strong>
+                <p>{product.description}</p>
+                <div className="metric-row">
+                  <span>{product.priceLabel || product.category}</span>
+                  {product.externalUrl ? (
+                    <a href={product.externalUrl} target="_blank" rel="noreferrer">
+                      Shop link <ExternalLink size={13} />
+                    </a>
+                  ) : null}
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+
+      <SectionTitle title="Projects available here" />
+      {projects.length ? (
+        <div className="visual-grid">
+          {projects.map((project) => (
+            <button key={project.id} type="button" className="ig-grid-cell" onClick={() => setView({ name: "project", id: project.id })}>
+              <img src={project.image} alt={project.title} />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="field-help">No projects have tagged this store yet. Owners can mark “Available at” on a project.</p>
+      )}
     </section>
   );
 }

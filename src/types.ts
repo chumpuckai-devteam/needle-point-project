@@ -1,5 +1,7 @@
 export type Status = "planned" | "in progress" | "finished" | "paused";
 export type Difficulty = "beginner" | "confident beginner" | "intermediate" | "advanced";
+export type StoreType = "local" | "online" | "both";
+export type StoreRole = "available_at" | "pattern_from" | "threads_from" | "finishing";
 
 export type Creator = {
   id: string;
@@ -52,6 +54,38 @@ export type Project = {
   visibility: "public" | "private";
   progress: number;
   updates: ProgressUpdate[];
+  storeIds?: string[];
+};
+
+export type StoreProduct = {
+  id: string;
+  storeId: string;
+  name: string;
+  description: string;
+  image: string;
+  priceLabel: string;
+  externalUrl: string;
+  category: string;
+};
+
+export type Store = {
+  id: string;
+  ownerUserId: string | null;
+  name: string;
+  handle: string;
+  storeType: StoreType;
+  description: string;
+  avatar: string;
+  coverImage: string;
+  websiteUrl: string;
+  location: string;
+  city: string;
+  region: string;
+  country: string;
+  shipsNationwide: boolean;
+  specialties: string[];
+  products: StoreProduct[];
+  projectCount: number;
 };
 
 export type Collection = {

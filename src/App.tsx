@@ -2,8 +2,9 @@ import { createProjectOnline, fetchPublicProjects, addProgressUpdateOnline, upda
 import { completeOnboarding, fetchProfileById, fetchProfiles, toggleFollowOnline, updateProfile } from "./api/profiles";
 import { addCommentOnline, toggleProjectLikeOnline, toggleSaveOnline } from "./api/social";
 import { uploadProjectImage, validateImageFile } from "./api/images";
+import { fetchStores, setProjectStores } from "./api/stores";
 import { creators as seedCreators, initialCollections, initialProjects, stitchAlong as seedStitchAlong } from "./data";
-import type { Collection, Creator, Project, StitchAlong } from "./types";
+import type { Collection, Creator, Project, StitchAlong, Store } from "./types";
 import {
   CollectionsView,
   DiscoverView,
@@ -15,9 +16,11 @@ import {
   SectionHeader,
   Sidebar,
   StitchAlongView,
+  StoreDetailView,
+  StoresView,
 } from "./AppComponents";
 import { AuthForm, AuthProvider, useAuth } from "./context/AuthContext";
-import { isSupabaseConfigured } from "./lib/supabase";
+import { isSupabaseConfigured, requireSupabase } from "./lib/supabase";
 import { loadFromStorage, saveToStorage } from "./lib/storage";
 import { blankDraft, fallbackImages, splitList, unique } from "./appModel";
 import type { DraftProject, View } from "./appModel";
@@ -26,6 +29,77 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate, usePa
 import { ExternalLink, Plus } from "lucide-react";
 
 const DEMO_CREATOR_ID = "c2";
+
+const DEMO_STORES: Store[] = [
+  {
+    id: "store-local-1",
+    ownerUserId: null,
+    name: "Canopy Canvas",
+    handle: "canopycanvas",
+    storeType: "both",
+    description: "Local needlepoint shop with painted canvases, threads, and finishing.",
+    avatar: "/assets/needlepoint-hero.png",
+    coverImage: "/assets/persimmon-garden-pillow.jpg",
+    websiteUrl: "https://example.com/canopy",
+    location: "Portland, OR",
+    city: "Portland",
+    region: "OR",
+    country: "US",
+    shipsNationwide: true,
+    specialties: ["painted canvases", "finishing", "threads"],
+    products: [
+      {
+        id: "sp1",
+        storeId: "store-local-1",
+        name: "Persimmon Garden pillow canvas",
+        description: "18 mesh painted canvas",
+        image: "/assets/persimmon-garden-pillow.jpg",
+        priceLabel: "from $86",
+        externalUrl: "https://example.com/canopy/persimmon",
+        category: "canvas",
+      },
+    ],
+    projectCount: 0,
+  },
+  {
+    id: "store-online-1",
+    ownerUserId: null,
+    name: "Thread & Tonic",
+    handle: "threadandtonic",
+    storeType: "online",
+    description: "Online specialty threads and silk blends for advanced stitchers.",
+    avatar: "/assets/needlepoint-hero.png",
+    coverImage: "/assets/blue-hydrangea-belt.jpg",
+    websiteUrl: "https://example.com/threadtonic",
+    location: "Ships nationwide",
+    city: "",
+    region: "",
+    country: "US",
+    shipsNationwide: true,
+    specialties: ["silk", "metallic", "kits"],
+    products: [],
+    projectCount: 0,
+  },
+  {
+    id: "store-local-2",
+    ownerUserId: null,
+    name: "Bookshop Windows LNS",
+    handle: "bookshopwindows",
+    storeType: "local",
+    description: "Neighborhood LNS hosting stitch-alongs and custom finishing.",
+    avatar: "/assets/needlepoint-hero.png",
+    coverImage: "/assets/bookshop-door-canvas.jpg",
+    websiteUrl: "https://example.com/bookshop",
+    location: "Austin, TX",
+    city: "Austin",
+    region: "TX",
+    country: "US",
+    shipsNationwide: false,
+    specialties: ["local pickup", "classes", "finishing"],
+    products: [],
+    projectCount: 0,
+  },
+];
 
 const STORAGE_KEYS = {
   projects: "needle-point-project:projects",
@@ -69,6 +143,7 @@ function AppShell() {
   const [updateError, setUpdateError] = useState("");
   const [commentText, setCommentText] = useState("");
   const [remoteError, setRemoteError] = useState("");
+  const [stores, setStores] = useState<Store[]>(DEMO_STORES);
 
   const meCreatorId = isDemoMode ? DEMO_CREATOR_ID : user?.id ?? DEMO_CREATOR_ID;
 
@@ -78,17 +153,27 @@ function AppShell() {
   useEffect(() => saveToStorage(STORAGE_KEYS.stitchAlong, stitchAlong), [stitchAlong]);
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
+    if (!isSupabaseConfigured) {
+      setStores(DEMO_STORES);
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
-        const [remoteProjects, remoteProfiles] = await Promise.all([
+        const [remoteProjects, remoteProfiles, remoteStores] = await Promise.all([
           fetchPublicProjects(user?.id ?? null),
           fetchProfiles(),
+          fetchStores(),
         ]);
         if (cancelled) return;
         if (remoteProfiles.length) setCreators(remoteProfiles);
-        if (remoteProjects.length) setProjects(remoteProjects);
+        if (remoteStores.length) setStores(remoteStores);
+        else setStores(DEMO_STORES);
+        if (remoteProjects.length) {
+          // Attach store ids from remote project_stores via store project counts is not enough —
+          // fetchStores includes counts; project.storeIds loaded via project_stores in a second query if present on rows.
+          setProjects(remoteProjects);
+        }
         setRemoteError("");
       } catch (error) {
         if (!cancelled) {
@@ -100,6 +185,36 @@ function AppShell() {
       cancelled = true;
     };
   }, [user?.id]);
+
+  // Load project↔store links when online
+  useEffect(() => {
+    if (!isSupabaseConfigured || !projects.length) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const client = requireSupabase();
+        const { data, error } = await client.from("project_stores").select("project_id, store_id");
+        if (error || cancelled || !data) return;
+        const byProject = new Map<string, string[]>();
+        for (const row of data) {
+          const list = byProject.get(row.project_id) ?? [];
+          list.push(row.store_id);
+          byProject.set(row.project_id, list);
+        }
+        setProjects((current) =>
+          current.map((project) => ({
+            ...project,
+            storeIds: byProject.get(project.id) ?? project.storeIds ?? [],
+          })),
+        );
+      } catch {
+        /* store tables may not exist yet during first deploy */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [projects.length, stores.length]);
 
   const creatorById = useCallback(
     (id: string) => creators.find((creator) => creator.id === id) ?? creators[0] ?? seedCreators[0],
@@ -145,6 +260,11 @@ function AppShell() {
   }, [creatorById, filters, projects, query]);
 
   function setView(view: View) {
+    if (view.name === "profile") {
+      const creator = creators.find((candidate) => candidate.id === view.id);
+      navigate(`/u/${creator?.handle ?? view.id}`);
+      return;
+    }
     navigate(pathForView(view));
   }
 
@@ -270,6 +390,10 @@ function AppShell() {
       let project: Project;
       if (isSupabaseConfigured && user) {
         project = await createProjectOnline({ userId: user.id, ...payload });
+        if (draft.storeIds.length) {
+          await setProjectStores(project.id, draft.storeIds);
+          project = { ...project, storeIds: draft.storeIds };
+        }
       } else {
         project = {
           id: `p${Date.now()}`,
@@ -277,6 +401,7 @@ function AppShell() {
           isLiked: false,
           isSaved: false,
           likes: 0,
+          storeIds: draft.storeIds,
           updates: [
             {
               id: `u${Date.now()}`,
@@ -387,10 +512,15 @@ function AppShell() {
               patternUrl: draft.patternUrl.trim() || item.patternUrl,
               visibility: draft.visibility,
               progress,
+              storeIds: draft.storeIds ?? [],
             }
           : item,
       ),
     );
+
+    if (isSupabaseConfigured && user) {
+      await setProjectStores(projectId, draft.storeIds ?? []);
+    }
     setRemoteError("");
   }
 
@@ -535,9 +665,7 @@ function AppShell() {
                 stitchAlong={stitchAlong}
                 followedCreators={followedCreators}
                 savedCount={savedProjects.length}
-                categories={categories}
-                stitches={stitches}
-                colors={colors}
+                stores={stores}
                 openDiscover={openDiscover}
               />
             }
@@ -578,9 +706,12 @@ function AppShell() {
                 imagePreview={imagePreview}
                 onPickImage={pickDraftImage}
                 onClearImage={clearDraftImage}
+                stores={stores}
               />
             }
           />
+          <Route path="/stores" element={<StoresView stores={stores} setView={setView} />} />
+          <Route path="/stores/:handle" element={<StoreRoute stores={stores} projects={projects} setView={setView} />} />
           <Route
             path="/stitch-along"
             element={
@@ -623,6 +754,7 @@ function AppShell() {
                 saveProjectEdits={saveProjectEdits}
                 isOwnerFor={(project) => (isDemoMode ? project.creatorId === meCreatorId : Boolean(user && project.creatorId === user.id))}
                 canUpload={Boolean(user) || !isSupabaseConfigured}
+                stores={stores}
                 setView={setView}
               />
             }
@@ -662,6 +794,7 @@ function ProjectRoute(props: {
   saveProjectEdits: (id: string, draft: DraftProject & { progress: number }, imageFile?: File | null) => Promise<void>;
   isOwnerFor: (project: Project) => boolean;
   canUpload: boolean;
+  stores: Store[];
   setView: (view: View) => void;
 }) {
   const { id = "" } = useParams();
@@ -678,6 +811,7 @@ function ProjectRoute(props: {
   }
 
   const { isOwnerFor } = props;
+  const projectStores = props.stores.filter((store) => (project.storeIds ?? []).includes(store.id));
   return (
     <ProjectDetail
       project={project}
@@ -704,9 +838,21 @@ function ProjectRoute(props: {
       toggleLike={props.toggleLike}
       toggleSave={props.toggleSave}
       saveProjectEdits={props.saveProjectEdits}
+      stores={props.stores}
+      projectStores={projectStores}
       setView={props.setView}
     />
   );
+}
+
+function StoreRoute({ stores, projects, setView }: { stores: Store[]; projects: Project[]; setView: (view: View) => void }) {
+  const { handle = "" } = useParams();
+  const store = stores.find((item) => item.handle === handle);
+  if (!store) {
+    return <EmptyState title="Store not found" body="That shop may have moved." action="Browse stores" onAction={() => setView({ name: "stores" })} />;
+  }
+  const linked = projects.filter((project) => (project.storeIds ?? []).includes(store.id));
+  return <StoreDetailView store={store} projects={linked} setView={setView} />;
 }
 
 function ProfileRoute({
@@ -1077,16 +1223,32 @@ function OnboardingPage() {
 }
 
 function pathForView(view: View) {
-  if (view.name === "home") return "/";
-  if (view.name === "discover") return "/discover";
-  if (view.name === "journal") return "/journal";
-  if (view.name === "collections") return "/collections";
-  if (view.name === "stitchAlong") return "/stitch-along";
-  if (view.name === "auth") return "/auth";
-  if (view.name === "onboarding") return "/onboarding";
-  if (view.name === "project") return `/projects/${view.id}`;
-  const creator = seedCreators.find((candidate) => candidate.id === view.id);
-  return `/u/${creator?.handle ?? view.id}`;
+  switch (view.name) {
+    case "home":
+      return "/";
+    case "discover":
+      return "/discover";
+    case "journal":
+      return "/journal";
+    case "collections":
+      return "/collections";
+    case "stitchAlong":
+      return "/stitch-along";
+    case "stores":
+      return "/stores";
+    case "store":
+      return `/stores/${view.handle}`;
+    case "auth":
+      return "/auth";
+    case "onboarding":
+      return "/onboarding";
+    case "project":
+      return `/projects/${view.id}`;
+    case "profile":
+      return `/u/${view.id}`;
+    default:
+      return "/";
+  }
 }
 
 function viewNameForPath(pathname: string) {
@@ -1094,6 +1256,7 @@ function viewNameForPath(pathname: string) {
   if (pathname.startsWith("/journal")) return "journal";
   if (pathname.startsWith("/collections")) return "collections";
   if (pathname.startsWith("/stitch-along")) return "stitchAlong";
+  if (pathname.startsWith("/stores")) return "stores";
   if (pathname.startsWith("/projects")) return "project";
   if (pathname.startsWith("/u/")) return "profile";
   if (pathname.startsWith("/auth")) return "auth";

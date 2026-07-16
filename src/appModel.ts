@@ -3,11 +3,13 @@ import type { Difficulty, Status } from "./types";
 export type View =
   | { name: "home" }
   | { name: "discover" }
+  | { name: "journal" }
   | { name: "project"; id: string }
   | { name: "profile"; id: string }
   | { name: "collections" }
-  | { name: "journal" }
   | { name: "stitchAlong" }
+  | { name: "stores" }
+  | { name: "store"; handle: string }
   | { name: "auth" }
   | { name: "onboarding" };
 
@@ -25,6 +27,7 @@ export type DraftProject = {
   patternSource: string;
   patternUrl: string;
   visibility: "public" | "private";
+  storeIds: string[];
 };
 
 export const blankDraft: DraftProject = {
@@ -41,6 +44,7 @@ export const blankDraft: DraftProject = {
   patternSource: "Personal stash",
   patternUrl: "",
   visibility: "public",
+  storeIds: [],
 };
 
 export const statusOptions: Status[] = ["planned", "in progress", "finished", "paused"];
