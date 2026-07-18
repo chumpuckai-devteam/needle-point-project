@@ -1,15 +1,15 @@
 import { FormEvent, useEffect, useId, useState } from "react";
-import { Bookmark, CalendarDays, ExternalLink, Filter, Heart, Home, MapPin, MessageCircle, Plus, Search, Sparkles, Store as StoreIcon, UserRound } from "lucide-react";
+import { Bookmark, CalendarDays, ExternalLink, Filter, Heart, Home, MessageCircle, Plus, Search, Share2, Sparkles, Store as StoreIcon, UserRound } from "lucide-react";
 import type { Collection, Creator, Difficulty, Project, Status, StitchAlong, Store } from "./types";
 import type { DraftProject, View } from "./appModel";
-import { difficultyOptions, statusOptions } from "./appModel";
+import { difficultyOptions, projectCommentCount, resolveMediaKind, statusOptions } from "./appModel";
 
 export function Sidebar({ view, setView, savedCount }: { view: string; setView: (view: View) => void; savedCount: number }) {
   const items = [
     { id: "home", label: "Home", icon: Home, action: () => setView({ name: "home" }) },
     { id: "discover", label: "Discover", icon: Search, action: () => setView({ name: "discover" }) },
     { id: "stores", label: "Stores", icon: StoreIcon, action: () => setView({ name: "stores" }) },
-    { id: "journal", label: "Journal", icon: Plus, action: () => setView({ name: "journal" }) },
+    { id: "journal", label: "Post", icon: Plus, action: () => setView({ name: "journal" }) },
     { id: "collections", label: `Saved (${savedCount})`, icon: Bookmark, action: () => setView({ name: "collections" }) },
     { id: "stitchAlong", label: "Stitch-along", icon: CalendarDays, action: () => setView({ name: "stitchAlong" }) },
     { id: "auth", label: "Account", icon: UserRound, action: () => setView({ name: "auth" }) },
@@ -51,84 +51,165 @@ export function HomeView(props: {
   openDiscover: (patch?: Partial<{ category: string; stitch: string; color: string; status: string; query: string }>) => void;
   toggleLike: (id: string) => void;
   toggleSave: (id: string) => void;
+  shareProject: (id: string) => void;
 }) {
   void props.stitchAlong;
   const followedFeed = props.projects.filter((project) => props.followedCreators.includes(project.creatorId));
   const feed = followedFeed.length ? followedFeed : props.projects;
 
   return (
-    <section className="page visual-home">
-      <div className="visual-home-header">
+    <section className="page feed-page">
+      <header className="feed-topbar">
         <div>
-          <p className="eyebrow">Visual studio</p>
-          <h1>Promote your projects. Connect with shops.</h1>
-          <p>A photo-first feed for stitchers — and a place for local & online stores to show up where the work is shared.</p>
+          <h1 className="feed-title">Home</h1>
+          <p className="feed-subtitle">
+            {followedFeed.length ? "Posts from people you follow" : "Latest projects · text, photos & video"}
+          </p>
         </div>
-        <div className="card-actions wrap">
+        <div className="feed-top-actions">
           <button className="primary" type="button" onClick={() => props.setView({ name: "journal" })}>
-            <Plus size={18} /> Post project
-          </button>
-          <button className="secondary" type="button" onClick={() => props.setView({ name: "stores" })}>
-            <StoreIcon size={17} /> Browse stores
+            <Plus size={18} /> Post
           </button>
         </div>
-      </div>
-
-      <div className="visual-action-row" aria-label="Quick actions">
-        <button type="button" className="chip-action" onClick={() => props.setView({ name: "journal" })}>
-          <Plus size={16} /> New post
-        </button>
-        <button type="button" className="chip-action" onClick={() => props.openDiscover()}>
-          <Search size={16} /> Discover
-        </button>
-        <button type="button" className="chip-action" onClick={() => props.setView({ name: "stores" })}>
-          <MapPin size={16} /> Stores
-        </button>
-        <button type="button" className="chip-action" onClick={() => props.setView({ name: "collections" })}>
-          <Bookmark size={16} /> Saved {props.savedCount ? `(${props.savedCount})` : ""}
-        </button>
-      </div>
+      </header>
 
       {props.stores.length > 0 && (
-        <div className="store-rail panel">
-          <SectionTitle title="Shops on Needlepoint" action="See all" onAction={() => props.setView({ name: "stores" })} />
-          <div className="store-rail-scroll">
-            {props.stores.slice(0, 8).map((store) => (
-              <button key={store.id} type="button" className="store-rail-card" onClick={() => props.setView({ name: "store", handle: store.handle })}>
-                <img src={store.avatar} alt="" />
-                <strong>{store.name}</strong>
-                <small>
-                  {store.storeType === "local" ? "Local" : store.storeType === "both" ? "Local + ships" : "Ships"}
-                  {store.location ? ` · ${store.location}` : ""}
-                </small>
-              </button>
-            ))}
-          </div>
+        <div className="feed-store-strip" aria-label="Shops">
+          {props.stores.slice(0, 10).map((store) => (
+            <button key={store.id} type="button" className="feed-store-chip" onClick={() => props.setView({ name: "store", handle: store.handle })}>
+              <img src={store.avatar || "/assets/needlepoint-hero.png"} alt="" />
+              <span>{store.name}</span>
+            </button>
+          ))}
+          <button type="button" className="feed-store-chip more" onClick={() => props.setView({ name: "stores" })}>
+            All shops
+          </button>
         </div>
       )}
 
-      <SectionTitle
-        title={followedFeed.length ? "From people you follow" : "Project feed"}
-        action="Open discover"
-        onAction={() => props.openDiscover()}
-      />
-      {feed.length ? (
-        <div className="visual-grid" aria-label="Project feed">
-          {feed.map((project) => (
-            <VisualProjectTile
+      <div className="feed-timeline" aria-label="Post feed">
+        {feed.length ? (
+          feed.map((project) => (
+            <FeedPost
               key={project.id}
               project={project}
               creator={props.creatorById(project.creatorId)}
               setView={props.setView}
               toggleLike={props.toggleLike}
               toggleSave={props.toggleSave}
+              shareProject={props.shareProject}
             />
-          ))}
-        </div>
-      ) : (
-        <EmptyState title="No projects yet" body="Be the first to post a canvas photo." action="Post project" onAction={() => props.setView({ name: "journal" })} />
-      )}
+          ))
+        ) : (
+          <EmptyState title="No posts yet" body="Share a project photo, note, or short video." action="Create post" onAction={() => props.setView({ name: "journal" })} />
+        )}
+      </div>
     </section>
+  );
+}
+
+/** X/IG-style vertical post: text, image, or video + social actions. */
+export function FeedPost({
+  project,
+  creator,
+  setView,
+  toggleLike,
+  toggleSave,
+  shareProject,
+}: {
+  project: Project;
+  creator: Creator;
+  setView: (view: View) => void;
+  toggleLike: (id: string) => void;
+  toggleSave: (id: string) => void;
+  shareProject: (id: string) => void;
+}) {
+  const mediaKind = resolveMediaKind(project);
+  const commentCount = projectCommentCount(project);
+  const body = project.notes?.trim() || "";
+  const showTitle = project.title?.trim() && project.title.trim() !== body.slice(0, project.title.length);
+
+  return (
+    <article className="feed-post">
+      <button type="button" className="feed-avatar-btn" onClick={() => setView({ name: "profile", id: creator.id })} aria-label={`@${creator.handle}`}>
+        <img src={creator.avatar} alt="" className="feed-avatar" />
+      </button>
+      <div className="feed-post-body">
+        <div className="feed-post-meta">
+          <button type="button" className="feed-name" onClick={() => setView({ name: "profile", id: creator.id })}>
+            {creator.name}
+          </button>
+          <button type="button" className="feed-handle" onClick={() => setView({ name: "profile", id: creator.id })}>
+            @{creator.handle}
+          </button>
+          {project.updates[0]?.date ? <span className="feed-dot">·</span> : null}
+          {project.updates[0]?.date ? <span className="feed-time">{project.updates[0].date}</span> : null}
+        </div>
+
+        {showTitle ? (
+          <button type="button" className="feed-post-title" onClick={() => setView({ name: "project", id: project.id })}>
+            {project.title}
+          </button>
+        ) : null}
+
+        {body ? (
+          <button type="button" className="feed-post-text" onClick={() => setView({ name: "project", id: project.id })}>
+            {body}
+          </button>
+        ) : !showTitle ? (
+          <button type="button" className="feed-post-title" onClick={() => setView({ name: "project", id: project.id })}>
+            {project.title}
+          </button>
+        ) : null}
+
+        {mediaKind === "image" && project.image ? (
+          <button type="button" className="feed-media" onClick={() => setView({ name: "project", id: project.id })}>
+            <img src={project.image} alt={project.title} />
+          </button>
+        ) : null}
+
+        {mediaKind === "video" && project.videoUrl ? (
+          <div className="feed-media feed-media-video">
+            <video controls playsInline preload="metadata" poster={project.image || undefined} src={project.videoUrl}>
+              <track kind="captions" />
+            </video>
+          </div>
+        ) : null}
+
+        {mediaKind === "text" && !body && !project.title ? (
+          <p className="feed-post-text muted">Untitled post</p>
+        ) : null}
+
+        <div className="feed-actions" role="group" aria-label="Post actions">
+          <button type="button" className="feed-action" onClick={() => setView({ name: "project", id: project.id })} aria-label="Comment">
+            <MessageCircle size={18} />
+            {commentCount > 0 ? <span>{commentCount}</span> : null}
+          </button>
+          <button
+            type="button"
+            className={`feed-action like ${project.isLiked ? "selected" : ""}`}
+            onClick={() => toggleLike(project.id)}
+            aria-label={project.isLiked ? "Unlike" : "Like"}
+            aria-pressed={project.isLiked}
+          >
+            <Heart size={18} fill={project.isLiked ? "currentColor" : "none"} />
+            {project.likes > 0 ? <span>{project.likes}</span> : null}
+          </button>
+          <button
+            type="button"
+            className={`feed-action bookmark ${project.isSaved ? "selected" : ""}`}
+            onClick={() => toggleSave(project.id)}
+            aria-label={project.isSaved ? "Remove bookmark" : "Bookmark"}
+            aria-pressed={project.isSaved}
+          >
+            <Bookmark size={18} fill={project.isSaved ? "currentColor" : "none"} />
+          </button>
+          <button type="button" className="feed-action" onClick={() => shareProject(project.id)} aria-label="Share">
+            <Share2 size={18} />
+          </button>
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -146,9 +227,10 @@ export function DiscoverView(props: {
   setView: (view: View) => void;
   toggleLike: (id: string) => void;
   toggleSave: (id: string) => void;
+  shareProject: (id: string) => void;
 }) {
   return (
-    <section className="page">
+    <section className="page feed-page">
       <SectionHeader eyebrow="Discover" title="Explore canvases, stitches, and creators" />
       <div className="searchbar">
         <Search size={18} />
@@ -164,15 +246,16 @@ export function DiscoverView(props: {
         <button className="secondary" onClick={props.clearFilters}>Clear</button>
       </div>
       {props.projects.length > 0 ? (
-        <div className="visual-grid" aria-label="Discover grid">
+        <div className="feed-timeline discover-feed" aria-label="Discover feed">
           {props.projects.map((project) => (
-            <VisualProjectTile
+            <FeedPost
               key={project.id}
               project={project}
               creator={props.creatorById(project.creatorId)}
               setView={props.setView}
               toggleLike={props.toggleLike}
               toggleSave={props.toggleSave}
+              shareProject={props.shareProject}
             />
           ))}
         </div>
@@ -196,10 +279,19 @@ export function VisualProjectTile({
   toggleLike: (id: string) => void;
   toggleSave: (id: string) => void;
 }) {
+  const mediaKind = resolveMediaKind(project);
   return (
     <article className="visual-tile">
       <button type="button" className="visual-tile-media" onClick={() => setView({ name: "project", id: project.id })}>
-        <img src={project.image} alt={project.title} />
+        {mediaKind === "video" && project.videoUrl ? (
+          <video muted playsInline preload="metadata" poster={project.image || undefined} src={project.videoUrl} />
+        ) : project.image ? (
+          <img src={project.image} alt={project.title} />
+        ) : (
+          <div className="visual-tile-text-only">
+            <span>{project.title}</span>
+          </div>
+        )}
       </button>
       <div className="visual-tile-meta">
         <button type="button" className="linklike" onClick={() => setView({ name: "profile", id: creator.id })}>
@@ -649,6 +741,7 @@ function projectToDraft(project: Project): DraftProject & { progress: number } {
   return {
     title: project.title,
     image: project.image.startsWith("http") ? project.image : project.image,
+    videoUrl: project.videoUrl ?? "",
     status: project.status,
     difficulty: project.difficulty,
     category: project.category,
@@ -737,6 +830,7 @@ export function JournalView({
               }}
             />
             <Field label="Or image URL" value={draft.image} onChange={(image) => setDraft({ ...draft, image })} placeholder="https://…" />
+            <Field label="Video URL (optional)" value={draft.videoUrl} onChange={(videoUrl) => setDraft({ ...draft, videoUrl })} placeholder="https://…/clip.mp4" />
             {uploadBusy && <p className="field-help">Uploading photo…</p>}
             {uploadError && (
               <p className="field-help" style={{ color: "#8a2f2f" }}>

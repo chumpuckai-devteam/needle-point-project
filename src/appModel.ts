@@ -1,4 +1,4 @@
-import type { Difficulty, Status } from "./types";
+import type { Difficulty, MediaKind, Project, Status } from "./types";
 
 export type View =
   | { name: "home" }
@@ -16,6 +16,7 @@ export type View =
 export type DraftProject = {
   title: string;
   image: string;
+  videoUrl: string;
   status: Status;
   difficulty: Difficulty;
   category: string;
@@ -33,6 +34,7 @@ export type DraftProject = {
 export const blankDraft: DraftProject = {
   title: "",
   image: "",
+  videoUrl: "",
   status: "in progress",
   difficulty: "confident beginner",
   category: "ornament",
@@ -63,4 +65,40 @@ export function unique(values: string[]) {
 
 export function splitList(value: string) {
   return value.split(",").map((item) => item.trim()).filter(Boolean);
+}
+
+export function resolveMediaKind(project: Pick<Project, "image" | "videoUrl" | "mediaKind">): MediaKind {
+  if (project.mediaKind) return project.mediaKind;
+  if (project.videoUrl?.trim()) return "video";
+  if (project.image?.trim()) return "image";
+  return "text";
+}
+
+export function projectCommentCount(project: Project) {
+  return project.updates.reduce((sum, update) => sum + update.comments.length, 0);
+}
+
+export async function shareProjectPost(project: Project, handle: string) {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const url = `${origin}/projects/${project.id}`;
+  const text = `${project.title}${handle ? ` by @${handle}` : ""} · Needlepoint`;
+  try {
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      await navigator.share({ title: project.title, text, url });
+      return { ok: true as const, method: "native" as const };
+    }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      return { ok: false as const, method: "cancelled" as const };
+    }
+  }
+  try {
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url);
+      return { ok: true as const, method: "clipboard" as const };
+    }
+  } catch {
+    // Ignore clipboard failures and return the URL below.
+  }
+  return { ok: false as const, method: "failed" as const, url };
 }

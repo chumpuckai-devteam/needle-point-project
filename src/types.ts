@@ -2,6 +2,8 @@ export type Status = "planned" | "in progress" | "finished" | "paused";
 export type Difficulty = "beginner" | "confident beginner" | "intermediate" | "advanced";
 export type StoreType = "local" | "online" | "both";
 export type StoreRole = "available_at" | "pattern_from" | "threads_from" | "finishing";
+/** Feed post media: X/IG-style text, image, or video. */
+export type MediaKind = "text" | "image" | "video";
 
 export type Creator = {
   id: string;
@@ -38,6 +40,9 @@ export type Project = {
   title: string;
   creatorId: string;
   image: string;
+  /** Optional video URL for feed posts (mp4/webm or hosted stream). */
+  videoUrl?: string;
+  mediaKind?: MediaKind;
   status: Status;
   difficulty: Difficulty;
   category: string;

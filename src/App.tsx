@@ -4,7 +4,7 @@ import { addCommentOnline, toggleProjectLikeOnline, toggleSaveOnline } from "./a
 import { uploadProjectImage, validateImageFile } from "./api/images";
 import { fetchStores, setProjectStores } from "./api/stores";
 import { creators as seedCreators, initialCollections, initialProjects, stitchAlong as seedStitchAlong } from "./data";
-import type { Collection, Creator, Project, StitchAlong, Store } from "./types";
+import type { Collection, Creator, MediaKind, Project, StitchAlong, Store } from "./types";
 import {
   CollectionsView,
   DiscoverView,
@@ -22,7 +22,7 @@ import {
 import { AuthForm, AuthProvider, useAuth } from "./context/AuthContext";
 import { isSupabaseConfigured, requireSupabase } from "./lib/supabase";
 import { loadFromStorage, saveToStorage } from "./lib/storage";
-import { blankDraft, fallbackImages, splitList, unique } from "./appModel";
+import { blankDraft, fallbackImages, shareProjectPost, splitList, unique } from "./appModel";
 import type { DraftProject, View } from "./appModel";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -326,6 +326,19 @@ function AppShell() {
     }
   }
 
+  function shareProject(id: string) {
+    const project = projects.find((item) => item.id === id);
+    if (!project) return;
+    const creator = creatorById(project.creatorId);
+    void shareProjectPost(project, creator.handle).then((result) => {
+      if (result.method === "clipboard") {
+        setRemoteError("Post link copied to clipboard.");
+      } else if (result.method === "failed") {
+        setRemoteError(`Share this post: ${result.url}`);
+      }
+    });
+  }
+
   function clearDraftImage() {
     if (imagePreview.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
     setPendingImageFile(null);
@@ -370,6 +383,8 @@ function AppShell() {
       const stitchTypes = splitList(draft.stitchTypes);
       const colors = splitList(draft.colors);
       const notes = draft.notes.trim();
+      const videoUrl = draft.videoUrl.trim();
+      const mediaKind: MediaKind = videoUrl ? "video" : image ? "image" : "text";
       const payload = {
         title: draft.title.trim(),
         notes,
@@ -390,6 +405,7 @@ function AppShell() {
       let project: Project;
       if (isSupabaseConfigured && user) {
         project = await createProjectOnline({ userId: user.id, ...payload });
+        project = { ...project, videoUrl, mediaKind };
         if (draft.storeIds.length) {
           await setProjectStores(project.id, draft.storeIds);
           project = { ...project, storeIds: draft.storeIds };
@@ -402,6 +418,8 @@ function AppShell() {
           isSaved: false,
           likes: 0,
           storeIds: draft.storeIds,
+          videoUrl,
+          mediaKind,
           updates: [
             {
               id: `u${Date.now()}`,
@@ -473,6 +491,8 @@ function AppShell() {
     const colors = splitList(draft.colors);
     const progress = Math.max(0, Math.min(100, Number(draft.progress) || 0));
     const status: Project["status"] = progress >= 100 ? "finished" : draft.status;
+    const videoUrl = draft.videoUrl.trim();
+    const mediaKind: MediaKind = videoUrl ? "video" : image ? "image" : "text";
 
     if (isSupabaseConfigured && user) {
       await updateProjectOnline(projectId, {
@@ -501,6 +521,8 @@ function AppShell() {
               title: draft.title.trim(),
               notes: draft.notes.trim(),
               image,
+              videoUrl,
+              mediaKind,
               status,
               difficulty: draft.difficulty,
               category: draft.category.trim() || item.category,
@@ -643,6 +665,7 @@ function AppShell() {
     setView,
     toggleLike,
     toggleSave,
+    shareProject,
   };
 
   return (

@@ -88,11 +88,13 @@ function mapProject(
   updates: ProgressUpdate[],
   flags: { likes: number; isLiked: boolean; isSaved: boolean },
 ): Project {
+  const image = row.primary_image_url || "";
   return {
     id: row.id,
     title: row.title,
     creatorId: row.user_id,
-    image: row.primary_image_url,
+    image,
+    mediaKind: image ? "image" : "text",
     status: statusFromDb[row.status],
     difficulty: difficultyFromDb[row.difficulty],
     category: row.category,
