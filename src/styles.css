@@ -1343,6 +1343,7 @@ main { background: #000; }
 .feed-action.bookmark.selected { color: #1d9bf0; }
 .discover-feed { border-top: 1px solid #2f3336; }
 .visual-tile-text-only { min-height: 100%; padding: 14px; display: grid; place-items: center; color: #e7e9ea; background: linear-gradient(135deg, #111, #1d2630); text-align: center; font-weight: 800; }
+.text-detail-card { min-height: 320px; display: grid; place-items: center; padding: 24px; background: linear-gradient(135deg, #111, #1d2630); color: #e7e9ea; font-size: clamp(1.6rem, 4vw, 3rem); font-weight: 800; text-align: center; }
 .visual-tile-media video { width: 100%; height: 100%; object-fit: cover; }
 .panel, .project-card, .metric-card, .empty-state, .store-card, .visual-tile, .action-card, .collection-card, .profile-chip, .saved-tile, .mini-update, .product-card { background: #050505; color: #e7e9ea; border-color: #2f3336; }
 .searchbar, .filters, input, textarea, select { background: #000; color: #e7e9ea; border-color: #2f3336; }

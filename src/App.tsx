@@ -22,7 +22,7 @@ import {
 import { AuthForm, AuthProvider, useAuth } from "./context/AuthContext";
 import { isSupabaseConfigured, requireSupabase } from "./lib/supabase";
 import { loadFromStorage, saveToStorage } from "./lib/storage";
-import { blankDraft, fallbackImages, shareProjectPost, splitList, unique } from "./appModel";
+import { blankDraft, shareProjectPost, splitList, unique } from "./appModel";
 import type { DraftProject, View } from "./appModel";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -376,7 +376,6 @@ function AppShell() {
         }
         image = await uploadProjectImage(user?.id || "demo-user", pendingImageFile);
       }
-      if (!image) image = fallbackImages[projects.length % fallbackImages.length];
 
       const progress = draft.status === "finished" ? 100 : draft.status === "planned" ? 5 : 20;
       const materials = splitList(draft.materials);

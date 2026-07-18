@@ -337,7 +337,7 @@ export function ProjectCard({
   return (
     <article className="project-card">
       <button className="image-button" onClick={() => setView({ name: "project", id: project.id })}>
-        <img src={project.image} alt={project.title} />
+        {project.image ? <img src={project.image} alt={project.title} /> : <div className="visual-tile-text-only"><span>{project.title}</span></div>}
       </button>
       <div className="card-body">
         <div>
@@ -443,7 +443,13 @@ export function ProjectDetail(props: {
     <section className="page">
       <div className="detail-layout">
         <div>
-          <img className="detail-image" src={props.project.image} alt={props.project.title} />
+          {props.project.videoUrl ? (
+            <video className="detail-image" controls playsInline preload="metadata" poster={props.project.image || undefined} src={props.project.videoUrl} />
+          ) : props.project.image ? (
+            <img className="detail-image" src={props.project.image} alt={props.project.title} />
+          ) : (
+            <div className="detail-image text-detail-card"><span>{props.project.title}</span></div>
+          )}
           <div className="panel">
             <SectionTitle title="Progress updates" />
             {props.isOwner ? (
