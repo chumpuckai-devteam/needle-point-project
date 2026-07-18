@@ -1,15 +1,38 @@
 import { FormEvent, useEffect, useId, useState } from "react";
-import { Bookmark, CalendarDays, ExternalLink, Filter, Heart, Home, MessageCircle, Plus, Search, Share2, Sparkles, Store as StoreIcon, UserRound } from "lucide-react";
+import { Bookmark, CalendarDays, ExternalLink, Filter, Frame, Heart, MessageCircle, Plus, Search, Share2, Sparkles, Store as StoreIcon, UserRound } from "lucide-react";
 import type { Collection, Creator, Difficulty, Project, Status, StitchAlong, Store } from "./types";
 import type { DraftProject, View } from "./appModel";
 import { difficultyOptions, projectCommentCount, resolveMediaKind, statusOptions } from "./appModel";
 
+const STATUS_LABELS: Record<Status, string> = {
+  planned: "Planned",
+  "in progress": "WIP",
+  finished: "Finished",
+  paused: "Paused",
+};
+
+function creatorInitials(creator: Creator) {
+  const source = (creator.name || creator.handle || "NP").trim();
+  const parts = source.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
+  return source.slice(0, 2).toUpperCase();
+}
+
+function shouldShowProjectTitle(title: string, body: string) {
+  const cleaned = title.trim();
+  if (!cleaned) return false;
+  if (cleaned.toLowerCase() === body.trim().toLowerCase()) return false;
+  // Avoid showing single UI-ish words that look like action chrome
+  if (/^(bookmark|like|share|comment|save|post)$/i.test(cleaned)) return false;
+  return true;
+}
+
 export function Sidebar({ view, setView, savedCount }: { view: string; setView: (view: View) => void; savedCount: number }) {
   const items = [
-    { id: "home", label: "Home", icon: Home, action: () => setView({ name: "home" }) },
+    { id: "home", label: "Studio", icon: Frame, action: () => setView({ name: "home" }) },
     { id: "discover", label: "Discover", icon: Search, action: () => setView({ name: "discover" }) },
-    { id: "stores", label: "Stores", icon: StoreIcon, action: () => setView({ name: "stores" }) },
-    { id: "journal", label: "Post", icon: Plus, action: () => setView({ name: "journal" }) },
+    { id: "stores", label: "Shops", icon: StoreIcon, action: () => setView({ name: "stores" }) },
+    { id: "journal", label: "New post", icon: Plus, action: () => setView({ name: "journal" }) },
     { id: "collections", label: `Saved (${savedCount})`, icon: Bookmark, action: () => setView({ name: "collections" }) },
     { id: "stitchAlong", label: "Stitch-along", icon: CalendarDays, action: () => setView({ name: "stitchAlong" }) },
     { id: "auth", label: "Account", icon: UserRound, action: () => setView({ name: "auth" }) },
@@ -18,7 +41,7 @@ export function Sidebar({ view, setView, savedCount }: { view: string; setView: 
 
   return (
     <aside className="sidebar">
-      <button className="brand" onClick={() => setView({ name: "home" })} aria-label="Go home">
+      <button className="brand" onClick={() => setView({ name: "home" })} aria-label="Go to studio">
         <span className="brand-mark">NP</span>
         <span>
           <strong>Needlepoint</strong>
@@ -61,14 +84,14 @@ export function HomeView(props: {
     <section className="page feed-page">
       <header className="feed-topbar">
         <div>
-          <h1 className="feed-title">Home</h1>
+          <h1 className="feed-title">Studio</h1>
           <p className="feed-subtitle">
-            {followedFeed.length ? "Posts from people you follow" : "Latest projects · text, photos & video"}
+            {followedFeed.length ? "Canvases from people you follow" : "Projects, progress notes, photos & video"}
           </p>
         </div>
         <div className="feed-top-actions">
           <button className="primary" type="button" onClick={() => props.setView({ name: "journal" })}>
-            <Plus size={18} /> Post
+            <Plus size={18} /> New post
           </button>
         </div>
       </header>
@@ -87,7 +110,7 @@ export function HomeView(props: {
         </div>
       )}
 
-      <div className="feed-timeline" aria-label="Post feed">
+      <div className="feed-timeline" aria-label="Studio feed">
         {feed.length ? (
           feed.map((project) => (
             <FeedPost
@@ -108,7 +131,7 @@ export function HomeView(props: {
   );
 }
 
-/** X/IG-style vertical post: text, image, or video + social actions. */
+/** Needlepoint studio feed post: avatar beside name, media, craft actions. */
 export function FeedPost({
   project,
   creator,
@@ -127,25 +150,45 @@ export function FeedPost({
   const mediaKind = resolveMediaKind(project);
   const commentCount = projectCommentCount(project);
   const body = project.notes?.trim() || "";
-  const showTitle = project.title?.trim() && project.title.trim() !== body.slice(0, project.title.length);
+  const showTitle = shouldShowProjectTitle(project.title || "", body);
+  const avatarSrc = creator.avatar?.trim() || "";
+  const initials = creatorInitials(creator);
+  const statusLabel = STATUS_LABELS[project.status] || project.status;
 
   return (
     <article className="feed-post">
-      <button type="button" className="feed-avatar-btn" onClick={() => setView({ name: "profile", id: creator.id })} aria-label={`@${creator.handle}`}>
-        <img src={creator.avatar} alt="" className="feed-avatar" />
-      </button>
-      <div className="feed-post-body">
-        <div className="feed-post-meta">
-          <button type="button" className="feed-name" onClick={() => setView({ name: "profile", id: creator.id })}>
-            {creator.name}
-          </button>
-          <button type="button" className="feed-handle" onClick={() => setView({ name: "profile", id: creator.id })}>
-            @{creator.handle}
-          </button>
-          {project.updates[0]?.date ? <span className="feed-dot">·</span> : null}
-          {project.updates[0]?.date ? <span className="feed-time">{project.updates[0].date}</span> : null}
-        </div>
+      <header className="feed-post-header">
+        <button
+          type="button"
+          className="feed-avatar-btn"
+          onClick={() => setView({ name: "profile", id: creator.id })}
+          aria-label={`@${creator.handle}`}
+        >
+          {avatarSrc ? (
+            <img src={avatarSrc} alt="" className="feed-avatar" />
+          ) : (
+            <span className="feed-avatar feed-avatar-fallback" aria-hidden="true">
+              {initials}
+            </span>
+          )}
+        </button>
 
+        <div className="feed-post-heading">
+          <div className="feed-post-meta">
+            <button type="button" className="feed-name" onClick={() => setView({ name: "profile", id: creator.id })}>
+              {creator.name}
+            </button>
+            <button type="button" className="feed-handle" onClick={() => setView({ name: "profile", id: creator.id })}>
+              @{creator.handle}
+            </button>
+            {project.updates[0]?.date ? <span className="feed-dot">·</span> : null}
+            {project.updates[0]?.date ? <span className="feed-time">{project.updates[0].date}</span> : null}
+            <span className={`feed-status status-${project.status.replace(/\s+/g, "-")}`}>{statusLabel}</span>
+          </div>
+        </div>
+      </header>
+
+      <div className="feed-post-body">
         {showTitle ? (
           <button type="button" className="feed-post-title" onClick={() => setView({ name: "project", id: project.id })}>
             {project.title}
@@ -156,8 +199,8 @@ export function FeedPost({
           <button type="button" className="feed-post-text" onClick={() => setView({ name: "project", id: project.id })}>
             {body}
           </button>
-        ) : !showTitle ? (
-          <button type="button" className="feed-post-title" onClick={() => setView({ name: "project", id: project.id })}>
+        ) : !showTitle && project.title?.trim() ? (
+          <button type="button" className="feed-post-text" onClick={() => setView({ name: "project", id: project.id })}>
             {project.title}
           </button>
         ) : null}
@@ -199,7 +242,7 @@ export function FeedPost({
             type="button"
             className={`feed-action bookmark ${project.isSaved ? "selected" : ""}`}
             onClick={() => toggleSave(project.id)}
-            aria-label={project.isSaved ? "Remove bookmark" : "Bookmark"}
+            aria-label={project.isSaved ? "Remove from saved" : "Save"}
             aria-pressed={project.isSaved}
           >
             <Bookmark size={18} fill={project.isSaved ? "currentColor" : "none"} />
