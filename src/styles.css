@@ -513,24 +513,46 @@ label input[type="radio"] {
   min-height: 0;
   margin: 0;
   flex-shrink: 0;
-  accent-color: #2f6f59;
+  accent-color: #2f8f86;
+  cursor: pointer;
 }
 
 .checkbox-field {
   display: flex !important;
   flex-direction: row;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   grid-column: 1 / -1;
   min-height: 44px;
-  padding: 4px 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.checkbox-field:hover {
+  background: rgba(47, 143, 134, 0.08);
+  border-color: rgba(47, 143, 134, 0.22);
+}
+
+.checkbox-field:has(input:checked) {
+  background: rgba(47, 143, 134, 0.12);
+  border-color: rgba(47, 143, 134, 0.4);
 }
 
 .checkbox-field span {
-  color: #241f21;
+  color: #f4efe6;
   font-size: 0.95rem;
   font-weight: 650;
-  line-height: 1.3;
+  line-height: 1.35;
+}
+
+.checkbox-field span small {
+  display: inline;
+  margin-left: 4px;
+  color: #c4b6a7;
+  font-weight: 550;
+  opacity: 1;
 }
 
 .account-identity {
@@ -566,15 +588,16 @@ label input[type="radio"] {
 .field-label {
   display: block;
   margin-bottom: 7px;
-  color: #5e5149;
+  color: #d7c9b8;
   font-size: 0.86rem;
   font-weight: 750;
 }
 
 .field-help {
   margin: 6px 0 0;
-  color: #766a61;
+  color: #b5a89a;
   font-size: 0.86rem;
+  line-height: 1.4;
 }
 
 .visually-hidden {
@@ -1228,6 +1251,14 @@ ul {
 .store-picker-options {
   display: grid;
   gap: 8px;
+  padding: 4px;
+  border-radius: 14px;
+  border: 1px solid var(--np-line, #3a322c);
+  background: rgba(12, 10, 9, 0.55);
+}
+
+.store-picker .field-label {
+  margin-bottom: 10px;
 }
 
 .store-chip-list {
@@ -1241,8 +1272,9 @@ ul {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid #d8cec2;
-  background: #f7f1e9;
+  border: 1px solid var(--np-line, #3a322c);
+  background: rgba(47, 143, 134, 0.12);
+  color: var(--np-ink, #f4efe6);
   border-radius: 999px;
   padding: 7px 11px;
   font-weight: 650;
@@ -1746,6 +1778,36 @@ select {
   background: #120f0d;
   color: var(--np-ink);
   border-color: var(--np-line);
+}
+
+/* Form text contrast on dark panels (WCAG-friendly) */
+label {
+  color: #d7c9b8;
+}
+
+label input:not([type="checkbox"]):not([type="radio"]),
+label textarea,
+label select,
+.searchbar input,
+.comment-box input,
+.update-composer textarea {
+  color: #1b1613;
+  background: #fffaf3;
+  border-color: #d8cec2;
+}
+
+label input:not([type="checkbox"]):not([type="radio"])::placeholder,
+label textarea::placeholder {
+  color: #7a6e63;
+  opacity: 1;
+}
+
+.checkbox-field span {
+  color: #f4efe6;
+}
+
+.checkbox-field span small {
+  color: #c4b6a7;
 }
 
 .secondary,
