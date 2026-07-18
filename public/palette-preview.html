@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Needlepoint palette options</title>
+    <style>
+      :root {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+        color: #1d1a17;
+        background: #ece7e1;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 28px 18px 48px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(1.6rem, 3vw, 2.2rem);
+      }
+      .lede {
+        margin: 0 0 24px;
+        color: #5f564e;
+        max-width: 70ch;
+        line-height: 1.5;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+      }
+      .card {
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,.08);
+        box-shadow: 0 10px 30px rgba(40, 30, 20, 0.08);
+        background: #fff;
+      }
+      .preview {
+        padding: 16px;
+        min-height: 170px;
+      }
+      .mock {
+        border-radius: 14px;
+        border: 1px solid rgba(0,0,0,.08);
+        overflow: hidden;
+      }
+      .mock-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 14px;
+        font-weight: 800;
+      }
+      .mock-body {
+        padding: 14px;
+        display: grid;
+        gap: 10px;
+      }
+      .post {
+        display: grid;
+        grid-template-columns: 36px 1fr;
+        gap: 10px;
+        align-items: start;
+      }
+      .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+      }
+      .line {
+        height: 10px;
+        border-radius: 999px;
+        margin-bottom: 6px;
+      }
+      .media {
+        height: 74px;
+        border-radius: 12px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 34px;
+        padding: 0 12px;
+        border-radius: 999px;
+        border: 0;
+        font-weight: 700;
+        font-size: 0.9rem;
+      }
+      .meta {
+        padding: 14px 16px 16px;
+      }
+      .meta h2 {
+        margin: 0 0 4px;
+        font-size: 1.05rem;
+      }
+      .meta p {
+        margin: 0 0 12px;
+        color: #666;
+        font-size: 0.9rem;
+        line-height: 1.4;
+      }
+      .swatches {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 6px;
+      }
+      .swatch {
+        border-radius: 10px;
+        min-height: 42px;
+        border: 1px solid rgba(0,0,0,.08);
+        display: grid;
+        align-content: end;
+        padding: 4px;
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .tag {
+        display: inline-block;
+        margin-bottom: 8px;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: #f1ebe4;
+        color: #5b524a;
+        font-size: 0.72rem;
+        font-weight: 750;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Needlepoint palette options</h1>
+    <p class="lede">
+      Five accessible craft-friendly schemes based on WCAG contrast guidance and dark/light UI best practices.
+      Pick one and Toad will apply it across the app.
+    </p>
+    <div class="grid" id="grid"></div>
+    <script>
+      const schemes = [
+        {
+          id: 1,
+          name: "Linen Studio",
+          vibe: "Light · warm · handmade",
+          why: "Classic craft shop feel. Cream paper surfaces, terracotta CTAs, deep ink for high contrast.",
+          colors: {
+            bg: "#FAF6F1", surface: "#F3EBE1", ink: "#2B2420", muted: "#6B5E54",
+            primary: "#C26A4A", secondary: "#2F6F59"
+          }
+        },
+        {
+          id: 2,
+          name: "Moss & Flax",
+          vibe: "Light · botanical · calm",
+          why: "Nature-forward needle arts palette. Moss green primary, flax gold accents, soft gallery white.",
+          colors: {
+            bg: "#F7F4EE", surface: "#FFFFFF", ink: "#1F2A24", muted: "#5F6B63",
+            primary: "#3F6F5B", secondary: "#C9A66B"
+          }
+        },
+        {
+          id: 3,
+          name: "Warm Midnight",
+          vibe: "Dark · refined · cozy",
+          why: "Dark-mode best practice: no pure black, warm charcoal surfaces, soft teal + gold accents.",
+          colors: {
+            bg: "#1A1714", surface: "#24201C", ink: "#F3EDE4", muted: "#A99C8E",
+            primary: "#3FA89A", secondary: "#D8A35E"
+          }
+        },
+        {
+          id: 4,
+          name: "Berry Thread",
+          vibe: "Light · soft · feminine-craft",
+          why: "Gentle blush surfaces with berry primary. Feels social and inviting without going pastel-low-contrast.",
+          colors: {
+            bg: "#FFF8F6", surface: "#FFFFFF", ink: "#2A1C22", muted: "#7A5F68",
+            primary: "#A84B5C", secondary: "#E8B4A2"
+          }
+        },
+        {
+          id: 5,
+          name: "Indigo Canvas",
+          vibe: "Light · modern · gallery",
+          why: "Cool contemporary studio look. Indigo for trust/actions, copper for craft warmth.",
+          colors: {
+            bg: "#F5F7FB", surface: "#FFFFFF", ink: "#1C2430", muted: "#5E6A7A",
+            primary: "#3D5A80", secondary: "#C9834A"
+          }
+        }
+      ];
+
+      const grid = document.getElementById("grid");
+      for (const s of schemes) {
+        const c = s.colors;
+        const card = document.createElement("article");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="preview" style="background:${c.bg}">
+            <div class="mock" style="background:${c.surface}; color:${c.ink}; border-color:${c.muted}33">
+              <div class="mock-top" style="border-bottom:1px solid ${c.muted}33">
+                <span>Studio</span>
+                <span class="btn" style="background:${c.primary}; color:${s.id===3 ? '#0f1412' : '#fff'}">New post</span>
+              </div>
+              <div class="mock-body">
+                <div class="post">
+                  <div class="avatar" style="background: linear-gradient(135deg, ${c.primary}, ${c.secondary})"></div>
+                  <div>
+                    <div class="line" style="width:58%; background:${c.ink}"></div>
+                    <div class="line" style="width:40%; background:${c.muted}"></div>
+                    <div class="media" style="background: linear-gradient(135deg, ${c.secondary}55, ${c.primary}33); border:1px solid ${c.muted}33"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="meta">
+            <span class="tag">Option ${s.id}</span>
+            <h2>${s.name}</h2>
+            <p><strong>${s.vibe}</strong><br/>${s.why}</p>
+            <div class="swatches">
+              ${Object.entries(c).map(([k,v]) => `
+                <div class="swatch" style="background:${v}; color:${k==='bg'||k==='surface'||k==='secondary'&&s.id!==3&&s.id!==1&&s.id!==5 ? '#222' : (k==='ink' && s.id===3 ? '#1a1714' : (['bg','surface'].includes(k) ? '#333' : '#fff'))}">
+                  <span>${k}<br/>${v}</span>
+                </div>`).join("")}
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      }
+    </script>
+  </body>
+</html>
