@@ -59,7 +59,9 @@ const DEMO_STORES: Store[] = [
         category: "canvas",
       },
     ],
-    projectCount: 0,
+    projectCount: 2,
+    latitude: 45.5202471,
+    longitude: -122.674194,
   },
   {
     id: "store-online-1",
@@ -78,7 +80,9 @@ const DEMO_STORES: Store[] = [
     shipsNationwide: true,
     specialties: ["silk", "metallic", "kits"],
     products: [],
-    projectCount: 0,
+    projectCount: 4,
+    latitude: null,
+    longitude: null,
   },
   {
     id: "store-local-2",
@@ -97,7 +101,9 @@ const DEMO_STORES: Store[] = [
     shipsNationwide: false,
     specialties: ["local pickup", "classes", "finishing"],
     products: [],
-    projectCount: 0,
+    projectCount: 1,
+    latitude: 30.2711286,
+    longitude: -97.7436995,
   },
 ];
 

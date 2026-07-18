@@ -17,6 +17,8 @@ type DbStore = {
   country: string;
   ships_nationwide: boolean;
   specialties: string[] | null;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 type DbProduct = {
@@ -50,6 +52,8 @@ function mapStore(row: DbStore, products: StoreProduct[] = [], projectCount = 0)
     specialties: row.specialties ?? [],
     products,
     projectCount,
+    latitude: row.latitude ?? null,
+    longitude: row.longitude ?? null,
   };
 }
 

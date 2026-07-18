@@ -1,8 +1,16 @@
-import { FormEvent, useEffect, useId, useState } from "react";
-import { Bookmark, CalendarDays, ExternalLink, Filter, Frame, Heart, MessageCircle, Plus, Search, Share2, Sparkles, Store as StoreIcon, UserRound } from "lucide-react";
+import { FormEvent, useEffect, useId, useMemo, useState } from "react";
+import { Bookmark, CalendarDays, ExternalLink, Filter, Frame, Heart, MapPin, MessageCircle, Plus, Search, Share2, Sparkles, Store as StoreIcon, UserRound } from "lucide-react";
 import type { Collection, Creator, Difficulty, Project, Status, StitchAlong, Store } from "./types";
 import type { DraftProject, View } from "./appModel";
 import { difficultyOptions, projectCommentCount, resolveMediaKind, statusOptions } from "./appModel";
+import {
+  formatDistanceMiles,
+  LOCAL_DRIVING_RADIUS_MILES,
+  rankStoresForUser,
+  requestBrowserLocation,
+  type GeoPoint,
+  type RankedStore,
+} from "./lib/geo";
 
 const STATUS_LABELS: Record<Status, string> = {
   planned: "Planned",
@@ -79,6 +87,23 @@ export function HomeView(props: {
   void props.stitchAlong;
   const followedFeed = props.projects.filter((project) => props.followedCreators.includes(project.creatorId));
   const feed = followedFeed.length ? followedFeed : props.projects;
+  const [userPoint, setUserPoint] = useState<GeoPoint | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    requestBrowserLocation()
+      .then((point) => {
+        if (!cancelled) setUserPoint(point);
+      })
+      .catch(() => {
+        /* optional on home strip */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const rankedStores = useMemo(() => rankStoresForUser(props.stores, userPoint, LOCAL_DRIVING_RADIUS_MILES).shown.slice(0, 10), [props.stores, userPoint]);
 
   return (
     <section className="page feed-page">
@@ -96,12 +121,15 @@ export function HomeView(props: {
         </div>
       </header>
 
-      {props.stores.length > 0 && (
+      {rankedStores.length > 0 && (
         <div className="feed-store-strip" aria-label="Shops">
-          {props.stores.slice(0, 10).map((store) => (
+          {rankedStores.map((store) => (
             <button key={store.id} type="button" className="feed-store-chip" onClick={() => props.setView({ name: "store", handle: store.handle })}>
               <img src={store.avatar || "/assets/needlepoint-hero.png"} alt="" />
-              <span>{store.name}</span>
+              <span>
+                {store.name}
+                {store.distanceMiles != null ? ` · ${formatDistanceMiles(store.distanceMiles)}` : ""}
+              </span>
             </button>
           ))}
           <button type="button" className="feed-store-chip more" onClick={() => props.setView({ name: "stores" })}>
@@ -1075,35 +1103,133 @@ export function ProfileView({
 }
 
 export function StoresView({ stores, setView }: { stores: Store[]; setView: (view: View) => void }) {
+  const [userPoint, setUserPoint] = useState<GeoPoint | null>(null);
+  const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "ready" | "denied" | "error">("idle");
+  const [locationMessage, setLocationMessage] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    setLocationStatus("loading");
+    requestBrowserLocation()
+      .then((point) => {
+        if (cancelled) return;
+        setUserPoint(point);
+        setLocationStatus("ready");
+        setLocationMessage("Sorted by distance from your location.");
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        const message = error instanceof Error ? error.message : "Could not determine your location.";
+        setLocationMessage(message);
+        setLocationStatus(message.toLowerCase().includes("denied") ? "denied" : "error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const ranked = useMemo(() => rankStoresForUser(stores, userPoint, LOCAL_DRIVING_RADIUS_MILES), [stores, userPoint]);
+
+  async function retryLocation() {
+    setLocationStatus("loading");
+    setLocationMessage("");
+    try {
+      const point = await requestBrowserLocation();
+      setUserPoint(point);
+      setLocationStatus("ready");
+      setLocationMessage("Sorted by distance from your location.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not determine your location.";
+      setLocationMessage(message);
+      setLocationStatus(message.toLowerCase().includes("denied") ? "denied" : "error");
+    }
+  }
+
   return (
     <section className="page">
-      <SectionHeader eyebrow="Stores" title="Local shops and online suppliers" />
+      <SectionHeader eyebrow="Shops" title="Local shops near you" />
       <p className="lede">
-        Stores connect with stitchers who promote canvases and finishes — no marketplace checkout yet, just presence and supply links.
+        Local shops are ordered by driving distance. If nothing is within about {LOCAL_DRIVING_RADIUS_MILES} miles, we surface the top online shops instead.
       </p>
-      {stores.length ? (
-        <div className="store-grid">
-          {stores.map((store) => (
-            <button key={store.id} type="button" className="store-card panel" onClick={() => setView({ name: "store", handle: store.handle })}>
-              <img className="store-card-cover" src={store.coverImage || store.avatar} alt="" />
-              <div className="store-card-body">
-                <img className="store-card-avatar" src={store.avatar} alt="" />
-                <strong>{store.name}</strong>
-                <small>@{store.handle}</small>
-                <p>{store.description || "Needlepoint supplier"}</p>
-                <div className="tag-row">
-                  <span>{store.storeType === "local" ? "Local" : store.storeType === "both" ? "Local + ships" : "Online"}</span>
-                  {store.location ? <span>{store.location}</span> : null}
-                  {store.shipsNationwide ? <span>Ships</span> : null}
-                </div>
-              </div>
-            </button>
-          ))}
+
+      <div className="store-location-bar panel">
+        <div className="store-location-copy">
+          <MapPin size={18} />
+          <div>
+            <strong>
+              {locationStatus === "ready"
+                ? ranked.mode === "nearby"
+                  ? `${ranked.nearby.length} shop${ranked.nearby.length === 1 ? "" : "s"} within ${LOCAL_DRIVING_RADIUS_MILES} mi`
+                  : `No local shops within ${LOCAL_DRIVING_RADIUS_MILES} mi`
+                : locationStatus === "loading"
+                  ? "Finding shops near you…"
+                  : "Location helps us rank local shops"}
+            </strong>
+            <p>
+              {locationStatus === "ready" && ranked.mode === "online-fallback"
+                ? "Showing top online shops for now."
+                : locationMessage || "Allow location to sort by proximity."}
+            </p>
+          </div>
         </div>
+        <button className="secondary" type="button" onClick={() => void retryLocation()} disabled={locationStatus === "loading"}>
+          {locationStatus === "loading" ? "Locating…" : userPoint ? "Refresh location" : "Use my location"}
+        </button>
+      </div>
+
+      {ranked.mode === "nearby" && ranked.nearby.length > 0 ? (
+        <>
+          <SectionTitle title="Near you" />
+          <StoreCardGrid stores={ranked.nearby} setView={setView} showDistance />
+          {ranked.online.length > 0 ? (
+            <>
+              <SectionTitle title="Top online shops" />
+              <StoreCardGrid stores={ranked.online} setView={setView} />
+            </>
+          ) : null}
+        </>
+      ) : ranked.shown.length ? (
+        <>
+          <SectionTitle title={ranked.mode === "online-fallback" ? "Top online shops" : "Shops"} />
+          <StoreCardGrid stores={ranked.shown} setView={setView} showDistance={Boolean(userPoint)} />
+        </>
       ) : (
         <EmptyState title="No stores yet" body="Shop profiles will appear here once seeded or claimed." />
       )}
     </section>
+  );
+}
+
+function StoreCardGrid({
+  stores,
+  setView,
+  showDistance = false,
+}: {
+  stores: RankedStore[];
+  setView: (view: View) => void;
+  showDistance?: boolean;
+}) {
+  return (
+    <div className="store-grid">
+      {stores.map((store) => (
+        <button key={store.id} type="button" className="store-card panel" onClick={() => setView({ name: "store", handle: store.handle })}>
+          <img className="store-card-cover" src={store.coverImage || store.avatar} alt="" />
+          <div className="store-card-body">
+            <img className="store-card-avatar" src={store.avatar} alt="" />
+            <strong>{store.name}</strong>
+            <small>@{store.handle}</small>
+            <p>{store.description || "Needlepoint supplier"}</p>
+            <div className="tag-row">
+              <span>{store.storeType === "local" ? "Local" : store.storeType === "both" ? "Local + ships" : "Online"}</span>
+              {showDistance && store.distanceMiles != null ? <span className="distance-tag">{formatDistanceMiles(store.distanceMiles)}</span> : null}
+              {store.location ? <span>{store.location}</span> : null}
+              {store.shipsNationwide ? <span>Ships</span> : null}
+              {store.projectCount > 0 ? <span>{store.projectCount} projects</span> : null}
+            </div>
+          </div>
+        </button>
+      ))}
+    </div>
   );
 }
 

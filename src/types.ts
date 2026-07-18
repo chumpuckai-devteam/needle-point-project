@@ -91,6 +91,9 @@ export type Store = {
   specialties: string[];
   products: StoreProduct[];
   projectCount: number;
+  /** Optional geocode for proximity ranking (local / hybrid shops). */
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 export type Collection = {
