@@ -178,10 +178,10 @@ export function useAuth() {
 
 export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
   const { signIn, signUp, isDemoMode, handle } = useAuth();
-  const [email, setEmail] = useState("threadandtonic@example.com");
-  const [password, setPassword] = useState("demo-password");
-  const [name, setName] = useState("June Mercer");
-  const [chosenHandle, setChosenHandle] = useState("threadandtonic");
+  const [email, setEmail] = useState(mode === "signin" ? "threadandtonic@example.com" : "");
+  const [password, setPassword] = useState(mode === "signin" ? "demo-password" : "");
+  const [name, setName] = useState("");
+  const [chosenHandle, setChosenHandle] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -201,19 +201,30 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
   }
 
   return (
-    <form className="panel form-grid" onSubmit={submit}>
+    <form className="auth-form panel form-grid" onSubmit={submit} noValidate={false}>
       {mode === "signup" && (
         <>
-          <label htmlFor={`${mode}-name`}>
-            Display name
-            <input id={`${mode}-name`} value={name} onChange={(event) => setName(event.target.value)} required />
+          <label htmlFor={`${mode}-name`} className="full-field">
+            <span className="label-text">Display name</span>
+            <input
+              id={`${mode}-name`}
+              name="name"
+              autoComplete="name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Your name"
+              required
+            />
           </label>
-          <label htmlFor={`${mode}-handle`}>
-            Handle
+          <label htmlFor={`${mode}-handle`} className="full-field">
+            <span className="label-text">Handle</span>
             <input
               id={`${mode}-handle`}
+              name="username"
+              autoComplete="username"
               value={chosenHandle}
               onChange={(event) => setChosenHandle(event.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+              placeholder="yourhandle"
               required
               minLength={3}
               maxLength={32}
@@ -221,25 +232,38 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
           </label>
         </>
       )}
-      <label htmlFor={`${mode}-email`}>
-        Email
-        <input id={`${mode}-email`} type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+      <label htmlFor={`${mode}-email`} className="full-field">
+        <span className="label-text">Email</span>
+        <input
+          id={`${mode}-email`}
+          name="email"
+          type="email"
+          autoComplete="email"
+          inputMode="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="you@email.com"
+          required
+        />
       </label>
-      <label htmlFor={`${mode}-password`}>
-        Password
+      <label htmlFor={`${mode}-password`} className="full-field">
+        <span className="label-text">Password</span>
         <input
           id={`${mode}-password`}
+          name="password"
           type="password"
+          autoComplete={mode === "signin" ? "current-password" : "new-password"}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
+          placeholder={mode === "signin" ? "Your password" : "At least 6 characters"}
           required
           minLength={6}
         />
       </label>
-      <button className="primary full-field" type="submit" disabled={busy}>
+      <button className="primary full-field auth-submit" type="submit" disabled={busy}>
         {busy ? "Working…" : mode === "signin" ? "Sign in" : "Create account"}
       </button>
-      {message && <p className="full-field">{message}</p>}
+      {message ? <p className="full-field auth-message">{message}</p> : null}
     </form>
   );
 }

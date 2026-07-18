@@ -783,6 +783,7 @@ function AppShell() {
           />
           <Route path="/u/:handle" element={<ProfileRoute creatorByHandle={creatorByHandle} projects={projects} followedCreators={followedCreators} toggleFollow={toggleFollow} setView={setView} />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/auth/signup" element={<AuthPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
@@ -899,13 +900,16 @@ function ProfileRoute({
 
 function AuthPage() {
   const { isDemoMode, handle, user, signOut, loading, refreshUser } = useAuth();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const navigate = useNavigate();
+  const location = useLocation();
+  const mode: "signin" | "signup" = location.pathname.includes("/signup") ? "signup" : "signin";
 
   if (loading) {
     return (
-      <section className="page">
-        <SectionHeader eyebrow="Account" title="Loading your session…" />
+      <section className="page auth-page">
+        <div className="auth-card">
+          <SectionHeader eyebrow="Account" title="Loading your session…" />
+        </div>
       </section>
     );
   }
@@ -916,34 +920,57 @@ function AuthPage() {
 
   if (isDemoMode) {
     return (
-      <section className="page">
-        <SectionHeader eyebrow="Account" title={`Demo mode active as @${handle}`} />
-        <p>Supabase is not configured in this build, so you are using a local demo session.</p>
-        <AuthForm mode="signin" />
+      <section className="page auth-page">
+        <div className="auth-card">
+          <SectionHeader eyebrow="Account" title={`Demo mode active as @${handle}`} />
+          <p className="auth-lead">Supabase is not configured in this build, so you are using a local demo session.</p>
+          <AuthForm mode="signin" />
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="page">
-      <SectionHeader eyebrow="Account" title="Sign in to Needlepoint" />
-      <p>Create an account or sign in to keep journals, likes, and follows across devices.</p>
-      <div className="card-actions wrap" style={{ marginBottom: 12 }}>
-        <button className={mode === "signin" ? "selected" : ""} type="button" onClick={() => setMode("signin")}>
-          Sign in
-        </button>
-        <button className={mode === "signup" ? "selected" : ""} type="button" onClick={() => setMode("signup")}>
-          Create account
-        </button>
+    <section className="page auth-page">
+      <div className="auth-card">
+        <p className="auth-eyebrow">Account</p>
+        <h1 className="auth-title">{mode === "signin" ? "Welcome back" : "Create your account"}</h1>
+        <p className="auth-lead">
+          {mode === "signin"
+            ? "Sign in to keep journals, likes, and follows across devices."
+            : "Join Needlepoint to share projects, follow stitchers, and save inspiration."}
+        </p>
+
+        <AuthForm mode={mode} key={mode} />
+
+        <div className="auth-switch">
+          {mode === "signin" ? (
+            <p>
+              New to Needlepoint?{" "}
+              <button className="text-button" type="button" onClick={() => navigate("/auth/signup")}>
+                Create an account
+              </button>
+            </p>
+          ) : (
+            <p>
+              Already have an account?{" "}
+              <button className="text-button" type="button" onClick={() => navigate("/auth")}>
+                Sign in
+              </button>
+            </p>
+          )}
+        </div>
+
+        {mode === "signup" ? (
+          <p className="auth-footnote">
+            After creating an account, finish{" "}
+            <button className="text-button" type="button" onClick={() => navigate("/onboarding")}>
+              Onboarding
+            </button>{" "}
+            to set skill level and interests.
+          </p>
+        ) : null}
       </div>
-      <AuthForm mode={mode} />
-      <p style={{ marginTop: 16 }}>
-        New here? After signup, visit{" "}
-        <button className="text-button" type="button" onClick={() => navigate("/onboarding")}>
-          Onboarding
-        </button>{" "}
-        to set skill and interests.
-      </p>
     </section>
   );
 }
