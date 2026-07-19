@@ -32,9 +32,12 @@ export function HomeView(props: {
   shareProject: (id: string) => void;
   dismissRecommendation?: (projectId: string) => void;
   hasInterests?: boolean;
+  /** Hide create CTAs for signed-out guests. */
+  canPost?: boolean;
 }) {
   void props.savedCount;
   void props.openDiscover;
+  const canPost = props.canPost !== false;
   const feed = props.projects;
   const followedFeedCount = feed.filter((project) => props.followedCreators.includes(project.creatorId)).length;
   const [userPoint, setUserPoint] = useState<GeoPoint | null>(null);
@@ -84,9 +87,15 @@ export function HomeView(props: {
           </p>
         </div>
         <div className="feed-top-actions">
-          <button className="primary" type="button" onClick={() => props.setView({ name: "journal" })}>
-            <Plus size={18} /> New post
-          </button>
+          {canPost ? (
+            <button className="primary" type="button" onClick={() => props.setView({ name: "journal" })}>
+              <Plus size={18} /> New post
+            </button>
+          ) : (
+            <button className="secondary" type="button" onClick={() => props.setView({ name: "auth" })}>
+              Sign in to post
+            </button>
+          )}
         </div>
       </header>
 
@@ -168,9 +177,9 @@ export function HomeView(props: {
             variant="panel"
             minHeight={280}
             title="No posts yet"
-            body="Share a project photo, note, or short video."
-            action="Create post"
-            onAction={() => props.setView({ name: "journal" })}
+            body={canPost ? "Share a project photo, note, or short video." : "Sign in to share a project photo, note, or short video."}
+            action={canPost ? "Create post" : "Sign in"}
+            onAction={() => props.setView({ name: canPost ? "journal" : "auth" })}
           />
         )}
       </div>

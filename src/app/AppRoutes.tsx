@@ -57,6 +57,8 @@ export type AppRoutesProps = {
   openDiscover: (patch?: Partial<{ category: string; stitch: string; color: string; status: string; query: string }>) => void;
   dismissRecommendation: (surface: "discover" | "studio", projectId: string) => void;
   hasInterests: boolean;
+  /** Signed-in (or demo) may create posts; guests should not see create CTAs. */
+  canPost: boolean;
   categories: string[];
   stitches: string[];
   colors: string[];
@@ -155,6 +157,7 @@ export function AppRoutes(props: AppRoutesProps) {
             openDiscover={props.openDiscover}
             dismissRecommendation={(projectId) => props.dismissRecommendation("studio", projectId)}
             hasInterests={props.hasInterests}
+            canPost={props.canPost}
           />
         }
       />

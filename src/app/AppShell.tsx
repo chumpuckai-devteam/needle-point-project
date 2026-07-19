@@ -1096,6 +1096,7 @@ export function AppShell() {
     <AppLayout
       savedCount={savedProjects.length}
       setView={setView}
+      canPost={Boolean(user) || isDemoMode || !isSupabaseConfigured}
       banner={remoteError}
       bannerInfo={noticeIsShareInfo}
     >
@@ -1121,6 +1122,7 @@ export function AppShell() {
         openDiscover={openDiscover}
         dismissRecommendation={dismissRecommendation}
         hasInterests={hasInterests}
+        canPost={Boolean(user) || isDemoMode || !isSupabaseConfigured}
         categories={categories}
         stitches={stitches}
         colors={colors}
