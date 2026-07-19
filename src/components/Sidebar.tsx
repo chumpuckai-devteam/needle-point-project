@@ -1,9 +1,9 @@
-import { Bookmark, CalendarDays, Frame, Plus, Search, Sparkles, Store as StoreIcon, UserRound } from "lucide-react";
+import { Bookmark, CalendarDays, Home, Plus, Search, Sparkles, Store as StoreIcon, UserRound } from "lucide-react";
 import type { View } from "../appModel";
 
 export function Sidebar({ view, setView, savedCount }: { view: string; setView: (view: View) => void; savedCount: number }) {
   const items = [
-    { id: "home", label: "Studio", icon: Frame, action: () => setView({ name: "home" }) },
+    { id: "home", label: "Studio", icon: Home, action: () => setView({ name: "home" }) },
     { id: "discover", label: "Discover", icon: Search, action: () => setView({ name: "discover" }) },
     { id: "stores", label: "Shops", icon: StoreIcon, action: () => setView({ name: "stores" }) },
     { id: "journal", label: "New post", icon: Plus, action: () => setView({ name: "journal" }) },
