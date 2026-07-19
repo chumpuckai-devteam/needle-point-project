@@ -1,24 +1,21 @@
 # Needlepoint Project
 
-Needlepoint Project is a Vite + React + TypeScript MVP for a craft-specific social app: Studio feed, project journals, discovery, collections, stitch-alongs, and shop connections for needlepoint.
+Needlepoint Project is a Vite + React + TypeScript private-beta app for needlepoint makers: **Studio** feed, project journals, Discover, collections, stitch-alongs, and **shop connections** (catalog link-outs, follow, owner tools).
 
-Start with [PRD.md](./PRD.md) for product scope and MVP acceptance criteria. Marketplace checkout, carts, direct messages, and native mobile apps are intentionally out of scope.
+Start with [PRD.md](./PRD.md) for product scope. **Out of scope:** marketplace checkout, carts, DMs, native mobile apps, Algolia.
+
+**Prod:** https://needle-point-project.vercel.app
 
 ## Run locally
 
-Requirements:
-
-- Node.js 20+
-- npm
-
-Install dependencies and start Vite:
+Requirements: Node.js 20+, npm.
 
 ```bash
 npm install
 npm run dev
 ```
 
-By default the app runs in offline demo mode. No Supabase env vars are required for local review; the demo session uses seeded creators/projects/stores and persists changes in `localStorage`.
+By default the app runs in **offline demo mode**. No Supabase env vars required. Seeded creators/projects/shops persist in `localStorage`. The demo session is the Canopy-owning stitcher (`c2` / @threadandtonic) so owner CRUD is immediately available.
 
 Optional live Supabase mode:
 
@@ -37,99 +34,120 @@ npm run test:smoke
 npm run preview
 ```
 
-`npm run test:smoke` covers the core router path plus auth, Available at / Shop the look, store detail/follow, and owner product CRUD smoke tests.
+`npm run test:smoke` runs Playwright critical paths: MVP routes, V3 matrix, auth demo, Available at / Shop the look, shop follow, owner product CRUD, guest/claim surface, outbound click contract, and critical-flows.
+
+## Architecture
+
+```
+src/
+  App.tsx                 # providers + AppShell only
+  app/
+    AppShell.tsx          # state, auth gates, online boot
+    AppRoutes.tsx         # route table
+    AppLayout.tsx         # chrome + sidebar
+    navigation.ts         # path ↔ view
+    demoData.ts           # DEMO_STORES, storage keys
+  pages/                  # route bodies (Home, Discover, Store, Project, …)
+  components/             # Sidebar, feed, UI primitives
+  api/                    # Supabase clients (stores, projects, clickEvents, …)
+supabase/migrations/      # schema, RLS, RPCs, storage
+```
 
 ## App routes
 
-- `/` — Studio feed
-- `/discover` — project search and craft filters
-- `/journal` — create project entries and review your journal
-- `/projects/:id` — project detail, owner edits, progress updates, Available at tags, Shop the look
-- `/u/:handle` — creator profile
-- `/collections` — saved-project collections
-- `/stitch-along` and `/stitch-along/:id` — public stitch-along list/detail, join, submit public projects
-- `/stores` — shop discovery by ZIP, city, city browse, or browser location
-- `/stores/:handle` — public shop profile, catalog, follow/claim/owner tools
-- `/auth`, `/auth/signup`, `/onboarding` — account and onboarding surfaces
+| Path | Surface |
+|------|---------|
+| `/` | Studio feed (SAL rail, followed shops, posts) |
+| `/discover` | Project search + craft filters |
+| `/journal` | Create project (auth-gated online) |
+| `/projects/:id` | Detail, progress, Available at, Shop the look |
+| `/u/:handle` | Creator profile |
+| `/collections` | Saved boards |
+| `/stitch-along`, `/stitch-along/:id` | Multi-SAL list/detail |
+| `/stores` | ZIP / city / near-you discovery |
+| `/stores/:handle` | Shop profile, catalog, follow/claim/owner |
+| `/auth`, `/auth/signup`, `/onboarding` | Account + interests |
 
-## UI state primitives
+### Mobile bottom nav (max 5)
 
-Shared loading skeletons, empty states, and error states live in `src/components/ui.tsx` (Moss & Flax tokens in `src/styles.css`). Use them for feed, shops, journal, project, and auth so loading → content swaps keep stable height.
+- **Signed-in / demo:** Studio · Discover · Shops · New post · Account  
+- **Online guest:** Studio · Discover · Shops · Saved · Account (no New post, no Onboarding)
 
-| Export | Role |
-|--------|------|
-| `Skeleton`, `SkeletonText` | Shimmer bones |
-| `FeedListSkeleton`, `FeedPostSkeleton` | Studio / list loading |
-| `CardGridSkeleton`, `CardSkeleton` | Grid / tile loading |
-| `DetailSkeleton`, `PageLoading` | Detail + auth hydrate |
-| `EmptyState`, `ErrorState` | Title / body / CTA (`action`+`onAction` or `cta` slot); variants `panel` · `inline` · `compact` · `detail` |
+## Guest vs signed-in
 
-Usage guide + list/detail examples: [docs/ui-state-primitives.md](./docs/ui-state-primitives.md). Copy-paste patterns also in `src/components/uiState.examples.tsx` (not routed).
+| Action | Guest (online) | Signed-in / demo |
+|--------|----------------|------------------|
+| Browse Studio, Discover, shops, projects, SAL | ✅ | ✅ |
+| Like, save, comment, follow, dismiss, join, claim | → `/auth` | ✅ |
+| Create post / onboarding | → `/auth` | ✅ |
+| Interest “Because you picked…” hints | Hidden | When interests set |
+| Shop claim | Request CTA → auth | Moderated request (demo: instant own) |
 
 ## Current product behavior
 
 ### Studio and Discover
 
-- Studio is the home feed. It shows active stitch-alongs, a followed-shops rail, nearby shop chips, and public project posts.
-- Discover searches public projects by title, notes, creator, materials, stitches, colors, category, and pattern source.
-- Discover filters support category, difficulty, stitch, color, and status.
-- Private projects are hidden from Studio, Discover, shop tags, profiles for other viewers, and stitch-along galleries.
+- Studio shows active stitch-alongs, followed-shops rail, nearby shop chips, and public posts.
+- Discover searches public projects and supports category, difficulty, stitch, color, status filters.
+- Private projects never appear on public surfaces.
+- Online boot soft-fails optional RPCs so one missing table cannot blank Studio; feed shows a skeleton until the first hydrate settles.
 
-### Projects and journal CRUD
+### Projects and journal
 
-- Create a project from `/journal` with title, photo or image URL, optional video URL, status, difficulty, category, canvas type, materials, stitches, colors, pattern source/link, visibility, notes, and `Available at` shop tags.
-- Owners can edit project details from `/projects/:id`, including visibility, progress, media, and `Available at` shops.
-- Owners can add progress updates with milestone text, notes, and optional images. Other users can comment on the latest update.
-- Project create/update persists to Supabase when env vars are configured and to `localStorage` in demo mode.
+- Create from `/journal` with media, craft metadata, visibility, notes, and **Available at** shop tags.
+- Owners edit on `/projects/:id` and add progress updates; others can comment when signed in.
+- Images upload to `project-images` in live mode.
 
-### Shops and stores
+### Shops
 
-- `/stores` is the shop discovery surface. It supports ZIP search, city search, city browse cards, and optional browser geolocation.
-- Local/hybrid shops are ranked within about 60 miles by default, with expand-to-100/150-mile coaching and an online-shops fallback.
-- Shop cards link to `/stores/:handle`; the app links out to each shop website for buying. Needlepoint does not process checkout.
-- Store detail pages show public profile fields, catalog cards, follower count, tagged projects, and website links.
-- Users can follow shops. In live Supabase mode, guests are sent to auth before following; demo mode toggles locally.
-- Store profile media uses the `store-profile-images` bucket in live mode; product photos use `store-product-images`.
+- Discovery: ZIP, city, city browse, optional geolocation (~60 mi default, expand coaching).
+- Public profile: description, specialties, follower count, catalog, tagged projects, website.
+- **Follow store** (auth online). **Shop the look** on projects tagged with stores.
+- Product **Shop** links and store **Visit website** record no-PII outbound click analytics (host only).
+- Profile media: `store-profile-images`. Product photos: `store-product-images`.
 
-### Owner and catalog CRUD
+### Owner catalog & profile
 
-- Demo mode treats the seeded Canopy Canvas shop as owned by the demo user, so owner tools are immediately visible at `/stores/canopycanvas`.
-- Owners can edit shop profile fields: name, description, website, location/city, specialties, avatar, and cover image.
-- Owners can create, edit, and delete catalog products with name, description, price label, category, external shop link, and optional image.
-- Live Supabase shop ownership is hardened: public clients cannot directly write `stores.owner_user_id`; unowned shop claims go through `request_store_claim(...)` and require approval before owner product writes are allowed.
+- Demo: Canopy Canvas is owned — **Edit shop profile** + **Add product** at `/stores/canopycanvas`.
+- Owners edit name, description, website, location/city, specialties, avatar, cover.
+- Product CRUD: name, description, price label, category, external URL, optional photo (Storage online).
+- **Claims (live):** unowned shops use **Request to claim shop** → `request_store_claim`. Ownership is assigned only via approve/establish (service role / owner). Demo still instant-owns for dogfood.
+- Product writes require `owner_user_id = auth.uid()`.
 
-### Seed/demo content
+### Seed / demo content
 
-Offline demo seed data is defined in `src/data.ts` and the `DEMO_STORES` constant in `src/App.tsx`.
-Live Supabase seed data is loaded by `scripts/seed.mjs`:
+Offline seed:
 
-- 3 creator profiles (`mara_stitches`, `threadandtonic`, `canopycanvas`)
-- 4 public projects plus 1 private demo draft
-- 4 shops: Canopy Canvas, Thread & Tonic, Bookshop Windows LNS, and Needle Nest Studio
-- catalog products across canvases, threads, finishing, classes, online-only, local, and hybrid shops
-- Project↔shop tags used by `Available at`, store project grids, and `Shop the look`
-- Multi stitch-alongs, joins/submissions, collections/saves, creator follows, store follows, interests, likes, and one private project for RLS/empty-state checks
+- Creators + projects: `src/data.ts` (`initialProjects`, including private **Midnight Sampler** for access checks)
+- Shops + catalog: `src/app/demoData.ts` (`DEMO_STORES` — Canopy owned, Thread & Tonic + Bookshop unowned)
 
-For live Supabase seeding:
+Live seed (`scripts/seed.mjs`):
 
 ```bash
-cp .env.example .env.local
-# Fill VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, and SUPABASE_SERVICE_ROLE_KEY.
-npm run seed
+# Needs SUPABASE_SERVICE_ROLE_KEY in .env.local
+npm run seed          # idempotent seed rows
+npm run seed:reset    # recreate seed.*@example.test users only
 ```
 
-`npm run seed` is idempotent for the seed rows it manages. `npm run seed:reset` deletes and recreates only the seed auth users (`seed.*@example.test`) before reseeding; it does not drop schema or remove real users.
+Includes multiple public projects, shops with catalog, project↔store tags, multi-SAL, follows, and private RLS fixtures so Discover/Studio are never empty cold-start after seed.
 
 ## Supabase live mode
 
-Greenfield setup notes live in [docs/supabase-setup.md](./docs/supabase-setup.md). Schema, RLS, RPCs, and storage buckets are under `supabase/migrations/`.
+Setup: [docs/supabase-setup.md](./docs/supabase-setup.md). Migrations under `supabase/migrations/`.
 
-When `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are set:
+When `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` are set:
 
-- Email/password sign-up and sign-in are enabled.
-- Profiles are auto-created by the database trigger.
-- Project create/list/update, progress updates, reactions, comments, saves, collections, stitch-alongs, stores, store follows, catalog products, and project↔store tags use Supabase.
-- Project images use the `project-images` bucket.
-- Store profile and product images use the store-specific buckets above.
+- Email/password auth; profiles via trigger
+- Projects, social, SAL, stores, follows, products, tags → Supabase
+- Storage: `project-images`, `store-profile-images`, `store-product-images`
+- Analytics: write-only `outbound_click_events` + `outbound_click_event_counts` RPC
 
-Without those vars the app stays in demo mode with local seed data and browser storage.
+Without those vars → demo mode (local seed + browser storage).
+
+## UI state primitives
+
+Shared skeletons / empty / error in `src/components/ui.tsx` (Moss & Flax in `src/styles.css`). Guide: [docs/ui-state-primitives.md](./docs/ui-state-primitives.md).
+
+## Kanban / shipping
+
+Board: `needlepoint` (Hermes). Prefer Program → Epic → Story. `kanban.auto_decompose` stays off — Tech Lead promotes slices only.

@@ -296,9 +296,11 @@ test.describe("Stitch-along + profile", () => {
 test.describe("Routing empty / unknown paths", () => {
   test("missing project id shows empty chrome without leaking title", async ({ page }) => {
     await page.goto("/projects/does-not-exist-xyz", nav);
-    await expect(page.getByText(/Project not found/i)).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText(/may have been moved|not available/i)).toBeVisible();
-    await page.getByRole("button", { name: /Back to discover/i }).click();
+    await expect(page.getByRole("strong").filter({ hasText: /Project not (found|available)/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.locator(".state-block-body")).toContainText(/private|moved|no longer shared|not available/i);
+    await page.getByRole("button", { name: /Back to [Dd]iscover/i }).click();
     await expect(page).toHaveURL(/\/discover/);
   });
 
