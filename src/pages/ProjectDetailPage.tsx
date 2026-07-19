@@ -29,6 +29,7 @@ export function ProjectDetail(props: {
   updateNote: string;
   updateMilestone: string;
   commentText: string;
+  canComment?: boolean;
   updateBusy: boolean;
   updateError: string;
   updateImagePreview: string;
@@ -186,12 +187,21 @@ export function ProjectDetail(props: {
                 </div>
               </article>
             ))}
-            <div className="comment-box">
-              <input value={props.commentText} onChange={(event) => props.setCommentText(event.target.value)} placeholder="Comment on the latest update" />
-              <button className="secondary" type="button" onClick={() => props.addComment(props.project.id)}>
-                Comment
-              </button>
-            </div>
+            {props.canComment === false ? (
+              <div className="comment-box comment-box-guest">
+                <p className="field-help">Sign in to leave a comment on this update.</p>
+                <button className="secondary" type="button" onClick={() => props.setView({ name: "auth" })}>
+                  Sign in to comment
+                </button>
+              </div>
+            ) : (
+              <div className="comment-box">
+                <input value={props.commentText} onChange={(event) => props.setCommentText(event.target.value)} placeholder="Comment on the latest update" />
+                <button className="secondary" type="button" onClick={() => props.addComment(props.project.id)}>
+                  Comment
+                </button>
+              </div>
+            )}
           </div>
         </div>
         <aside className="panel sticky">

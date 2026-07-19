@@ -66,10 +66,22 @@ export function AppShell() {
   const [followedStores, setFollowedStores] = useState<string[]>(() => loadFromStorage(STORAGE_KEYS.storeFollows, ["store-local-1"]));
   const [dismissedDiscover, setDismissedDiscover] = useState<string[]>(() => loadFromStorage(STORAGE_KEYS.dismissDiscover, [] as string[]));
   const [dismissedStudio, setDismissedStudio] = useState<string[]>(() => loadFromStorage(STORAGE_KEYS.dismissStudio, [] as string[]));
-  const [interestProfile, setInterestProfile] = useState(() => ({
-    interests: loadFromStorage(STORAGE_KEYS.interests, ["ornaments", "florals"] as string[]),
-    skillLevel: loadFromStorage(STORAGE_KEYS.skill, "confident beginner"),
-  }));
+  const [interestProfile, setInterestProfile] = useState(() => {
+    // Demo keeps seed interests for dogfood. Online guests start unpersonalized
+    // (no "Because you picked ornaments" from stale LS defaults).
+    if (!isSupabaseConfigured) {
+      return {
+        interests: loadFromStorage(STORAGE_KEYS.interests, ["ornaments", "florals"] as string[]),
+        skillLevel: loadFromStorage(STORAGE_KEYS.skill, "confident beginner"),
+      };
+    }
+    return {
+      interests: [] as string[],
+      skillLevel: "confident beginner",
+    };
+  });
+  /** False until first online boot settles — avoids empty-state flash. */
+  const [remoteReady, setRemoteReady] = useState(() => !isSupabaseConfigured);
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState({ category: "all", difficulty: "all", stitch: "all", color: "all", status: "all" });
   const [draft, setDraft] = useState<DraftProject>(blankDraft);
@@ -117,14 +129,32 @@ export function AppShell() {
   useEffect(() => saveToStorage(STORAGE_KEYS.dismissStudio, dismissedStudio), [dismissedStudio]);
 
   // Refresh onboarding prefs when returning from /onboarding (same tab localStorage).
+  // Online guests never personalize from localStorage; signed-in/demo may.
   useEffect(() => {
+    if (isSupabaseConfigured && !isDemoMode && !user) {
+      setInterestProfile({ interests: [], skillLevel: "confident beginner" });
+      return;
+    }
     if (location.pathname !== "/" && location.pathname !== "/discover") return;
     setInterestProfile({
-      interests: loadFromStorage(STORAGE_KEYS.interests, interestProfile.interests),
+      interests: loadFromStorage(STORAGE_KEYS.interests, isSupabaseConfigured ? ([] as string[]) : interestProfile.interests),
       skillLevel: loadFromStorage(STORAGE_KEYS.skill, interestProfile.skillLevel),
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-read storage on route change
-  }, [location.pathname]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-read storage on route/auth change
+  }, [location.pathname, user, isDemoMode]);
+
+  // Load signed-in interests once auth resolves online.
+  useEffect(() => {
+    if (!isSupabaseConfigured || isDemoMode) return;
+    if (!user) {
+      setInterestProfile({ interests: [], skillLevel: "confident beginner" });
+      return;
+    }
+    setInterestProfile({
+      interests: loadFromStorage(STORAGE_KEYS.interests, [] as string[]),
+      skillLevel: loadFromStorage(STORAGE_KEYS.skill, "confident beginner"),
+    });
+  }, [user, isDemoMode]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -204,6 +234,8 @@ export function AppShell() {
         if (!cancelled) {
           setRemoteError(error instanceof Error ? error.message : "Failed to load remote data");
         }
+      } finally {
+        if (!cancelled) setRemoteReady(true);
       }
     })();
     return () => {
@@ -269,6 +301,11 @@ export function AppShell() {
   const savedProjects = accessibleProjects.filter((project) => project.isSaved);
   const myProjects = accessibleProjects.filter((project) => project.creatorId === meCreatorId);
   const hasInterests = interestProfile.interests.length > 0;
+  /** Personalize feed ranking / match hints only for demo or signed-in users. */
+  const canPersonalize = !isSupabaseConfigured || isDemoMode || Boolean(user);
+  const feedInterestProfile = canPersonalize
+    ? interestProfile
+    : { interests: [] as string[], skillLevel: interestProfile.skillLevel };
 
   const categories = unique(publicProjects.map((project) => project.category));
   const stitches = unique(publicProjects.flatMap((project) => project.stitchTypes));
@@ -276,13 +313,18 @@ export function AppShell() {
 
   // Studio: followed first, then interest-ranked recommendations (client rank for demo + dismiss layer).
   const studioFeedProjects = useMemo(() => {
-    const ranked = rankProjectsByInterest(publicProjects, interestProfile, {
+    const ranked = rankProjectsByInterest(publicProjects, feedInterestProfile, {
       dismissedIds: dismissedStudio,
       followedCreatorIds: followedCreators,
       surface: "studio",
     });
-    return composeStudioFeed(ranked, followedCreators, dismissedStudio);
-  }, [dismissedStudio, followedCreators, interestProfile, publicProjects]);
+    const feed = composeStudioFeed(ranked, followedCreators, dismissedStudio);
+    if (canPersonalize) return feed;
+    // Guests: strip interest match metadata even if server sent it.
+    return feed.map((project) =>
+      project.matchedInterests?.length ? { ...project, matchedInterests: undefined } : project,
+    );
+  }, [canPersonalize, dismissedStudio, feedInterestProfile, followedCreators, publicProjects]);
 
   // Discover: hard filters first, then interest order among remaining public projects.
   const filteredProjects = useMemo(() => {
@@ -313,11 +355,15 @@ export function AppShell() {
         (filters.status === "all" || project.status === filters.status)
       );
     });
-    return rankProjectsByInterest(filtered, interestProfile, {
+    const ranked = rankProjectsByInterest(filtered, feedInterestProfile, {
       dismissedIds: dismissedDiscover,
       surface: "discover",
     });
-  }, [creatorById, dismissedDiscover, filters, interestProfile, publicProjects, query]);
+    if (canPersonalize) return ranked;
+    return ranked.map((project) =>
+      project.matchedInterests?.length ? { ...project, matchedInterests: undefined } : project,
+    );
+  }, [canPersonalize, creatorById, dismissedDiscover, feedInterestProfile, filters, publicProjects, query]);
 
   function setView(view: View) {
     // Guests may browse freely; posting/account-write destinations require sign-in online.
@@ -1153,6 +1199,7 @@ export function AppShell() {
         dismissRecommendation={dismissRecommendation}
         hasInterests={hasInterests}
         canPost={Boolean(user) || isDemoMode || !isSupabaseConfigured}
+        feedLoading={!remoteReady}
         categories={categories}
         stitches={stitches}
         colors={colors}
@@ -1196,6 +1243,7 @@ export function AppShell() {
         updateNote={updateNote}
         updateMilestone={updateMilestone}
         commentText={commentText}
+        canComment={Boolean(user) || isDemoMode || !isSupabaseConfigured}
         updateBusy={updateBusy}
         updateError={updateError}
         updateImagePreview={updateImagePreview}

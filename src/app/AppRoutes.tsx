@@ -59,6 +59,8 @@ export type AppRoutesProps = {
   hasInterests: boolean;
   /** Signed-in (or demo) may create posts; guests should not see create CTAs. */
   canPost: boolean;
+  /** Studio boot still loading remote projects. */
+  feedLoading: boolean;
   categories: string[];
   stitches: string[];
   colors: string[];
@@ -111,6 +113,7 @@ export type AppRoutesProps = {
   updateNote: string;
   updateMilestone: string;
   commentText: string;
+  canComment: boolean;
   updateBusy: boolean;
   updateError: string;
   updateImagePreview: string;
@@ -160,6 +163,7 @@ export function AppRoutes(props: AppRoutesProps) {
             dismissRecommendation={(projectId) => props.dismissRecommendation("studio", projectId)}
             hasInterests={props.hasInterests}
             canPost={props.canPost}
+            feedLoading={props.feedLoading}
           />
         }
       />
@@ -289,6 +293,7 @@ export function AppRoutes(props: AppRoutesProps) {
             updateNote={props.updateNote}
             updateMilestone={props.updateMilestone}
             commentText={props.commentText}
+            canComment={props.canComment}
             updateBusy={props.updateBusy}
             updateError={props.updateError}
             updateImagePreview={props.updateImagePreview}

@@ -34,10 +34,13 @@ export function HomeView(props: {
   hasInterests?: boolean;
   /** Hide create CTAs for signed-out guests. */
   canPost?: boolean;
+  /** True while remote Studio boot is still in flight. */
+  feedLoading?: boolean;
 }) {
   void props.savedCount;
   void props.openDiscover;
   const canPost = props.canPost !== false;
+  const feedLoading = Boolean(props.feedLoading);
   const feed = props.projects;
   const followedFeedCount = feed.filter((project) => props.followedCreators.includes(project.creatorId)).length;
   const [userPoint, setUserPoint] = useState<GeoPoint | null>(null);
@@ -159,7 +162,30 @@ export function HomeView(props: {
       )}
 
       <div className="feed-timeline" aria-label="Studio feed">
-        {feed.length ? (
+        {feedLoading ? (
+          <div className="feed-list-skeleton" aria-busy="true" aria-label="Loading studio feed">
+            {[0, 1].map((i) => (
+              <article key={i} className="feed-post feed-post-skeleton" aria-hidden="true">
+                <header className="feed-post-header">
+                  <span className="feed-avatar feed-skel-avatar skeleton-bone skeleton-bone--circle" />
+                  <div className="feed-post-heading">
+                    <div className="feed-skel-meta">
+                      <span className="skeleton-text-line" style={{ width: "40%" }} />
+                      <span className="skeleton-text-line" style={{ width: "24%" }} />
+                    </div>
+                  </div>
+                </header>
+                <div className="feed-skel-media skeleton-bone" />
+                <div className="feed-skel-actions">
+                  <span className="skeleton-text-line" style={{ width: "48px" }} />
+                  <span className="skeleton-text-line" style={{ width: "48px" }} />
+                  <span className="skeleton-text-line" style={{ width: "48px" }} />
+                  <span className="skeleton-text-line" style={{ width: "48px" }} />
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : feed.length ? (
           feed.map((project) => (
             <FeedPost
               key={project.id}

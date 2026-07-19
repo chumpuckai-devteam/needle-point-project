@@ -11,6 +11,7 @@ export function ProjectRoute(props: {
   updateNote: string;
   updateMilestone: string;
   commentText: string;
+  canComment?: boolean;
   updateBusy: boolean;
   updateError: string;
   updateImagePreview: string;
@@ -61,6 +62,7 @@ export function ProjectRoute(props: {
       updateNote={props.updateNote}
       updateMilestone={props.updateMilestone}
       commentText={props.commentText}
+      canComment={props.canComment !== false}
       updateBusy={props.updateBusy}
       updateError={props.updateError}
       updateImagePreview={props.updateImagePreview}

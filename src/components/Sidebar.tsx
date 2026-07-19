@@ -10,12 +10,12 @@ export function Sidebar({
   view: string;
   setView: (view: View) => void;
   savedCount: number;
-  /** When false (signed-out online guest), hide New post from nav. */
+  /** When false (signed-out online guest), hide New post + Onboarding from nav. */
   canPost?: boolean;
 }) {
   // Order matters on mobile: only the first 5 items appear in the bottom bar
   // (see styles.css `.sidebar nav button:nth-child(n + 6)`).
-  // Guests: Studio · Discover · Shops · Saved · Account (no create).
+  // Guests: Studio · Discover · Shops · Saved · Account (no create / onboarding).
   // Signed-in: Studio · Discover · Shops · New post · Account.
   const items = [
     { id: "home", label: "Studio", icon: Home, action: () => setView({ name: "home" }) },
@@ -29,7 +29,9 @@ export function Sidebar({
       ? [{ id: "collections", label: `Saved (${savedCount})`, icon: Bookmark, action: () => setView({ name: "collections" }) }]
       : []),
     { id: "stitchAlong", label: "Stitch-along", icon: CalendarDays, action: () => setView({ name: "stitchAlong" }) },
-    { id: "onboarding", label: "Onboarding", icon: Sparkles, action: () => setView({ name: "onboarding" }) },
+    ...(canPost
+      ? [{ id: "onboarding", label: "Onboarding", icon: Sparkles, action: () => setView({ name: "onboarding" }) }]
+      : []),
   ];
 
   return (
