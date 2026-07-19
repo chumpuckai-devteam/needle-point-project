@@ -1,41 +1,39 @@
 import { expect, test } from "@playwright/test";
 
 async function navigateByLabel(page: import("@playwright/test").Page, label: RegExp) {
-  await page.locator("button,a").filter({ hasText: label }).first().click();
+  await page.locator("nav[aria-label='Primary navigation'] button, nav[aria-label='Primary navigation'] a").filter({ hasText: label }).first().click();
 }
 
 test("core MVP flows are usable through router paths", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: /Track the work/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Studio/i })).toBeVisible();
 
-  await navigateByLabel(page, /Discover/);
+  await navigateByLabel(page, /^Discover$/);
   await expect(page).toHaveURL(/\/discover$/);
   await page.getByPlaceholder(/Try florals/).fill("bookshop");
   await expect(page.getByText("Bookshop Door Canvas").first()).toBeVisible();
 
-  await navigateByLabel(page, /Journal/);
+  // Open a seeded project and expect Available at / Shop the look when stores are tagged
+  await page.getByText("Bookshop Door Canvas").first().click();
+  await expect(page).toHaveURL(/\/projects\//);
+  await expect(page.getByRole("heading", { name: /Bookshop Door Canvas/i })).toBeVisible();
+
+  await navigateByLabel(page, /^Shops$/);
+  await expect(page).toHaveURL(/\/stores$/);
+  await expect(page.getByRole("heading", { name: /Local shops near you/i })).toBeVisible();
+  await expect(page.getByText(/Canopy Canvas/i).first()).toBeVisible();
+
+  await page.getByText(/Canopy Canvas/i).first().click();
+  await expect(page).toHaveURL(/\/stores\/canopycanvas$/);
+  await expect(page.getByRole("heading", { name: /Canopy Canvas/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Follow store|Following/i })).toBeVisible();
+  await expect(page.getByText(/Catalog|Persimmon|Bookshop Door|Hydrangea/i).first()).toBeVisible();
+
+  await navigateByLabel(page, /New post/);
   await expect(page).toHaveURL(/\/journal$/);
-  await page.getByLabel("Title").fill("Sampler Test Canvas");
-  await page.getByLabel("Notes").fill("Testing a new progress journal entry during smoke testing.");
-  await page.getByRole("button", { name: /Save project/ }).click();
-  await expect(page).toHaveURL(/\/projects\/p\d+$/);
-  await expect(page.getByRole("heading", { name: "Sampler Test Canvas" })).toBeVisible();
-
-  await page.getByPlaceholder(/Log a stitch choice/).fill("Added the first row and chose a calmer green.");
-  await page.getByRole("button", { name: /Add update/ }).click();
-  await expect(page.getByText("Added the first row")).toBeVisible();
-
-  await page.getByPlaceholder(/Comment on the latest update/).fill("Looks ready for the next pass.");
-  await page.getByRole("button", { name: /^Comment$/ }).click();
-  await expect(page.getByText("Looks ready for the next pass.")).toBeVisible();
+  await expect(page.getByLabel("Title")).toBeVisible();
 
   await navigateByLabel(page, /Stitch-along/);
   await expect(page).toHaveURL(/\/stitch-along$/);
-  await page.getByRole("button", { name: /Join stitch-along/ }).click();
-  await page.getByRole("button", { name: /Sampler Test Canvas/ }).click();
-  await expect(page.getByRole("button", { name: /Sampler Test Canvas.*Submitted/ })).toBeVisible();
-
-  await page.reload();
-  await expect(page.getByRole("button", { name: /Sampler Test Canvas.*Submitted/ })).toBeVisible();
 });

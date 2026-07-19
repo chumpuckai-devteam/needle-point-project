@@ -59,26 +59,26 @@ npm run preview
 
 ## Current MVP Slice
 
-This repo now contains a Vite + React + TypeScript web app with seeded local content. It includes:
+This repo contains a Vite + React + TypeScript web app (demo localStorage **or** live Supabase). It includes:
 
-- Home/discovery feed with creator updates and a featured stitch-along.
-- React Router routes for `/`, `/discover`, `/journal`, `/projects/:id`, `/u/:handle`, `/collections`, `/stitch-along`, `/auth`, and `/onboarding`.
+- **Craft Studio** home feed (photo-first, unique craft UI — Moss & Flax palette).
+- React Router routes for `/`, `/discover`, `/journal`, `/projects/:id`, `/u/:handle`, `/collections`, `/stitch-along`, `/stores`, `/stores/:handle`, `/auth`, `/auth/signup`, and `/onboarding`.
+- Separate sign-in and create-account screens (footer switch between them).
 - Search and craft-specific filters for category, difficulty, stitch, color, and status.
-- Project detail pages with metadata, progress history, likes, saves, comments, follows, and local progress updates.
-- Project journal creation backed by local React state with offline persistence.
-- Creator/stitcher profile pages with external links.
-- Saved project collections.
-- A join-and-submit stitch-along flow.
-- Optional Supabase password auth with safe demo fallback when env variables are absent.
-- A Playwright smoke test for the core MVP path.
+- Project journal create/edit, progress photos, likes, saves, comments, creator follows.
+- **Stores**: local/online shop profiles, proximity ranking (~60 mi) with top-online fallback.
+- Store **catalog** cards (link-out only — no checkout), **Available at** project tags, **Shop the look** on project detail, **Follow store** (auth required online).
+- Saved project collections and a join-and-submit stitch-along flow.
+- Dual-mode: Supabase when env is set; offline demo otherwise.
+- Playwright smoke test for the core MVP path.
 
-Payments, marketplace checkout, direct messages, and native mobile are out of scope.
+Payments, marketplace checkout, cart, direct messages, and native mobile apps are out of scope.
 
 ## Supabase (multi-user)
 
 Greenfield setup steps: [docs/supabase-setup.md](./docs/supabase-setup.md)
 
-Schema + RLS: `supabase/migrations/20260715120000_init.sql`
+Schema + RLS migrations under `supabase/migrations/` (init, stores, lat/lng, store follows + catalog seed).
 
 When `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` are set:
 
@@ -86,5 +86,6 @@ When `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` are set:
 - Profile auto-created via DB trigger
 - Project create + list hydrate from Postgres
 - Image uploads use the `project-images` storage bucket
+- Stores, products, project↔store tags, store follows
 
 Without those vars the app stays in demo mode (localStorage).

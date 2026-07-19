@@ -33,7 +33,12 @@ type DbProduct = {
   sort_order: number;
 };
 
-function mapStore(row: DbStore, products: StoreProduct[] = [], projectCount = 0): Store {
+function mapStore(
+  row: DbStore,
+  products: StoreProduct[] = [],
+  projectCount = 0,
+  followerCount = 0,
+): Store {
   return {
     id: row.id,
     ownerUserId: row.owner_user_id,
@@ -52,6 +57,7 @@ function mapStore(row: DbStore, products: StoreProduct[] = [], projectCount = 0)
     specialties: row.specialties ?? [],
     products,
     projectCount,
+    followerCount,
     latitude: row.latitude ?? null,
     longitude: row.longitude ?? null,
   };
@@ -78,10 +84,14 @@ export async function fetchStores(): Promise<Store[]> {
   if (!rows?.length) return [];
 
   const ids = rows.map((r) => r.id as string);
-  const [{ data: products }, { data: links }] = await Promise.all([
+  const [{ data: products }, { data: links }, { data: followCounts, error: followCountError }] = await Promise.all([
     client.from("store_products").select("*").in("store_id", ids).order("sort_order"),
     client.from("project_stores").select("store_id"),
+    client.rpc("store_follow_counts"),
   ]);
+  if (followCountError) {
+    // Older DBs without the RPC still work without follower counts
+  }
 
   const productsByStore = new Map<string, StoreProduct[]>();
   for (const p of (products as DbProduct[] | null) ?? []) {
@@ -89,12 +99,23 @@ export async function fetchStores(): Promise<Store[]> {
     list.push(mapProduct(p));
     productsByStore.set(p.store_id, list);
   }
-  const counts = new Map<string, number>();
+  const projectCounts = new Map<string, number>();
   for (const link of links ?? []) {
-    counts.set(link.store_id, (counts.get(link.store_id) ?? 0) + 1);
+    projectCounts.set(link.store_id, (projectCounts.get(link.store_id) ?? 0) + 1);
+  }
+  const followerCounts = new Map<string, number>();
+  for (const row of (followCounts as { store_id: string; follower_count: number }[] | null) ?? []) {
+    followerCounts.set(row.store_id, Number(row.follower_count) || 0);
   }
 
-  return (rows as DbStore[]).map((row) => mapStore(row, productsByStore.get(row.id) ?? [], counts.get(row.id) ?? 0));
+  return (rows as DbStore[]).map((row) =>
+    mapStore(
+      row,
+      productsByStore.get(row.id) ?? [],
+      projectCounts.get(row.id) ?? 0,
+      followerCounts.get(row.id) ?? 0,
+    ),
+  );
 }
 
 export async function fetchStoreByHandle(handle: string): Promise<Store | null> {
@@ -104,15 +125,21 @@ export async function fetchStoreByHandle(handle: string): Promise<Store | null> 
   if (error) throw error;
   if (!data) return null;
 
-  const [{ data: products }, { data: links }] = await Promise.all([
+  const [{ data: products }, { data: links }, { data: followCounts }] = await Promise.all([
     client.from("store_products").select("*").eq("store_id", data.id).order("sort_order"),
     client.from("project_stores").select("project_id").eq("store_id", data.id),
+    client.rpc("store_follow_counts"),
   ]);
+
+  const followerCount =
+    ((followCounts as { store_id: string; follower_count: number }[] | null) ?? []).find((row) => row.store_id === data.id)
+      ?.follower_count ?? 0;
 
   return mapStore(
     data as DbStore,
     ((products as DbProduct[] | null) ?? []).map(mapProduct),
     (links ?? []).length,
+    Number(followerCount) || 0,
   );
 }
 
@@ -126,7 +153,18 @@ export async function fetchStoresForProject(projectId: string): Promise<{ store:
   const ids = links.map((l) => l.store_id as string);
   const { data: stores, error: storeError } = await client.from("stores").select("*").in("id", ids);
   if (storeError) throw storeError;
-  const byId = new Map(((stores as DbStore[] | null) ?? []).map((s) => [s.id, mapStore(s)]));
+
+  const { data: products } = await client.from("store_products").select("*").in("store_id", ids).order("sort_order");
+  const productsByStore = new Map<string, StoreProduct[]>();
+  for (const p of (products as DbProduct[] | null) ?? []) {
+    const list = productsByStore.get(p.store_id) ?? [];
+    list.push(mapProduct(p));
+    productsByStore.set(p.store_id, list);
+  }
+
+  const byId = new Map(
+    ((stores as DbStore[] | null) ?? []).map((s) => [s.id, mapStore(s, productsByStore.get(s.id) ?? [])]),
+  );
 
   return links
     .map((link) => {
@@ -154,4 +192,24 @@ export async function fetchProjectIdsForStore(storeId: string): Promise<string[]
   const { data, error } = await client.from("project_stores").select("project_id").eq("store_id", storeId);
   if (error) throw error;
   return (data ?? []).map((row) => row.project_id as string);
+}
+
+export async function fetchFollowedStoreIds(userId: string): Promise<string[]> {
+  if (!isSupabaseConfigured) return [];
+  const client = requireSupabase();
+  const { data, error } = await client.from("store_follows").select("store_id").eq("follower_id", userId);
+  if (error) throw error;
+  return (data ?? []).map((row) => row.store_id as string);
+}
+
+export async function toggleStoreFollowOnline(userId: string, storeId: string, currentlyFollowing: boolean) {
+  if (!isSupabaseConfigured) return;
+  const client = requireSupabase();
+  if (currentlyFollowing) {
+    const { error } = await client.from("store_follows").delete().eq("follower_id", userId).eq("store_id", storeId);
+    if (error) throw error;
+  } else {
+    const { error } = await client.from("store_follows").insert({ follower_id: userId, store_id: storeId });
+    if (error) throw error;
+  }
 }

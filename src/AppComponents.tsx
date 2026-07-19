@@ -803,6 +803,31 @@ export function ProjectDetail(props: {
                   </div>
                 </div>
               )}
+              {props.projectStores.some((store) => store.products.length > 0) && (
+                <div className="shop-the-look">
+                  <SectionTitle title="Shop the look" />
+                  <p className="field-help">Link-outs from shops tagged on this project. No checkout on Needlepoint.</p>
+                  <div className="product-grid shop-look-grid">
+                    {props.projectStores.flatMap((store) =>
+                      store.products.slice(0, 3).map((product) => (
+                        <article key={`${store.id}-${product.id}`} className="product-card panel">
+                          <img src={product.image} alt={product.name} />
+                          <strong>{product.name}</strong>
+                          <p className="shop-look-store">@{store.handle}</p>
+                          <div className="metric-row">
+                            <span>{product.priceLabel || product.category}</span>
+                            {product.externalUrl ? (
+                              <a href={product.externalUrl} target="_blank" rel="noreferrer">
+                                Shop <ExternalLink size={13} />
+                              </a>
+                            ) : null}
+                          </div>
+                        </article>
+                      )),
+                    )}
+                  </div>
+                </div>
+              )}
               <a className="external" href={props.project.patternUrl} target="_blank" rel="noreferrer">
                 Pattern source: {props.project.patternSource} <ExternalLink size={15} />
               </a>
@@ -1236,10 +1261,14 @@ function StoreCardGrid({
 export function StoreDetailView({
   store,
   projects,
+  isFollowed,
+  toggleStoreFollow,
   setView,
 }: {
   store: Store;
   projects: Project[];
+  isFollowed: boolean;
+  toggleStoreFollow: (storeId: string) => void;
   setView: (view: View) => void;
 }) {
   return (
@@ -1255,6 +1284,7 @@ export function StoreDetailView({
               @{store.handle}
               {store.location ? ` · ${store.location}` : ""}
               {store.shipsNationwide ? " · Ships nationwide" : ""}
+              {typeof store.followerCount === "number" ? ` · ${store.followerCount} followers` : ""}
             </p>
             <p>{store.description}</p>
             <div className="tag-row">
@@ -1262,7 +1292,14 @@ export function StoreDetailView({
                 <span key={tag}>{tag}</span>
               ))}
             </div>
-            <div className="card-actions wrap" style={{ marginTop: 12 }}>
+            <div className="card-actions wrap store-detail-actions">
+              <button
+                type="button"
+                className={isFollowed ? "selected" : ""}
+                onClick={() => toggleStoreFollow(store.id)}
+              >
+                {isFollowed ? "Following" : "Follow store"}
+              </button>
               {store.websiteUrl ? (
                 <a className="secondary" href={store.websiteUrl} target="_blank" rel="noreferrer">
                   Visit website <ExternalLink size={14} />
@@ -1276,7 +1313,7 @@ export function StoreDetailView({
         </div>
       </div>
 
-      {store.products.length > 0 && (
+      {store.products.length > 0 ? (
         <>
           <SectionTitle title="Catalog" />
           <div className="product-grid">
@@ -1297,6 +1334,8 @@ export function StoreDetailView({
             ))}
           </div>
         </>
+      ) : (
+        <p className="field-help">No catalog items yet. Check back soon.</p>
       )}
 
       <SectionTitle title="Projects available here" />

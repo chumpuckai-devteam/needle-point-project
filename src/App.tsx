@@ -2,7 +2,7 @@ import { createProjectOnline, fetchPublicProjects, addProgressUpdateOnline, upda
 import { completeOnboarding, fetchProfileById, fetchProfiles, toggleFollowOnline, updateProfile } from "./api/profiles";
 import { addCommentOnline, toggleProjectLikeOnline, toggleSaveOnline } from "./api/social";
 import { uploadProjectImage, validateImageFile } from "./api/images";
-import { fetchStores, setProjectStores } from "./api/stores";
+import { fetchFollowedStoreIds, fetchStores, setProjectStores, toggleStoreFollowOnline } from "./api/stores";
 import { creators as seedCreators, initialCollections, initialProjects, stitchAlong as seedStitchAlong } from "./data";
 import type { Collection, Creator, MediaKind, Project, StitchAlong, Store } from "./types";
 import {
@@ -52,14 +52,35 @@ const DEMO_STORES: Store[] = [
         id: "sp1",
         storeId: "store-local-1",
         name: "Persimmon Garden pillow canvas",
-        description: "18 mesh painted canvas",
+        description: "18 mesh painted canvas for a lush fruit pillow.",
         image: "/assets/persimmon-garden-pillow.jpg",
         priceLabel: "from $86",
         externalUrl: "https://example.com/canopy/persimmon",
         category: "canvas",
       },
+      {
+        id: "sp2",
+        storeId: "store-local-1",
+        name: "Bookshop Door printed canvas",
+        description: "18 mesh storefront scene for framed pieces.",
+        image: "/assets/bookshop-door-canvas.jpg",
+        priceLabel: "from $74",
+        externalUrl: "https://example.com/canopy/bookshop-door",
+        category: "canvas",
+      },
+      {
+        id: "sp3",
+        storeId: "store-local-1",
+        name: "Blue Hydrangea belt canvas",
+        description: "Narrow belt canvas with botanical repeat.",
+        image: "/assets/blue-hydrangea-belt.jpg",
+        priceLabel: "from $48",
+        externalUrl: "https://example.com/canopy/hydrangea-belt",
+        category: "canvas",
+      },
     ],
-    projectCount: 2,
+    projectCount: 3,
+    followerCount: 12,
     latitude: 45.5202471,
     longitude: -122.674194,
   },
@@ -79,8 +100,40 @@ const DEMO_STORES: Store[] = [
     country: "US",
     shipsNationwide: true,
     specialties: ["silk", "metallic", "kits"],
-    products: [],
-    projectCount: 4,
+    products: [
+      {
+        id: "sp4",
+        storeId: "store-online-1",
+        name: "Silk blend starter pack",
+        description: "Assorted silk blends for advanced stitchers.",
+        image: "/assets/blue-hydrangea-belt.jpg",
+        priceLabel: "$42",
+        externalUrl: "https://example.com/threadtonic/silk-pack",
+        category: "thread",
+      },
+      {
+        id: "sp5",
+        storeId: "store-online-1",
+        name: "Metallic accent kit",
+        description: "Kreinik-style accents for roofs and trims.",
+        image: "/assets/tiny-ski-lodge-ornament.jpg",
+        priceLabel: "$28",
+        externalUrl: "https://example.com/threadtonic/metallic",
+        category: "thread",
+      },
+      {
+        id: "sp6",
+        storeId: "store-online-1",
+        name: "Holiday ornament finishing pack",
+        description: "Cording and felt backs for small gifts.",
+        image: "/assets/tiny-ski-lodge-ornament.jpg",
+        priceLabel: "$19",
+        externalUrl: "https://example.com/threadtonic/finishing",
+        category: "finishing",
+      },
+    ],
+    projectCount: 3,
+    followerCount: 28,
     latitude: null,
     longitude: null,
   },
@@ -100,8 +153,40 @@ const DEMO_STORES: Store[] = [
     country: "US",
     shipsNationwide: false,
     specialties: ["local pickup", "classes", "finishing"],
-    products: [],
+    products: [
+      {
+        id: "sp7",
+        storeId: "store-local-2",
+        name: "Custom finishing — small pillow",
+        description: 'Local finishing for pillows under 16".',
+        image: "/assets/persimmon-garden-pillow.jpg",
+        priceLabel: "from $65",
+        externalUrl: "https://example.com/bookshop/finishing",
+        category: "finishing",
+      },
+      {
+        id: "sp8",
+        storeId: "store-local-2",
+        name: "July stitch-along kit add-on",
+        description: "Threads pulled for bookshop-themed SAL.",
+        image: "/assets/bookshop-door-canvas.jpg",
+        priceLabel: "$36",
+        externalUrl: "https://example.com/bookshop/sal-kit",
+        category: "kit",
+      },
+      {
+        id: "sp9",
+        storeId: "store-local-2",
+        name: "Neighborhood class voucher",
+        description: "In-store beginner basketweave session.",
+        image: "/assets/needlepoint-hero.png",
+        priceLabel: "$45",
+        externalUrl: "https://example.com/bookshop/class",
+        category: "class",
+      },
+    ],
     projectCount: 1,
+    followerCount: 6,
     latitude: 30.2711286,
     longitude: -97.7436995,
   },
@@ -111,6 +196,7 @@ const STORAGE_KEYS = {
   projects: "needle-point-project:projects",
   collections: "needle-point-project:collections",
   follows: "needle-point-project:follows",
+  storeFollows: "needle-point-project:storeFollows",
   stitchAlong: "needle-point-project:stitchAlong",
 };
 
@@ -133,6 +219,7 @@ function AppShell() {
   const [collections, setCollections] = useState<Collection[]>(() => loadFromStorage(STORAGE_KEYS.collections, initialCollections));
   const [stitchAlong, setStitchAlong] = useState<StitchAlong>(() => loadFromStorage(STORAGE_KEYS.stitchAlong, seedStitchAlong));
   const [followedCreators, setFollowedCreators] = useState<string[]>(() => loadFromStorage(STORAGE_KEYS.follows, ["c1"]));
+  const [followedStores, setFollowedStores] = useState<string[]>(() => loadFromStorage(STORAGE_KEYS.storeFollows, ["store-local-1"]));
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState({ category: "all", difficulty: "all", stitch: "all", color: "all", status: "all" });
   const [draft, setDraft] = useState<DraftProject>(blankDraft);
@@ -156,30 +243,42 @@ function AppShell() {
   useEffect(() => saveToStorage(STORAGE_KEYS.projects, projects), [projects]);
   useEffect(() => saveToStorage(STORAGE_KEYS.collections, collections), [collections]);
   useEffect(() => saveToStorage(STORAGE_KEYS.follows, followedCreators), [followedCreators]);
+  useEffect(() => saveToStorage(STORAGE_KEYS.storeFollows, followedStores), [followedStores]);
   useEffect(() => saveToStorage(STORAGE_KEYS.stitchAlong, stitchAlong), [stitchAlong]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
       setStores(DEMO_STORES);
+      // Demo: attach Available at tags to seed projects if missing
+      setProjects((current) =>
+        current.map((project) => {
+          if (project.storeIds?.length) return project;
+          if (project.id === "p1") return { ...project, storeIds: ["store-local-1", "store-online-1"] };
+          if (project.id === "p2") return { ...project, storeIds: ["store-online-1"] };
+          if (project.id === "p3") return { ...project, storeIds: ["store-local-1", "store-local-2"] };
+          if (project.id === "p4") return { ...project, storeIds: ["store-local-1", "store-online-1"] };
+          return project;
+        }),
+      );
       return;
     }
     let cancelled = false;
     (async () => {
       try {
-        const [remoteProjects, remoteProfiles, remoteStores] = await Promise.all([
+        const [remoteProjects, remoteProfiles, remoteStores, remoteStoreFollows] = await Promise.all([
           fetchPublicProjects(user?.id ?? null),
           fetchProfiles(),
           fetchStores(),
+          user?.id ? fetchFollowedStoreIds(user.id) : Promise.resolve([] as string[]),
         ]);
         if (cancelled) return;
         if (remoteProfiles.length) setCreators(remoteProfiles);
         if (remoteStores.length) setStores(remoteStores);
         else setStores(DEMO_STORES);
         if (remoteProjects.length) {
-          // Attach store ids from remote project_stores via store project counts is not enough —
-          // fetchStores includes counts; project.storeIds loaded via project_stores in a second query if present on rows.
           setProjects(remoteProjects);
         }
+        if (user?.id) setFollowedStores(remoteStoreFollows);
         setRemoteError("");
       } catch (error) {
         if (!cancelled) {
@@ -328,6 +427,31 @@ function AppShell() {
     if (isSupabaseConfigured && user) {
       void toggleFollowOnline(user.id, id, currently).catch((error) => {
         setRemoteError(error instanceof Error ? error.message : "Follow failed");
+      });
+    }
+  }
+
+  function toggleStoreFollow(storeId: string) {
+    if (isSupabaseConfigured && !user) {
+      setRemoteError("Sign in to follow stores.");
+      setView({ name: "auth" });
+      return;
+    }
+    const currently = followedStores.includes(storeId);
+    setFollowedStores((current) => (currently ? current.filter((id) => id !== storeId) : [...current, storeId]));
+    setStores((current) =>
+      current.map((store) =>
+        store.id === storeId
+          ? {
+              ...store,
+              followerCount: Math.max(0, (store.followerCount ?? 0) + (currently ? -1 : 1)),
+            }
+          : store,
+      ),
+    );
+    if (isSupabaseConfigured && user) {
+      void toggleStoreFollowOnline(user.id, storeId, currently).catch((error) => {
+        setRemoteError(error instanceof Error ? error.message : "Store follow failed");
       });
     }
   }
@@ -739,7 +863,18 @@ function AppShell() {
             }
           />
           <Route path="/stores" element={<StoresView stores={stores} setView={setView} />} />
-          <Route path="/stores/:handle" element={<StoreRoute stores={stores} projects={projects} setView={setView} />} />
+          <Route
+            path="/stores/:handle"
+            element={
+              <StoreRoute
+                stores={stores}
+                projects={projects}
+                followedStores={followedStores}
+                toggleStoreFollow={toggleStoreFollow}
+                setView={setView}
+              />
+            }
+          />
           <Route
             path="/stitch-along"
             element={
@@ -874,14 +1009,34 @@ function ProjectRoute(props: {
   );
 }
 
-function StoreRoute({ stores, projects, setView }: { stores: Store[]; projects: Project[]; setView: (view: View) => void }) {
+function StoreRoute({
+  stores,
+  projects,
+  followedStores,
+  toggleStoreFollow,
+  setView,
+}: {
+  stores: Store[];
+  projects: Project[];
+  followedStores: string[];
+  toggleStoreFollow: (storeId: string) => void;
+  setView: (view: View) => void;
+}) {
   const { handle = "" } = useParams();
   const store = stores.find((item) => item.handle === handle);
   if (!store) {
     return <EmptyState title="Store not found" body="That shop may have moved." action="Browse stores" onAction={() => setView({ name: "stores" })} />;
   }
   const linked = projects.filter((project) => (project.storeIds ?? []).includes(store.id));
-  return <StoreDetailView store={store} projects={linked} setView={setView} />;
+  return (
+    <StoreDetailView
+      store={store}
+      projects={linked}
+      isFollowed={followedStores.includes(store.id)}
+      toggleStoreFollow={toggleStoreFollow}
+      setView={setView}
+    />
+  );
 }
 
 function ProfileRoute({
