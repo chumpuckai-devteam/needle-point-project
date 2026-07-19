@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useId, useState } from "react";
 import { ExternalLink, Plus } from "lucide-react";
 import type { Project, Store, StoreProduct } from "../types";
 import type { StoreProductInput, StoreProfileInput } from "../api/stores";
+import { recordOutboundClickEvent } from "../api/clickEvents";
 import type { View } from "../appModel";
 import { ImageFilePicker } from "../components/ImageFilePicker";
 import { SectionTitle } from "../components/ui";
@@ -28,6 +29,33 @@ function isLikelyUrl(value: string) {
   } catch {
     return false;
   }
+}
+
+function trackShopLinkClick(product: StoreProduct, surface: string, placement: string) {
+  void recordOutboundClickEvent({
+    eventName: "shop_link_click",
+    productId: product.id,
+    storeId: product.storeId,
+    destinationType: "product_external_url",
+    destinationUrl: product.externalUrl,
+    surface,
+    placement,
+  }).catch(() => {
+    /* never block navigation */
+  });
+}
+
+function trackStoreWebsiteClick(store: Store, surface: string, placement: string) {
+  void recordOutboundClickEvent({
+    eventName: "store_website_click",
+    storeId: store.id,
+    destinationType: "store_website_url",
+    destinationUrl: store.websiteUrl,
+    surface,
+    placement,
+  }).catch(() => {
+    /* never block navigation */
+  });
 }
 
 export function StoreDetailView({
@@ -300,7 +328,13 @@ export function StoreDetailView({
             </>
           ) : null}
           {store.websiteUrl ? (
-            <a className="secondary" href={store.websiteUrl} target="_blank" rel="noreferrer">
+            <a
+              className="secondary"
+              href={store.websiteUrl}
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => trackStoreWebsiteClick(store, "store_detail", "header_website")}
+            >
               Visit website <ExternalLink size={14} />
             </a>
           ) : null}
@@ -584,7 +618,12 @@ export function StoreDetailView({
                 <div className="metric-row product-card-meta">
                   <span>{product.priceLabel || product.category}</span>
                   {product.externalUrl ? (
-                    <a href={product.externalUrl} target="_blank" rel="noreferrer">
+                    <a
+                      href={product.externalUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={() => trackShopLinkClick(product, "store_detail", "catalog_card")}
+                    >
                       Shop link <ExternalLink size={13} />
                     </a>
                   ) : null}

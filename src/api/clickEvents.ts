@@ -64,19 +64,32 @@ export async function recordOutboundClickEvent(input: OutboundClickEventInput): 
   if (isShopLink && !productId) return;
   if (!input.storeId) return;
 
+  // Online schema uses UUID FKs — skip demo/local ids quietly.
+  const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if (!uuidRe.test(input.storeId)) return;
+  if (productId && !uuidRe.test(productId)) return;
+
   const expectedDestinationType: OutboundClickDestinationType = isShopLink ? "product_external_url" : "store_website_url";
   if (input.destinationType !== expectedDestinationType) return;
 
-  const client = requireSupabase();
-  await client.from("outbound_click_events").insert({
-    event_name: input.eventName,
-    product_id: productId,
-    store_id: input.storeId,
-    destination_type: input.destinationType,
-    destination_host: normalizeDestinationHost(input.destinationUrl),
-    surface,
-    placement: cleanStableLabel(input.placement),
-  });
+  try {
+    const client = requireSupabase();
+    const { error } = await client.from("outbound_click_events").insert({
+      event_name: input.eventName,
+      product_id: productId,
+      store_id: input.storeId,
+      destination_type: input.destinationType,
+      destination_host: normalizeDestinationHost(input.destinationUrl),
+      surface,
+      placement: cleanStableLabel(input.placement),
+    });
+    if (error) {
+      // Analytics must never surface to users.
+      console.debug("outbound click not recorded", error.message);
+    }
+  } catch (error) {
+    console.debug("outbound click not recorded", error);
+  }
 }
 
 export async function fetchOutboundClickEventCounts(

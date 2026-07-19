@@ -1,9 +1,24 @@
 import { FormEvent, useEffect, useId, useState } from "react";
 import { Bookmark, ExternalLink, Heart, Share2, Store as StoreIcon, UserRound } from "lucide-react";
-import type { Creator, Difficulty, Project, Status, Store } from "../types";
+import type { Creator, Difficulty, Project, Status, Store, StoreProduct } from "../types";
 import type { DraftProject, View } from "../appModel";
 import { difficultyOptions, statusOptions, visibilityHelp, visibilityLabel } from "../appModel";
+import { recordOutboundClickEvent } from "../api/clickEvents";
 import { Field, Meta, SectionTitle } from "../components/ui";
+
+function trackShopLinkClick(product: StoreProduct, storeId: string, surface: string, placement: string) {
+  void recordOutboundClickEvent({
+    eventName: "shop_link_click",
+    productId: product.id,
+    storeId: product.storeId || storeId,
+    destinationType: "product_external_url",
+    destinationUrl: product.externalUrl,
+    surface,
+    placement,
+  }).catch(() => {
+    /* never block navigation */
+  });
+}
 
 export function ProjectDetail(props: {
   project: Project;
@@ -410,7 +425,12 @@ export function ProjectDetail(props: {
                           <div className="metric-row product-card-meta">
                             <span>{product.priceLabel || product.category}</span>
                             {product.externalUrl ? (
-                              <a href={product.externalUrl} target="_blank" rel="noreferrer">
+                              <a
+                                href={product.externalUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={() => trackShopLinkClick(product, store.id, "project_detail", "shop_the_look")}
+                              >
                                 Shop <ExternalLink size={13} />
                               </a>
                             ) : null}
