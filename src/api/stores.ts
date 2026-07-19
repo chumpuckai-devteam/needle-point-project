@@ -213,3 +213,98 @@ export async function toggleStoreFollowOnline(userId: string, storeId: string, c
     if (error) throw error;
   }
 }
+
+export type StoreProductInput = {
+  name: string;
+  description?: string;
+  image?: string;
+  priceLabel?: string;
+  externalUrl?: string;
+  category?: string;
+  sortOrder?: number;
+};
+
+export async function claimStoreOnline(storeId: string, userId: string): Promise<void> {
+  if (!isSupabaseConfigured) return;
+  const client = requireSupabase();
+  const { data, error } = await client
+    .from("stores")
+    .update({ owner_user_id: userId, updated_at: new Date().toISOString() })
+    .eq("id", storeId)
+    .is("owner_user_id", null)
+    .select("id")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("This shop is already claimed or could not be claimed.");
+}
+
+export async function createStoreProductOnline(storeId: string, input: StoreProductInput): Promise<StoreProduct> {
+  if (!isSupabaseConfigured) {
+    return {
+      id: `local-${crypto.randomUUID()}`,
+      storeId,
+      name: input.name.trim(),
+      description: input.description?.trim() || "",
+      image: input.image?.trim() || "/assets/needlepoint-hero.png",
+      priceLabel: input.priceLabel?.trim() || "",
+      externalUrl: input.externalUrl?.trim() || "",
+      category: input.category?.trim() || "canvas",
+    };
+  }
+  const client = requireSupabase();
+  const { data, error } = await client
+    .from("store_products")
+    .insert({
+      store_id: storeId,
+      name: input.name.trim(),
+      description: input.description?.trim() || "",
+      image_url: input.image?.trim() || "",
+      price_label: input.priceLabel?.trim() || "",
+      external_url: input.externalUrl?.trim() || "",
+      category: input.category?.trim() || "canvas",
+      sort_order: input.sortOrder ?? 0,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return mapProduct(data as DbProduct);
+}
+
+export async function updateStoreProductOnline(productId: string, input: StoreProductInput): Promise<StoreProduct> {
+  if (!isSupabaseConfigured) {
+    return {
+      id: productId,
+      storeId: "",
+      name: input.name.trim(),
+      description: input.description?.trim() || "",
+      image: input.image?.trim() || "/assets/needlepoint-hero.png",
+      priceLabel: input.priceLabel?.trim() || "",
+      externalUrl: input.externalUrl?.trim() || "",
+      category: input.category?.trim() || "canvas",
+    };
+  }
+  const client = requireSupabase();
+  const { data, error } = await client
+    .from("store_products")
+    .update({
+      name: input.name.trim(),
+      description: input.description?.trim() || "",
+      image_url: input.image?.trim() || "",
+      price_label: input.priceLabel?.trim() || "",
+      external_url: input.externalUrl?.trim() || "",
+      category: input.category?.trim() || "canvas",
+      sort_order: input.sortOrder ?? 0,
+    })
+    .eq("id", productId)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return mapProduct(data as DbProduct);
+}
+
+export async function deleteStoreProductOnline(productId: string): Promise<void> {
+  if (!isSupabaseConfigured) return;
+  const client = requireSupabase();
+  const { error } = await client.from("store_products").delete().eq("id", productId);
+  if (error) throw error;
+}

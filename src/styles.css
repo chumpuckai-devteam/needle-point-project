@@ -1292,6 +1292,54 @@ ul {
   padding-inline: 14px;
 }
 
+.store-product-form {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0 20px;
+  padding: 16px;
+}
+
+.store-product-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.store-product-form input,
+.store-product-form textarea,
+.store-product-form select {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--np-line, #3a322c);
+  background: rgba(255, 253, 249, 0.92);
+  color: #1f1a16;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.store-product-form textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.product-owner-actions {
+  margin-top: 8px;
+}
+
+.danger-btn {
+  color: #8a2f2f !important;
+}
+
+.error-text {
+  color: #8a2f2f;
+}
+
 @media (max-width: 640px) {
   .store-detail-head {
     grid-template-columns: 72px minmax(0, 1fr);

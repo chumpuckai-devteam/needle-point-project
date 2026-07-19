@@ -2,7 +2,17 @@ import { createProjectOnline, fetchPublicProjects, addProgressUpdateOnline, upda
 import { completeOnboarding, fetchProfileById, fetchProfiles, toggleFollowOnline, updateProfile } from "./api/profiles";
 import { addCommentOnline, toggleProjectLikeOnline, toggleSaveOnline } from "./api/social";
 import { uploadProjectImage, validateImageFile } from "./api/images";
-import { fetchFollowedStoreIds, fetchStores, setProjectStores, toggleStoreFollowOnline } from "./api/stores";
+import {
+  claimStoreOnline,
+  createStoreProductOnline,
+  deleteStoreProductOnline,
+  fetchFollowedStoreIds,
+  fetchStores,
+  setProjectStores,
+  toggleStoreFollowOnline,
+  updateStoreProductOnline,
+  type StoreProductInput,
+} from "./api/stores";
 import { creators as seedCreators, initialCollections, initialProjects, stitchAlong as seedStitchAlong } from "./data";
 import type { Collection, Creator, MediaKind, Project, StitchAlong, Store } from "./types";
 import {
@@ -237,6 +247,9 @@ function AppShell() {
   const [commentText, setCommentText] = useState("");
   const [remoteError, setRemoteError] = useState("");
   const [stores, setStores] = useState<Store[]>(DEMO_STORES);
+  const [claimBusy, setClaimBusy] = useState(false);
+  const [productBusy, setProductBusy] = useState(false);
+  const [productError, setProductError] = useState("");
 
   const meCreatorId = isDemoMode ? DEMO_CREATOR_ID : user?.id ?? DEMO_CREATOR_ID;
 
@@ -453,6 +466,100 @@ function AppShell() {
       void toggleStoreFollowOnline(user.id, storeId, currently).catch((error) => {
         setRemoteError(error instanceof Error ? error.message : "Store follow failed");
       });
+    }
+  }
+
+  async function claimStore(storeId: string) {
+    if (isSupabaseConfigured && !user) {
+      setRemoteError("Sign in to claim a shop.");
+      setView({ name: "auth" });
+      return;
+    }
+    setClaimBusy(true);
+    setRemoteError("");
+    try {
+      const ownerId = user?.id ?? meCreatorId;
+      if (isSupabaseConfigured && user) {
+        await claimStoreOnline(storeId, user.id);
+      }
+      setStores((current) => current.map((store) => (store.id === storeId ? { ...store, ownerUserId: ownerId } : store)));
+    } catch (error) {
+      setRemoteError(error instanceof Error ? error.message : "Could not claim shop");
+    } finally {
+      setClaimBusy(false);
+    }
+  }
+
+  async function createStoreProduct(storeId: string, input: StoreProductInput) {
+    setProductBusy(true);
+    setProductError("");
+    try {
+      const created = await createStoreProductOnline(storeId, input);
+      const product = {
+        ...created,
+        storeId,
+        image: created.image || "/assets/needlepoint-hero.png",
+      };
+      setStores((current) =>
+        current.map((store) => (store.id === storeId ? { ...store, products: [...store.products, product] } : store)),
+      );
+    } catch (error) {
+      setProductError(error instanceof Error ? error.message : "Could not add product");
+      throw error;
+    } finally {
+      setProductBusy(false);
+    }
+  }
+
+  async function updateStoreProduct(storeId: string, productId: string, input: StoreProductInput) {
+    setProductBusy(true);
+    setProductError("");
+    try {
+      const updated = await updateStoreProductOnline(productId, input);
+      setStores((current) =>
+        current.map((store) =>
+          store.id === storeId
+            ? {
+                ...store,
+                products: store.products.map((product) =>
+                  product.id === productId
+                    ? {
+                        ...product,
+                        name: updated.name || input.name.trim(),
+                        description: updated.description ?? input.description?.trim() ?? "",
+                        image: updated.image || input.image?.trim() || product.image || "/assets/needlepoint-hero.png",
+                        priceLabel: updated.priceLabel ?? input.priceLabel?.trim() ?? "",
+                        externalUrl: updated.externalUrl ?? input.externalUrl?.trim() ?? "",
+                        category: updated.category || input.category?.trim() || "canvas",
+                      }
+                    : product,
+                ),
+              }
+            : store,
+        ),
+      );
+    } catch (error) {
+      setProductError(error instanceof Error ? error.message : "Could not update product");
+      throw error;
+    } finally {
+      setProductBusy(false);
+    }
+  }
+
+  async function deleteStoreProduct(storeId: string, productId: string) {
+    setProductBusy(true);
+    setProductError("");
+    try {
+      await deleteStoreProductOnline(productId);
+      setStores((current) =>
+        current.map((store) =>
+          store.id === storeId ? { ...store, products: store.products.filter((product) => product.id !== productId) } : store,
+        ),
+      );
+    } catch (error) {
+      setProductError(error instanceof Error ? error.message : "Could not delete product");
+    } finally {
+      setProductBusy(false);
     }
   }
 
@@ -871,6 +978,15 @@ function AppShell() {
                 projects={projects}
                 followedStores={followedStores}
                 toggleStoreFollow={toggleStoreFollow}
+                currentUserId={isDemoMode ? meCreatorId : user?.id ?? null}
+                isDemoMode={isDemoMode}
+                claimBusy={claimBusy}
+                productBusy={productBusy}
+                productError={productError}
+                onClaimStore={(storeId) => void claimStore(storeId)}
+                onCreateProduct={(storeId, input) => createStoreProduct(storeId, input)}
+                onUpdateProduct={(storeId, productId, input) => updateStoreProduct(storeId, productId, input)}
+                onDeleteProduct={(storeId, productId) => deleteStoreProduct(storeId, productId)}
                 setView={setView}
               />
             }
@@ -1014,12 +1130,30 @@ function StoreRoute({
   projects,
   followedStores,
   toggleStoreFollow,
+  currentUserId,
+  isDemoMode,
+  claimBusy,
+  productBusy,
+  productError,
+  onClaimStore,
+  onCreateProduct,
+  onUpdateProduct,
+  onDeleteProduct,
   setView,
 }: {
   stores: Store[];
   projects: Project[];
   followedStores: string[];
   toggleStoreFollow: (storeId: string) => void;
+  currentUserId: string | null;
+  isDemoMode: boolean;
+  claimBusy: boolean;
+  productBusy: boolean;
+  productError: string;
+  onClaimStore: (storeId: string) => void;
+  onCreateProduct: (storeId: string, input: StoreProductInput) => Promise<void>;
+  onUpdateProduct: (storeId: string, productId: string, input: StoreProductInput) => Promise<void>;
+  onDeleteProduct: (storeId: string, productId: string) => Promise<void>;
   setView: (view: View) => void;
 }) {
   const { handle = "" } = useParams();
@@ -1028,12 +1162,25 @@ function StoreRoute({
     return <EmptyState title="Store not found" body="That shop may have moved." action="Browse stores" onAction={() => setView({ name: "stores" })} />;
   }
   const linked = projects.filter((project) => (project.storeIds ?? []).includes(store.id));
+  const isOwner = isDemoMode
+    ? true
+    : Boolean(currentUserId && store.ownerUserId && store.ownerUserId === currentUserId);
+  const canClaim = isDemoMode && !isOwner && !store.ownerUserId;
   return (
     <StoreDetailView
       store={store}
       projects={linked}
       isFollowed={followedStores.includes(store.id)}
+      isOwner={isOwner}
+      canClaim={canClaim}
+      claimBusy={claimBusy}
+      productBusy={productBusy}
+      productError={productError}
       toggleStoreFollow={toggleStoreFollow}
+      onClaimStore={() => onClaimStore(store.id)}
+      onCreateProduct={(input) => onCreateProduct(store.id, input)}
+      onUpdateProduct={(productId, input) => onUpdateProduct(store.id, productId, input)}
+      onDeleteProduct={(productId) => onDeleteProduct(store.id, productId)}
       setView={setView}
     />
   );

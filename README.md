@@ -68,6 +68,7 @@ This repo contains a Vite + React + TypeScript web app (demo localStorage **or**
 - Project journal create/edit, progress photos, likes, saves, comments, creator follows.
 - **Stores**: local/online shop profiles, proximity ranking (~60 mi) with top-online fallback.
 - Store **catalog** cards (link-out only — no checkout), **Available at** project tags, **Shop the look** on project detail, **Follow store** (auth required online).
+- **Owner product CRUD**: claim an unowned shop, then add/edit/delete catalog items (demo mode can manage all demo shops).
 - Saved project collections and a join-and-submit stitch-along flow.
 - Dual-mode: Supabase when env is set; offline demo otherwise.
 - Playwright smoke test for the core MVP path.

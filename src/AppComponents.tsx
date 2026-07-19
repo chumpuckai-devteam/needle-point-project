@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useId, useMemo, useState } from "react";
 import { Bookmark, CalendarDays, ExternalLink, Filter, Frame, Heart, MapPin, MessageCircle, Plus, Search, Share2, Sparkles, Store as StoreIcon, UserRound } from "lucide-react";
-import type { Collection, Creator, Difficulty, Project, Status, StitchAlong, Store } from "./types";
+import type { Collection, Creator, Difficulty, Project, Status, StitchAlong, Store, StoreProduct } from "./types";
+import type { StoreProductInput } from "./api/stores";
 import type { DraftProject, View } from "./appModel";
 import { difficultyOptions, projectCommentCount, resolveMediaKind, statusOptions } from "./appModel";
 import {
@@ -1262,15 +1263,77 @@ export function StoreDetailView({
   store,
   projects,
   isFollowed,
+  isOwner,
+  canClaim,
+  claimBusy,
+  productBusy,
+  productError,
   toggleStoreFollow,
+  onClaimStore,
+  onCreateProduct,
+  onUpdateProduct,
+  onDeleteProduct,
   setView,
 }: {
   store: Store;
   projects: Project[];
   isFollowed: boolean;
+  isOwner: boolean;
+  canClaim: boolean;
+  claimBusy?: boolean;
+  productBusy?: boolean;
+  productError?: string;
   toggleStoreFollow: (storeId: string) => void;
+  onClaimStore?: () => void;
+  onCreateProduct?: (input: StoreProductInput) => Promise<void>;
+  onUpdateProduct?: (productId: string, input: StoreProductInput) => Promise<void>;
+  onDeleteProduct?: (productId: string) => void | Promise<void>;
   setView: (view: View) => void;
 }) {
+  const blankProduct = (): StoreProductInput => ({
+    name: "",
+    description: "",
+    image: "",
+    priceLabel: "",
+    externalUrl: "",
+    category: "canvas",
+  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<StoreProductInput>(blankProduct());
+  const [showForm, setShowForm] = useState(false);
+
+  function startCreate() {
+    setEditingId(null);
+    setDraft(blankProduct());
+    setShowForm(true);
+  }
+
+  function startEdit(product: StoreProduct) {
+    setEditingId(product.id);
+    setDraft({
+      name: product.name,
+      description: product.description,
+      image: product.image.startsWith("/assets/") ? "" : product.image,
+      priceLabel: product.priceLabel,
+      externalUrl: product.externalUrl,
+      category: product.category || "canvas",
+    });
+    setShowForm(true);
+  }
+
+  async function submitProduct(event: FormEvent) {
+    event.preventDefault();
+    if (!draft.name.trim() || productBusy) return;
+    if (editingId) {
+      await onUpdateProduct?.(editingId, draft);
+    } else {
+      await onCreateProduct?.(draft);
+    }
+    setShowForm(false);
+    setEditingId(null);
+    setDraft(blankProduct());
+  }
+
   return (
     <section className="page">
       <div className="store-detail-hero panel">
@@ -1278,7 +1341,7 @@ export function StoreDetailView({
         <div className="store-detail-head">
           <img src={store.avatar} alt="" />
           <div>
-            <p className="eyebrow">Store</p>
+            <p className="eyebrow">{isOwner ? "Your shop" : "Store"}</p>
             <h1>{store.name}</h1>
             <p>
               @{store.handle}
@@ -1293,13 +1356,21 @@ export function StoreDetailView({
               ))}
             </div>
             <div className="card-actions wrap store-detail-actions">
-              <button
-                type="button"
-                className={isFollowed ? "selected" : ""}
-                onClick={() => toggleStoreFollow(store.id)}
-              >
-                {isFollowed ? "Following" : "Follow store"}
-              </button>
+              {!isOwner ? (
+                <button type="button" className={isFollowed ? "selected" : ""} onClick={() => toggleStoreFollow(store.id)}>
+                  {isFollowed ? "Following" : "Follow store"}
+                </button>
+              ) : null}
+              {canClaim && onClaimStore ? (
+                <button type="button" className="primary" disabled={claimBusy} onClick={() => onClaimStore()}>
+                  {claimBusy ? "Claiming…" : "Claim this shop"}
+                </button>
+              ) : null}
+              {isOwner ? (
+                <button type="button" className="primary" onClick={startCreate}>
+                  <Plus size={16} /> Add product
+                </button>
+              ) : null}
               {store.websiteUrl ? (
                 <a className="secondary" href={store.websiteUrl} target="_blank" rel="noreferrer">
                   Visit website <ExternalLink size={14} />
@@ -1312,6 +1383,89 @@ export function StoreDetailView({
           </div>
         </div>
       </div>
+
+      {isOwner && showForm ? (
+        <form className="panel store-product-form" onSubmit={(event) => void submitProduct(event)}>
+          <SectionTitle title={editingId ? "Edit catalog item" : "New catalog item"} />
+          <p className="field-help">Link-out only — price is a label, shoppers leave Needlepoint to buy.</p>
+          <label>
+            <span className="field-label">Name</span>
+            <input
+              required
+              value={draft.name}
+              onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
+              placeholder="Persimmon Garden pillow canvas"
+            />
+          </label>
+          <label>
+            <span className="field-label">Description</span>
+            <textarea
+              rows={3}
+              value={draft.description}
+              onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))}
+              placeholder="18 mesh painted canvas"
+            />
+          </label>
+          <div className="form-grid-2">
+            <label>
+              <span className="field-label">Price label</span>
+              <input
+                value={draft.priceLabel}
+                onChange={(event) => setDraft((current) => ({ ...current, priceLabel: event.target.value }))}
+                placeholder="from $86"
+              />
+            </label>
+            <label>
+              <span className="field-label">Category</span>
+              <select
+                value={draft.category}
+                onChange={(event) => setDraft((current) => ({ ...current, category: event.target.value }))}
+              >
+                <option value="canvas">Canvas</option>
+                <option value="thread">Thread</option>
+                <option value="kit">Kit</option>
+                <option value="finishing">Finishing</option>
+                <option value="class">Class</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            <span className="field-label">Shop link (external URL)</span>
+            <input
+              type="url"
+              value={draft.externalUrl}
+              onChange={(event) => setDraft((current) => ({ ...current, externalUrl: event.target.value }))}
+              placeholder="https://yourshop.com/product"
+            />
+          </label>
+          <label>
+            <span className="field-label">Image URL (optional)</span>
+            <input
+              value={draft.image}
+              onChange={(event) => setDraft((current) => ({ ...current, image: event.target.value }))}
+              placeholder="https://… or leave blank for default"
+            />
+          </label>
+          {productError ? <p className="field-help error-text">{productError}</p> : null}
+          <div className="card-actions wrap">
+            <button type="submit" className="primary" disabled={productBusy || !draft.name.trim()}>
+              {productBusy ? "Saving…" : editingId ? "Save changes" : "Add to catalog"}
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => {
+                setShowForm(false);
+                setEditingId(null);
+                setDraft(blankProduct());
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : null}
 
       {store.products.length > 0 ? (
         <>
@@ -1330,12 +1484,33 @@ export function StoreDetailView({
                     </a>
                   ) : null}
                 </div>
+                {isOwner ? (
+                  <div className="card-actions wrap product-owner-actions">
+                    <button type="button" className="secondary" onClick={() => startEdit(product)} disabled={productBusy}>
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="secondary danger-btn"
+                      disabled={productBusy}
+                      onClick={() => {
+                        if (window.confirm(`Remove “${product.name}” from the catalog?`)) {
+                          void onDeleteProduct?.(product.id);
+                        }
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ) : null}
               </article>
             ))}
           </div>
         </>
       ) : (
-        <p className="field-help">No catalog items yet. Check back soon.</p>
+        <p className="field-help">
+          {isOwner ? "No catalog items yet. Add your first product above." : "No catalog items yet. Check back soon."}
+        </p>
       )}
 
       <SectionTitle title="Projects available here" />
