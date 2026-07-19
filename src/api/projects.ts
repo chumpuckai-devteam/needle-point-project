@@ -32,6 +32,13 @@ type DbUpdateRow = {
 type DbMaterial = { project_id: string; type: string; brand: string; color_name: string; notes: string };
 type DbTag = { project_id: string; tags: { name: string; category: string } | null };
 
+export type RecommendationSurface = "discover" | "studio";
+
+type RecommendedProjectRow = DbProjectRow & {
+  recommendation_score?: number;
+  matched_interests?: string[];
+};
+
 const statusFromDb: Record<DbProjectRow["status"], Status> = {
   planned: "planned",
   in_progress: "in progress",
@@ -81,14 +88,16 @@ function mapUpdate(row: DbUpdateRow, comments: ProgressUpdate["comments"] = []):
 }
 
 function mapProject(
-  row: DbProjectRow,
+  row: DbProjectRow | RecommendedProjectRow,
   materials: string[],
   stitches: string[],
   colors: string[],
   updates: ProgressUpdate[],
   flags: { likes: number; isLiked: boolean; isSaved: boolean },
+  storeIds: string[] = [],
 ): Project {
   const image = row.primary_image_url || "";
+  const recommended = row as RecommendedProjectRow;
   return {
     id: row.id,
     title: row.title,
@@ -111,7 +120,36 @@ function mapProject(
     visibility: row.visibility,
     progress: row.progress,
     updates,
+    storeIds,
+    recommendationScore: recommended.recommendation_score,
+    matchedInterests: recommended.matched_interests,
   };
+}
+
+export async function fetchRecommendedProjects({
+  surface,
+  currentUserId,
+  limit = 100,
+}: {
+  surface: RecommendationSurface;
+  currentUserId?: string | null;
+  limit?: number;
+}): Promise<Project[]> {
+  if (!isSupabaseConfigured) return [];
+  const client = requireSupabase();
+
+  const { data: rows, error } = await client.rpc("get_recommended_projects", {
+    p_surface: surface,
+    p_limit: limit,
+    p_cursor: null,
+  });
+
+  // During rolling deploys the frontend may reach Supabase before the new RPC is
+  // applied. Keep the public feed alive with the pre-ranking default path.
+  if (error) return fetchPublicProjects(currentUserId);
+  if (!rows?.length) return [];
+
+  return loadProjectRelations(rows as RecommendedProjectRow[], currentUserId);
 }
 
 export async function fetchPublicProjects(currentUserId?: string | null): Promise<Project[]> {
@@ -125,20 +163,51 @@ export async function fetchPublicProjects(currentUserId?: string | null): Promis
   if (error) throw error;
   if (!rows?.length) return [];
 
+  return loadProjectRelations(rows as DbProjectRow[], currentUserId);
+}
+
+export async function dismissRecommendedProjectOnline(
+  userId: string,
+  projectId: string,
+  surface: RecommendationSurface,
+): Promise<void> {
+  const client = requireSupabase();
+  const { error } = await client.from("recommendation_dismissals").upsert(
+    {
+      user_id: userId,
+      project_id: projectId,
+      surface,
+      dismissed_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id,project_id,surface" },
+  );
+  if (error) throw error;
+}
+
+async function loadProjectRelations(rows: DbProjectRow[], currentUserId?: string | null): Promise<Project[]> {
+  const client = requireSupabase();
+
   const ids = rows.map((r) => r.id as string);
 
-  const [{ data: materials }, { data: tags }, { data: updates }, { data: reactions }, { data: saved }] = await Promise.all([
-    client.from("materials").select("project_id,type,brand,color_name,notes").in("project_id", ids),
-    client.from("project_tags").select("project_id, tags(name, category)").in("project_id", ids),
-    client.from("project_updates").select("*").in("project_id", ids).order("created_at", { ascending: false }),
-    client.from("reactions").select("target_id,user_id").eq("target_type", "project").in("target_id", ids),
-    currentUserId
-      ? client
-          .from("collection_items")
-          .select("project_id, collections!inner(user_id)")
-          .eq("collections.user_id", currentUserId)
-      : Promise.resolve({ data: [] as { project_id: string }[] }),
-  ]);
+  const [{ data: materials }, { data: tags }, { data: updates }, { data: reactions }, { data: saved }, projectStoresResult] =
+    await Promise.all([
+      client.from("materials").select("project_id,type,brand,color_name,notes").in("project_id", ids),
+      client.from("project_tags").select("project_id, tags(name, category)").in("project_id", ids),
+      client.from("project_updates").select("*").in("project_id", ids).order("created_at", { ascending: false }),
+      client.from("reactions").select("target_id,user_id").eq("target_type", "project").in("target_id", ids),
+      currentUserId
+        ? client
+            .from("collection_items")
+            .select("project_id, collections!inner(user_id, is_default)")
+            .eq("collections.user_id", currentUserId)
+            .eq("collections.is_default", true)
+        : Promise.resolve({ data: [] as { project_id: string }[] }),
+      // project_stores may be missing on very early deploys — never fail the public feed
+      client.from("project_stores").select("project_id, store_id").in("project_id", ids).then(
+        (result) => result,
+        () => ({ data: null as { project_id: string; store_id: string }[] | null, error: null }),
+      ),
+    ]);
 
   const materialsByProject = groupMaterials(materials as DbMaterial[] | null);
   const tagsByProject = groupTags(tags as DbTag[] | null);
@@ -159,14 +228,32 @@ export async function fetchPublicProjects(currentUserId?: string | null): Promis
 
   const savedSet = new Set(((saved as { project_id: string }[] | null) ?? []).map((s) => s.project_id));
 
+  const storeIdsByProject = new Map<string, string[]>();
+  // Ignore link-table errors (missing relation); empty map leaves storeIds=[]
+  if (!projectStoresResult.error) {
+    for (const row of projectStoresResult.data ?? []) {
+      const list = storeIdsByProject.get(row.project_id) ?? [];
+      list.push(row.store_id);
+      storeIdsByProject.set(row.project_id, list);
+    }
+  }
+
   return (rows as DbProjectRow[]).map((row) => {
     const tagInfo = tagsByProject.get(row.id) ?? { stitches: [], colors: [] };
     const likeInfo = likesByProject.get(row.id) ?? { count: 0, mine: false };
-    return mapProject(row, materialsByProject.get(row.id) ?? [], tagInfo.stitches, tagInfo.colors, updatesByProject.get(row.id) ?? [], {
-      likes: likeInfo.count,
-      isLiked: likeInfo.mine,
-      isSaved: savedSet.has(row.id),
-    });
+    return mapProject(
+      row,
+      materialsByProject.get(row.id) ?? [],
+      tagInfo.stitches,
+      tagInfo.colors,
+      updatesByProject.get(row.id) ?? [],
+      {
+        likes: likeInfo.count,
+        isLiked: likeInfo.mine,
+        isSaved: savedSet.has(row.id),
+      },
+      storeIdsByProject.get(row.id) ?? [],
+    );
   });
 }
 

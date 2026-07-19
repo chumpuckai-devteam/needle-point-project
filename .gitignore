@@ -10,3 +10,6 @@ playwright-report/
 .env.local
 vite.config.js
 vite.config.d.ts
+core
+supabase/.temp/
+dogfood-output/

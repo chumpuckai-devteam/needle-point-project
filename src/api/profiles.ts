@@ -27,12 +27,12 @@ export type ProfileUpdateInput = {
   location: string;
   avatarUrl: string;
   isCreator: boolean;
-  links: { label: string; url: string }[];
+  links: { id?: string; label: string; url: string }[];
 };
 
 function mapProfile(
   p: ProfileRow,
-  links: { label: string; url: string }[] = [],
+  links: { id?: string; label: string; url: string }[] = [],
   followers = 0,
   specialties: string[] = [],
 ): ProfileDetails {
@@ -63,7 +63,7 @@ export async function fetchProfiles(): Promise<Creator[]> {
   if (!ids.length) return [];
 
   const [{ data: links }, { data: follows }, { data: interests }] = await Promise.all([
-    client.from("profile_links").select("profile_id,label,url").in("profile_id", ids),
+    client.from("profile_links").select("id,profile_id,label,url").in("profile_id", ids),
     client.from("follows").select("following_id"),
     client.from("profile_interests").select("profile_id,interest").in("profile_id", ids),
   ]);
@@ -73,10 +73,10 @@ export async function fetchProfiles(): Promise<Creator[]> {
     followerCounts.set(f.following_id, (followerCounts.get(f.following_id) ?? 0) + 1);
   }
 
-  const linksByProfile = new Map<string, { label: string; url: string }[]>();
+  const linksByProfile = new Map<string, { id?: string; label: string; url: string }[]>();
   for (const link of links ?? []) {
     const list = linksByProfile.get(link.profile_id) ?? [];
-    list.push({ label: link.label, url: link.url });
+    list.push({ id: link.id, label: link.label, url: link.url });
     linksByProfile.set(link.profile_id, list);
   }
 
@@ -100,14 +100,14 @@ export async function fetchProfileById(userId: string): Promise<ProfileDetails |
   if (!data) return null;
 
   const [{ data: links }, { data: follows }, { data: interests }] = await Promise.all([
-    client.from("profile_links").select("label,url").eq("profile_id", userId).order("sort_order"),
+    client.from("profile_links").select("id,label,url").eq("profile_id", userId).order("sort_order"),
     client.from("follows").select("following_id").eq("following_id", userId),
     client.from("profile_interests").select("interest").eq("profile_id", userId),
   ]);
 
   return mapProfile(
     data as ProfileRow,
-    (links ?? []).map((l) => ({ label: l.label, url: l.url })),
+    (links ?? []).map((l) => ({ id: l.id, label: l.label, url: l.url })),
     (follows ?? []).length,
     (interests ?? []).map((i) => i.interest),
   );

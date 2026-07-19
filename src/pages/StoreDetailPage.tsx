@@ -1,0 +1,632 @@
+import { FormEvent, useEffect, useId, useState } from "react";
+import { ExternalLink, Plus } from "lucide-react";
+import type { Project, Store, StoreProduct } from "../types";
+import type { StoreProductInput, StoreProfileInput } from "../api/stores";
+import type { View } from "../appModel";
+import { ImageFilePicker } from "../components/ImageFilePicker";
+import { SectionTitle } from "../components/ui";
+
+function storeProfileFromStore(store: Store): StoreProfileInput {
+  return {
+    name: store.name,
+    description: store.description,
+    websiteUrl: store.websiteUrl,
+    location: store.location,
+    city: store.city,
+    avatar: store.avatar,
+    coverImage: store.coverImage,
+    specialties: store.specialties,
+  };
+}
+
+function isLikelyUrl(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return true;
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+export function StoreDetailView({
+  store,
+  projects,
+  isFollowed,
+  isOwner,
+  canClaim,
+  claimBusy,
+  productBusy,
+  productError,
+  profileBusy,
+  profileError,
+  profileSuccess,
+  canUpload = true,
+  toggleStoreFollow,
+  onClaimStore,
+  onCreateProduct,
+  onUpdateProduct,
+  onDeleteProduct,
+  onUpdateProfile,
+  setView,
+}: {
+  store: Store;
+  projects: Project[];
+  isFollowed: boolean;
+  isOwner: boolean;
+  canClaim: boolean;
+  claimBusy?: boolean;
+  productBusy?: boolean;
+  productError?: string;
+  profileBusy?: boolean;
+  profileError?: string;
+  profileSuccess?: string;
+  canUpload?: boolean;
+  toggleStoreFollow: (storeId: string) => void;
+  onClaimStore?: () => void;
+  onCreateProduct?: (input: StoreProductInput, imageFile?: File | null) => Promise<void>;
+  onUpdateProduct?: (productId: string, input: StoreProductInput, imageFile?: File | null) => Promise<void>;
+  onDeleteProduct?: (productId: string) => void | Promise<void>;
+  onUpdateProfile?: (input: StoreProfileInput, files?: { avatarFile?: File | null; coverFile?: File | null }) => Promise<void>;
+  setView: (view: View) => void;
+}) {
+  const blankProduct = (): StoreProductInput => ({
+    name: "",
+    description: "",
+    image: "",
+    priceLabel: "",
+    externalUrl: "",
+    category: "canvas",
+  });
+  const avatarFileId = useId();
+  const coverFileId = useId();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<StoreProductInput>(blankProduct());
+  const [productImageFile, setProductImageFile] = useState<File | null>(null);
+  const [productImageError, setProductImageError] = useState("");
+  const [existingProductImage, setExistingProductImage] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [showProfileForm, setShowProfileForm] = useState(false);
+  const [profileDraft, setProfileDraft] = useState<StoreProfileInput>(() => storeProfileFromStore(store));
+  const [specialtiesText, setSpecialtiesText] = useState(store.specialties.join(", "));
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState("");
+  const [coverPreview, setCoverPreview] = useState("");
+  const [localProfileError, setLocalProfileError] = useState("");
+
+  useEffect(() => {
+    if (!showProfileForm) {
+      setProfileDraft(storeProfileFromStore(store));
+      setSpecialtiesText(store.specialties.join(", "));
+    }
+  }, [store, showProfileForm]);
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreview.startsWith("blob:")) URL.revokeObjectURL(avatarPreview);
+      if (coverPreview.startsWith("blob:")) URL.revokeObjectURL(coverPreview);
+    };
+  }, [avatarPreview, coverPreview]);
+
+  function resetProductImage() {
+    setProductImageFile(null);
+    setProductImageError("");
+    setExistingProductImage("");
+  }
+
+  function startCreate() {
+    setShowProfileForm(false);
+    setEditingId(null);
+    setDraft(blankProduct());
+    resetProductImage();
+    setShowForm(true);
+  }
+
+  function startEdit(product: StoreProduct) {
+    setShowProfileForm(false);
+    setEditingId(product.id);
+    const keepImage = product.image && !product.image.startsWith("/assets/") ? product.image : "";
+    setDraft({
+      name: product.name,
+      description: product.description,
+      image: keepImage,
+      priceLabel: product.priceLabel,
+      externalUrl: product.externalUrl,
+      category: product.category || "canvas",
+    });
+    setProductImageFile(null);
+    setProductImageError("");
+    setExistingProductImage(product.image || "");
+    setShowForm(true);
+  }
+
+  function startProfileEdit() {
+    setShowForm(false);
+    setEditingId(null);
+    setProfileDraft(storeProfileFromStore(store));
+    setSpecialtiesText(store.specialties.join(", "));
+    setAvatarFile(null);
+    setCoverFile(null);
+    if (avatarPreview.startsWith("blob:")) URL.revokeObjectURL(avatarPreview);
+    if (coverPreview.startsWith("blob:")) URL.revokeObjectURL(coverPreview);
+    setAvatarPreview("");
+    setCoverPreview("");
+    setLocalProfileError("");
+    setShowProfileForm(true);
+  }
+
+  function cancelProfileEdit() {
+    setShowProfileForm(false);
+    setAvatarFile(null);
+    setCoverFile(null);
+    if (avatarPreview.startsWith("blob:")) URL.revokeObjectURL(avatarPreview);
+    if (coverPreview.startsWith("blob:")) URL.revokeObjectURL(coverPreview);
+    setAvatarPreview("");
+    setCoverPreview("");
+    setLocalProfileError("");
+  }
+
+  function pickAvatar(file: File | null) {
+    if (!file) return;
+    if (avatarPreview.startsWith("blob:")) URL.revokeObjectURL(avatarPreview);
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+    setLocalProfileError("");
+  }
+
+  function pickCover(file: File | null) {
+    if (!file) return;
+    if (coverPreview.startsWith("blob:")) URL.revokeObjectURL(coverPreview);
+    setCoverFile(file);
+    setCoverPreview(URL.createObjectURL(file));
+    setLocalProfileError("");
+  }
+
+  async function submitProduct(event: FormEvent) {
+    event.preventDefault();
+    if (!draft.name.trim() || productBusy) return;
+    if (productImageError) return;
+    try {
+      if (editingId) {
+        await onUpdateProduct?.(editingId, draft, productImageFile);
+      } else {
+        await onCreateProduct?.(draft, productImageFile);
+      }
+      setShowForm(false);
+      setEditingId(null);
+      setDraft(blankProduct());
+      resetProductImage();
+    } catch {
+      /* parent sets productError */
+    }
+  }
+
+  async function submitProfile(event: FormEvent) {
+    event.preventDefault();
+    if (profileBusy || !isOwner) return;
+    const name = profileDraft.name.trim();
+    if (!name) {
+      setLocalProfileError("Shop name is required.");
+      return;
+    }
+    if (!isLikelyUrl(profileDraft.websiteUrl || "")) {
+      setLocalProfileError("Website URL must start with http:// or https://.");
+      return;
+    }
+    const specialties = specialtiesText
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+    setLocalProfileError("");
+    try {
+      await onUpdateProfile?.(
+        {
+          ...profileDraft,
+          name,
+          description: profileDraft.description?.trim() || "",
+          websiteUrl: profileDraft.websiteUrl?.trim() || "",
+          location: profileDraft.location?.trim() || "",
+          city: profileDraft.city?.trim() || "",
+          avatar: profileDraft.avatar?.trim() || "",
+          coverImage: profileDraft.coverImage?.trim() || "",
+          specialties,
+        },
+        { avatarFile, coverFile },
+      );
+      setShowProfileForm(false);
+      setAvatarFile(null);
+      setCoverFile(null);
+      if (avatarPreview.startsWith("blob:")) URL.revokeObjectURL(avatarPreview);
+      if (coverPreview.startsWith("blob:")) URL.revokeObjectURL(coverPreview);
+      setAvatarPreview("");
+      setCoverPreview("");
+    } catch {
+      /* parent sets profileError */
+    }
+  }
+
+  const shownAvatar = avatarPreview || profileDraft.avatar || store.avatar;
+  const shownCover = coverPreview || profileDraft.coverImage || store.coverImage || store.avatar;
+  const profileMessage = localProfileError || profileError || "";
+
+  return (
+    <section className="page">
+      <div className="store-detail-hero panel">
+        <img className="store-detail-cover" src={store.coverImage || store.avatar} alt="" />
+        <div className="store-detail-head">
+          <img src={store.avatar} alt="" />
+          <div>
+            <p className="eyebrow">{isOwner ? "Your shop" : "Store"}</p>
+            <h1>{store.name}</h1>
+            <p className="store-detail-meta">
+              @{store.handle}
+              {store.location ? ` · ${store.location}` : ""}
+              {store.shipsNationwide ? " · Ships nationwide" : ""}
+              {typeof store.followerCount === "number" ? ` · ${store.followerCount} followers` : ""}
+            </p>
+            <p className="store-detail-desc">{store.description}</p>
+            <div className="tag-row">
+              {store.specialties.map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="card-actions wrap store-detail-actions">
+          {!isOwner ? (
+            <button type="button" className={isFollowed ? "selected" : ""} onClick={() => toggleStoreFollow(store.id)}>
+              {isFollowed ? "Following" : "Follow store"}
+            </button>
+          ) : null}
+          {canClaim && onClaimStore ? (
+            <button type="button" className="primary" disabled={claimBusy} onClick={() => onClaimStore()}>
+              {claimBusy ? "Claiming…" : "Claim this shop"}
+            </button>
+          ) : null}
+          {isOwner ? (
+            <>
+              <button type="button" className="secondary" onClick={startProfileEdit} disabled={profileBusy}>
+                Edit shop profile
+              </button>
+              <button type="button" className="primary" onClick={startCreate}>
+                <Plus size={16} /> Add product
+              </button>
+            </>
+          ) : null}
+          {store.websiteUrl ? (
+            <a className="secondary" href={store.websiteUrl} target="_blank" rel="noreferrer">
+              Visit website <ExternalLink size={14} />
+            </a>
+          ) : null}
+          <button type="button" className="secondary" onClick={() => setView({ name: "stores" })}>
+            All stores
+          </button>
+        </div>
+      </div>
+
+      {profileSuccess && !showProfileForm ? <p className="field-help success-text store-profile-banner">{profileSuccess}</p> : null}
+
+      {isOwner && showProfileForm ? (
+        <form className="panel store-product-form store-profile-form" onSubmit={(event) => void submitProfile(event)}>
+          <SectionTitle title="Edit shop profile" />
+          <p className="field-help">These details appear on your public shop page. Only you can edit them.</p>
+
+          <label>
+            <span className="field-label">Shop name</span>
+            <input
+              required
+              value={profileDraft.name}
+              onChange={(event) => setProfileDraft((current) => ({ ...current, name: event.target.value }))}
+              placeholder="Canopy Canvas"
+              maxLength={80}
+              disabled={profileBusy}
+            />
+          </label>
+
+          <label>
+            <span className="field-label">Description</span>
+            <textarea
+              rows={4}
+              value={profileDraft.description || ""}
+              onChange={(event) => setProfileDraft((current) => ({ ...current, description: event.target.value }))}
+              placeholder="Painted canvases, threads, and finishing for local stitchers."
+              maxLength={1000}
+              disabled={profileBusy}
+            />
+          </label>
+
+          <label>
+            <span className="field-label">Website</span>
+            <input
+              type="url"
+              value={profileDraft.websiteUrl || ""}
+              onChange={(event) => setProfileDraft((current) => ({ ...current, websiteUrl: event.target.value }))}
+              placeholder="https://yourshop.com"
+              disabled={profileBusy}
+            />
+          </label>
+
+          <div className="form-grid-2">
+            <label>
+              <span className="field-label">Location label</span>
+              <input
+                value={profileDraft.location || ""}
+                onChange={(event) => setProfileDraft((current) => ({ ...current, location: event.target.value }))}
+                placeholder="Portland, OR"
+                maxLength={120}
+                disabled={profileBusy}
+              />
+            </label>
+            <label>
+              <span className="field-label">City</span>
+              <input
+                value={profileDraft.city || ""}
+                onChange={(event) => setProfileDraft((current) => ({ ...current, city: event.target.value }))}
+                placeholder="Portland"
+                maxLength={80}
+                disabled={profileBusy}
+              />
+            </label>
+          </div>
+
+          <label>
+            <span className="field-label">Specialties</span>
+            <input
+              value={specialtiesText}
+              onChange={(event) => setSpecialtiesText(event.target.value)}
+              placeholder="painted canvases, finishing, threads"
+              disabled={profileBusy}
+            />
+            <span className="field-help">Comma-separated tags (up to 10) shown on your public profile.</span>
+          </label>
+
+          <div className="store-profile-media">
+            <div className="image-upload-field">
+              <span className="field-label">Avatar</span>
+              <div className="image-upload-preview compact store-avatar-preview">
+                <img src={shownAvatar} alt="" />
+                <div className="card-actions wrap">
+                  <label className="secondary file-button" htmlFor={avatarFileId}>
+                    {canUpload ? "Upload avatar" : "Choose avatar"}
+                  </label>
+                </div>
+              </div>
+              <input
+                id={avatarFileId}
+                type="file"
+                accept="image/*"
+                className="visually-hidden"
+                disabled={!canUpload || profileBusy}
+                onChange={(event) => {
+                  pickAvatar(event.target.files?.[0] ?? null);
+                  event.target.value = "";
+                }}
+              />
+              <label>
+                <span className="field-label">Or avatar URL</span>
+                <input
+                  value={profileDraft.avatar || ""}
+                  onChange={(event) => {
+                    setAvatarFile(null);
+                    if (avatarPreview.startsWith("blob:")) URL.revokeObjectURL(avatarPreview);
+                    setAvatarPreview("");
+                    setProfileDraft((current) => ({ ...current, avatar: event.target.value }));
+                  }}
+                  placeholder="https://…"
+                  disabled={profileBusy}
+                />
+              </label>
+            </div>
+
+            <div className="image-upload-field">
+              <span className="field-label">Cover image</span>
+              <div className="image-upload-preview compact store-cover-preview">
+                <img src={shownCover} alt="" />
+                <div className="card-actions wrap">
+                  <label className="secondary file-button" htmlFor={coverFileId}>
+                    {canUpload ? "Upload cover" : "Choose cover"}
+                  </label>
+                </div>
+              </div>
+              <input
+                id={coverFileId}
+                type="file"
+                accept="image/*"
+                className="visually-hidden"
+                disabled={!canUpload || profileBusy}
+                onChange={(event) => {
+                  pickCover(event.target.files?.[0] ?? null);
+                  event.target.value = "";
+                }}
+              />
+              <label>
+                <span className="field-label">Or cover URL</span>
+                <input
+                  value={profileDraft.coverImage || ""}
+                  onChange={(event) => {
+                    setCoverFile(null);
+                    if (coverPreview.startsWith("blob:")) URL.revokeObjectURL(coverPreview);
+                    setCoverPreview("");
+                    setProfileDraft((current) => ({ ...current, coverImage: event.target.value }));
+                  }}
+                  placeholder="https://…"
+                  disabled={profileBusy}
+                />
+              </label>
+            </div>
+          </div>
+
+          {profileMessage ? <p className="field-help error-text">{profileMessage}</p> : null}
+          {profileSuccess && showProfileForm ? <p className="field-help success-text">{profileSuccess}</p> : null}
+
+          <div className="card-actions wrap">
+            <button type="submit" className="primary" disabled={profileBusy || !profileDraft.name.trim()}>
+              {profileBusy ? "Saving…" : "Save shop profile"}
+            </button>
+            <button type="button" className="secondary" onClick={cancelProfileEdit} disabled={profileBusy}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {isOwner && showForm ? (
+        <form className="panel store-product-form" onSubmit={(event) => void submitProduct(event)}>
+          <SectionTitle title={editingId ? "Edit catalog item" : "New catalog item"} />
+          <p className="field-help">Link-out only — price is a label, shoppers leave Needlepoint to buy.</p>
+          <label>
+            <span className="field-label">Name</span>
+            <input
+              required
+              value={draft.name}
+              onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
+              placeholder="Persimmon Garden pillow canvas"
+            />
+          </label>
+          <label>
+            <span className="field-label">Description</span>
+            <textarea
+              rows={3}
+              value={draft.description}
+              onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))}
+              placeholder="18 mesh painted canvas"
+            />
+          </label>
+          <div className="form-grid-2">
+            <label>
+              <span className="field-label">Price label</span>
+              <input
+                value={draft.priceLabel}
+                onChange={(event) => setDraft((current) => ({ ...current, priceLabel: event.target.value }))}
+                placeholder="from $86"
+              />
+            </label>
+            <label>
+              <span className="field-label">Category</span>
+              <select
+                value={draft.category}
+                onChange={(event) => setDraft((current) => ({ ...current, category: event.target.value }))}
+              >
+                <option value="canvas">Canvas</option>
+                <option value="thread">Thread</option>
+                <option value="kit">Kit</option>
+                <option value="finishing">Finishing</option>
+                <option value="class">Class</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            <span className="field-label">Shop link (external URL)</span>
+            <input
+              type="url"
+              value={draft.externalUrl}
+              onChange={(event) => setDraft((current) => ({ ...current, externalUrl: event.target.value }))}
+              placeholder="https://yourshop.com/product"
+            />
+          </label>
+          <ImageFilePicker
+            label="Product photo (optional)"
+            compact
+            canUpload={canUpload}
+            disabled={Boolean(productBusy)}
+            file={productImageFile}
+            onFileChange={setProductImageFile}
+            urlValue={draft.image || ""}
+            onUrlChange={(image) => setDraft((current) => ({ ...current, image }))}
+            existingPreview={existingProductImage}
+            onClearExisting={() => setExistingProductImage("")}
+            error={productImageError}
+            onErrorChange={setProductImageError}
+            helpText={
+              canUpload
+                ? "JPG, PNG, WebP, or GIF up to 8MB. You can also paste a URL below."
+                : "Sign in with Supabase to upload files, or paste a URL."
+            }
+          />
+          {productError ? <p className="field-help error-text">{productError}</p> : null}
+          <div className="card-actions wrap">
+            <button type="submit" className="primary" disabled={productBusy || !draft.name.trim() || Boolean(productImageError)}>
+              {productBusy ? "Saving…" : editingId ? "Save changes" : "Add to catalog"}
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => {
+                setShowForm(false);
+                setEditingId(null);
+                setDraft(blankProduct());
+                resetProductImage();
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {store.products.length > 0 ? (
+        <>
+          <SectionTitle title="Catalog" />
+          <div className="product-grid">
+            {store.products.map((product) => (
+              <article key={product.id} className="product-card panel">
+                <img src={product.image} alt={product.name} />
+                <strong>{product.name}</strong>
+                <p className="product-card-desc">{product.description}</p>
+                <div className="metric-row product-card-meta">
+                  <span>{product.priceLabel || product.category}</span>
+                  {product.externalUrl ? (
+                    <a href={product.externalUrl} target="_blank" rel="noreferrer">
+                      Shop link <ExternalLink size={13} />
+                    </a>
+                  ) : null}
+                </div>
+                {isOwner ? (
+                  <div className="card-actions wrap product-owner-actions">
+                    <button type="button" className="secondary" onClick={() => startEdit(product)} disabled={productBusy}>
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="secondary danger-btn"
+                      disabled={productBusy}
+                      onClick={() => {
+                        if (window.confirm(`Remove “${product.name}” from the catalog?`)) {
+                          void onDeleteProduct?.(product.id);
+                        }
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        </>
+      ) : (
+        <p className="field-help">
+          {isOwner ? "No catalog items yet. Add your first product above." : "No catalog items yet. Check back soon."}
+        </p>
+      )}
+
+      <SectionTitle title="Projects available here" />
+      {projects.length ? (
+        <div className="visual-grid">
+          {projects.map((project) => (
+            <button key={project.id} type="button" className="ig-grid-cell" onClick={() => setView({ name: "project", id: project.id })}>
+              <img src={project.image} alt={project.title} />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="field-help">No projects have tagged this store yet. Owners can mark “Available at” on a project.</p>
+      )}
+    </section>
+  );
+}
+
+export { StoreDetailView as StoreDetailPage };

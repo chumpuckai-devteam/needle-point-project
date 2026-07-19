@@ -15,7 +15,7 @@ export type Creator = {
   isCreator: boolean;
   location: string;
   followers: number;
-  links: { label: string; url: string }[];
+  links: { id?: string; label: string; url: string }[];
   specialties: string[];
 };
 
@@ -60,6 +60,9 @@ export type Project = {
   progress: number;
   updates: ProgressUpdate[];
   storeIds?: string[];
+  /** Optional ranking debug fields from get_recommended_projects / client ranker. */
+  recommendationScore?: number;
+  matchedInterests?: string[];
 };
 
 export type StoreProduct = {
@@ -86,6 +89,8 @@ export type Store = {
   location: string;
   city: string;
   region: string;
+  /** US ZIP / postal code (empty string when unknown). */
+  postalCode: string;
   country: string;
   shipsNationwide: boolean;
   specialties: string[];
@@ -103,6 +108,7 @@ export type Collection = {
   name: string;
   description: string;
   projectIds: string[];
+  isDefault?: boolean;
 };
 
 export type StitchAlong = {
@@ -110,9 +116,16 @@ export type StitchAlong = {
   title: string;
   hostId: string;
   dates: string;
+  startDate: string;
+  endDate: string;
   theme: string;
   description: string;
   rules: string[];
   participantProjectIds: string[];
   joined: boolean;
+  isPublic: boolean;
+  coverImageUrl?: string;
+  status?: "draft" | "active" | "ended";
+  /** Join count (preferred participant metric). */
+  participantCount?: number;
 };

@@ -7,8 +7,12 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "seed": "node scripts/seed.mjs",
+    "seed:reset": "node scripts/seed.mjs --reset",
     "lint": "eslint \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\" \"*.config.{js,ts}\"",
-    "test:smoke": "playwright test"
+    "test:smoke": "playwright test tests/mvp-smoke.spec.ts tests/v3-matrix.spec.ts tests/owner-crud-smoke.spec.ts tests/available-at-flow.spec.ts tests/shop-detail-follow-smoke.spec.ts tests/auth-smoke.spec.ts tests/critical-flows.spec.ts",
+    "test:e2e": "playwright test tests/mvp-smoke.spec.ts tests/v3-matrix.spec.ts tests/owner-crud-smoke.spec.ts tests/available-at-flow.spec.ts tests/shop-detail-follow-smoke.spec.ts tests/auth-smoke.spec.ts tests/critical-flows.spec.ts",
+    "test:e2e:critical": "playwright test tests/critical-flows.spec.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.6",

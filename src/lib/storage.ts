@@ -23,6 +23,7 @@ export type PersistedState = {
   projects: Project[];
   collections: Collection[];
   stitchAlong: StitchAlong;
+  stitchAlongs?: StitchAlong[];
   followedCreators: string[];
 };
 
