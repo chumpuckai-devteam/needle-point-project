@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { DragEvent, useEffect, useId, useState } from "react";
 import { Plus } from "lucide-react";
 import { validateImageFile } from "../api/images";
 
@@ -51,6 +51,7 @@ export function ImageFilePicker({
 }: ImageFilePickerProps) {
   const fileInputId = useId();
   const [blobPreview, setBlobPreview] = useState("");
+  const [dragging, setDragging] = useState(false);
 
   useEffect(() => {
     if (!file) {
@@ -65,8 +66,15 @@ export function ImageFilePicker({
   }, [file]);
 
   const preview = blobPreview || urlValue.trim() || existingPreview;
-  const dropzoneClass = compact ? "image-upload-dropzone compact" : "image-upload-dropzone";
+  const dropzoneClass = [
+    "image-upload-dropzone",
+    compact ? "compact" : "",
+    dragging ? "is-dragging" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
   const previewClass = compact ? "image-upload-preview compact" : "image-upload-preview";
+  const dropEnabled = canUpload && !disabled;
 
   function setError(message: string) {
     onErrorChange?.(message);
@@ -90,13 +98,53 @@ export function ImageFilePicker({
     onUrlChange("");
     onClearExisting?.();
     setError("");
+    setDragging(false);
+  }
+
+  function onDragEnter(event: DragEvent) {
+    if (!dropEnabled) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setDragging(true);
+  }
+
+  function onDragOver(event: DragEvent) {
+    if (!dropEnabled) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = "copy";
+    setDragging(true);
+  }
+
+  function onDragLeave(event: DragEvent) {
+    if (!dropEnabled) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const related = event.relatedTarget as Node | null;
+    if (related && event.currentTarget.contains(related)) return;
+    setDragging(false);
+  }
+
+  function onDrop(event: DragEvent) {
+    if (!dropEnabled) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setDragging(false);
+    const next = event.dataTransfer.files?.[0] ?? null;
+    pickFile(next);
   }
 
   return (
     <div className="image-upload-field">
       <span className="field-label">{label}</span>
       {preview ? (
-        <div className={previewClass}>
+        <div
+          className={previewClass}
+          onDragEnter={onDragEnter}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+        >
           <img src={preview} alt="" />
           <div className="card-actions wrap">
             <label className="secondary file-button" htmlFor={fileInputId}>
@@ -106,9 +154,17 @@ export function ImageFilePicker({
               Remove
             </button>
           </div>
+          {dragging && dropEnabled ? <p className="field-help">Drop to replace photo</p> : null}
         </div>
       ) : (
-        <label className={dropzoneClass} htmlFor={fileInputId}>
+        <label
+          className={dropzoneClass}
+          htmlFor={fileInputId}
+          onDragEnter={onDragEnter}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+        >
           <span className="action-card-icon">
             <Plus size={18} />
           </span>
