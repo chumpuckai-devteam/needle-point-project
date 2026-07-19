@@ -316,6 +316,17 @@ export function AppShell() {
   }, [creatorById, dismissedDiscover, filters, interestProfile, publicProjects, query]);
 
   function setView(view: View) {
+    // Guests may browse freely; posting/account-write destinations require sign-in online.
+    if (
+      isSupabaseConfigured &&
+      !isDemoMode &&
+      !user &&
+      (view.name === "journal" || view.name === "onboarding")
+    ) {
+      setRemoteError(view.name === "journal" ? "Sign in to create a post." : "Sign in to finish onboarding.");
+      navigate("/auth");
+      return;
+    }
     if (view.name === "profile") {
       const creator = creators.find((candidate) => candidate.id === view.id);
       navigate(`/u/${creator?.handle ?? view.id}`);
@@ -327,6 +338,24 @@ export function AppShell() {
     }
     navigate(pathForView(view));
   }
+
+  /** Online guests can view; interactions require a real session. Demo stays fully interactive. */
+  function requireAuth(actionLabel: string): boolean {
+    if (!isSupabaseConfigured || isDemoMode) return true;
+    if (user) return true;
+    setRemoteError(`Sign in to ${actionLabel}.`);
+    navigate("/auth");
+    return false;
+  }
+
+  // Deep-link /journal while signed out → auth (view still allowed on all other routes).
+  useEffect(() => {
+    if (!isSupabaseConfigured || isDemoMode || user) return;
+    if (location.pathname === "/journal" || location.pathname.startsWith("/journal/")) {
+      setRemoteError("Sign in to create a post.");
+      navigate("/auth", { replace: true });
+    }
+  }, [isDemoMode, location.pathname, navigate, user]);
 
   function openDiscover(patch?: Partial<{ category: string; stitch: string; color: string; status: string; query: string }>) {
     setFilters({
@@ -341,6 +370,7 @@ export function AppShell() {
   }
 
   function toggleLike(id: string) {
+    if (!requireAuth("like posts")) return;
     const project = projects.find((item) => item.id === id);
     setProjects((current) =>
       current.map((item) =>
@@ -355,6 +385,7 @@ export function AppShell() {
   }
 
   function toggleSave(id: string) {
+    if (!requireAuth("save posts")) return;
     const project = projects.find((item) => item.id === id);
     setProjects((current) => current.map((item) => (item.id === id ? { ...item, isSaved: !item.isSaved } : item)));
     setCollections((current) =>
@@ -377,6 +408,7 @@ export function AppShell() {
   }
 
   function toggleFollow(id: string) {
+    if (!requireAuth("follow people")) return;
     const currently = followedCreators.includes(id);
     setFollowedCreators((current) => (currently ? current.filter((creatorId) => creatorId !== id) : [...current, id]));
     if (isSupabaseConfigured && user) {
@@ -388,11 +420,7 @@ export function AppShell() {
 
   function toggleStoreFollow(storeId: string) {
     // Online guests must sign in. Demo/offline toggles local state → localStorage storeFollows.
-    if (isSupabaseConfigured && !user) {
-      setRemoteError("Sign in to follow stores.");
-      setView({ name: "auth" });
-      return;
-    }
+    if (!requireAuth("follow stores")) return;
     const currently = followedStores.includes(storeId);
     // Optimistic + idempotent; useEffect persists followedStores to STORAGE_KEYS.storeFollows.
     setFollowedStores((current) =>
@@ -434,11 +462,7 @@ export function AppShell() {
   }
 
   async function claimStore(storeId: string) {
-    if (isSupabaseConfigured && !user) {
-      setRemoteError("Sign in to claim a shop.");
-      setView({ name: "auth" });
-      return;
-    }
+    if (!requireAuth("claim a shop")) return;
     setClaimBusy(true);
     setRemoteError("");
     try {
@@ -650,6 +674,7 @@ export function AppShell() {
 
   async function submitProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!requireAuth("create a post")) return;
     if (!draft.title.trim() || uploadBusy) return;
 
     setUploadBusy(true);
@@ -759,6 +784,7 @@ export function AppShell() {
   }
 
   async function saveProjectEdits(projectId: string, draft: DraftProject & { progress: number }, imageFile?: File | null) {
+    if (!requireAuth("edit projects")) return;
     const project = projects.find((item) => item.id === projectId);
     if (!project) throw new Error("Project not found");
     if (isSupabaseConfigured && user && project.creatorId !== user.id) {
@@ -832,6 +858,7 @@ export function AppShell() {
   }
 
   async function addProgressUpdate(projectId: string) {
+    if (!requireAuth("post progress updates")) return;
     if (updateBusy) return;
     const note = updateNote.trim();
     const milestone = updateMilestone.trim() || "Progress logged";
@@ -902,6 +929,7 @@ export function AppShell() {
   }
 
   function addComment(projectId: string) {
+    if (!requireAuth("comment on posts")) return;
     if (!commentText.trim()) return;
     const body = commentText.trim();
     const author = user?.name || "You";
@@ -933,6 +961,7 @@ export function AppShell() {
   }
 
   function joinStitchAlong(stitchAlongId = stitchAlong.id) {
+    if (!requireAuth("join stitch-alongs")) return;
     setStitchAlongs((currentList) => {
       const current = currentList.find((event) => event.id === stitchAlongId) ?? currentList[0] ?? seedStitchAlong;
       const wasJoined = current.joined;
@@ -952,6 +981,7 @@ export function AppShell() {
   }
 
   function submitToStitchAlong(projectId: string, stitchAlongId = stitchAlong.id) {
+    if (!requireAuth("submit to a stitch-along")) return;
     const project = accessibleProjects.find((item) => item.id === projectId);
     if (!project || project.visibility !== "public") {
       setRemoteError("Only public projects can join a stitch-along gallery. Switch visibility to Public first.");
@@ -990,6 +1020,7 @@ export function AppShell() {
     endDate: string;
     coverImageUrl: string;
   }) {
+    if (!requireAuth("host a stitch-along")) return;
     setSalCreateError("");
     const local: StitchAlong = {
       id: `sa-local-${Date.now()}`,
@@ -1040,6 +1071,7 @@ export function AppShell() {
   }
 
   function dismissRecommendation(surface: "discover" | "studio", projectId: string) {
+    if (!requireAuth("skip recommendations")) return;
     if (surface === "discover") {
       setDismissedDiscover((current) => (current.includes(projectId) ? current : [...current, projectId]));
     } else {
@@ -1049,8 +1081,6 @@ export function AppShell() {
       void dismissRecommendedProjectOnline(user.id, projectId, surface).catch((error) => {
         setRemoteError(error instanceof Error ? error.message : "Could not save skip");
       });
-    } else if (isSupabaseConfigured && !user) {
-      setRemoteError("Sign in to remember skipped recommendations across devices.");
     }
   }
 
@@ -1059,7 +1089,8 @@ export function AppShell() {
     remoteError.startsWith("Public post link") ||
     remoteError.startsWith("Private link") ||
     remoteError.startsWith("This project is private") ||
-    remoteError.startsWith("Share this public");
+    remoteError.startsWith("Share this public") ||
+    remoteError.startsWith("Sign in to ");
 
   return (
     <AppLayout
