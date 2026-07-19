@@ -1,4 +1,5 @@
 import type { View } from "../appModel";
+import { storeDetailPath } from "../lib/storeLinks";
 
 export function pathForView(view: View) {
   switch (view.name) {
@@ -15,7 +16,7 @@ export function pathForView(view: View) {
     case "stores":
       return "/stores";
     case "store":
-      return `/stores/${view.handle}`;
+      return storeDetailPath(view.handle);
     case "auth":
       return "/auth";
     case "onboarding":

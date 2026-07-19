@@ -4,10 +4,19 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { normalizeStoreIdentifier } from "../src/api/stores";
+import {
+  findStoreByIdentifier,
+  isStoresBrowseReturnPath,
+  resolveStoresReturnTo,
+  storeDetailPath,
+} from "../src/lib/storeLinks";
+import type { Store } from "../src/types";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
 const storesApi = readFileSync(path.join(root, "src/api/stores.ts"), "utf8");
+const storeRoute = readFileSync(path.join(root, "src/pages/StoreRoute.tsx"), "utf8");
+const storesPage = readFileSync(path.join(root, "src/pages/StoresPage.tsx"), "utf8");
 const docs = readFileSync(path.join(root, "docs/supabase-setup.md"), "utf8");
 
 function readMigrations(): string {
@@ -18,6 +27,11 @@ function readMigrations(): string {
     .map((name) => readFileSync(path.join(migrationsDir, name), "utf8"))
     .join("\n");
 }
+
+const sampleStores = [
+  { id: "store-local-1", handle: "canopycanvas", name: "Canopy" },
+  { id: "550e8400-e29b-41d4-a716-446655440000", handle: "threadandtonic", name: "Thread" },
+] as Store[];
 
 test.describe("store city browse backend contract", () => {
   test("normalizes deep-link identifiers without making handles unstable", () => {
@@ -65,5 +79,29 @@ test.describe("store city browse backend contract", () => {
     expect(docs).toContain("fetchStoreCityDirectory(limit?) -> StoreCityDirectoryEntry[]");
     expect(docs).toContain("fetchStoreByIdentifier(identifier) -> Store | null");
     expect(docs).toContain("Public browse: anon and authenticated clients can execute both RPCs");
+  });
+
+  test("store detail deep-link helpers resolve handle and id", () => {
+    expect(storeDetailPath("CanopyCanvas")).toBe("/stores/canopycanvas");
+    expect(storeDetailPath("/stores/ThreadAndTonic?x=1")).toBe("/stores/threadandtonic");
+    expect(findStoreByIdentifier(sampleStores, "canopycanvas")?.id).toBe("store-local-1");
+    expect(findStoreByIdentifier(sampleStores, "STORE-LOCAL-1")?.handle).toBe("canopycanvas");
+    expect(findStoreByIdentifier(sampleStores, "550e8400-e29b-41d4-a716-446655440000")?.handle).toBe("threadandtonic");
+    expect(isStoresBrowseReturnPath("/stores?city=Austin&region=TX")).toBe(true);
+    expect(isStoresBrowseReturnPath("/stores/canopycanvas")).toBe(false);
+    expect(resolveStoresReturnTo({ storesReturnTo: "/stores?city=Portland&region=OR" })).toBe(
+      "/stores?city=Portland&region=OR",
+    );
+    expect(resolveStoresReturnTo({ storesReturnTo: "https://evil.example" })).toBe("/stores");
+  });
+
+  test("browse cards and store route wire shareable detail URLs", () => {
+    expect(storesPage).toContain("to={detailHref}");
+    expect(storesPage).toContain("storesReturnTo");
+    expect(storesPage).toContain("data-store-handle");
+    expect(storeRoute).toContain("fetchStoreByIdentifier");
+    expect(storeRoute).toContain("findStoreByIdentifier");
+    expect(storeRoute).toContain("browseReturnTo");
+    expect(storeRoute).toContain("storeDetailPath");
   });
 });

@@ -230,15 +230,17 @@ export const initialProjects: Project[] = [
 export const initialCollections: Collection[] = [
   {
     id: "col1",
-    name: "Next on the stretcher bars",
-    description: "Saved projects with stitch ideas for the next month.",
+    name: "Saved",
+    description: "Projects you saved from discovery.",
     projectIds: ["p1", "p3"],
+    isDefault: true,
   },
   {
     id: "col2",
     name: "Holiday finishing ideas",
     description: "Ornaments, metallic thread notes, and quick gifts.",
     projectIds: ["p2"],
+    isDefault: false,
   },
 ];
 

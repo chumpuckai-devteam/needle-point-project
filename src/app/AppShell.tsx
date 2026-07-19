@@ -2,6 +2,13 @@ import { createProjectOnline, fetchRecommendedProjects, dismissRecommendedProjec
 import { fetchProfiles, toggleFollowOnline } from "../api/profiles";
 import { addCommentOnline, toggleProjectLikeOnline, toggleSaveOnline } from "../api/social";
 import {
+  createCollectionOnline,
+  deleteCollectionOnline,
+  listCollectionsOnline,
+  renameCollectionOnline,
+} from "../api/collections";
+import { submitReportOnline, type ReportInput } from "../api/reports";
+import {
   createStitchAlongOnline,
   getStitchAlongOnline,
   joinStitchAlongOnline,
@@ -444,9 +451,10 @@ export function AppShell() {
     if (!requireAuth("save posts")) return;
     const project = projects.find((item) => item.id === id);
     setProjects((current) => current.map((item) => (item.id === id ? { ...item, isSaved: !item.isSaved } : item)));
-    setCollections((current) =>
-      current.map((collection) =>
-        collection.id === "col1"
+    setCollections((current) => {
+      const defaultId = current.find((c) => c.isDefault)?.id ?? "col1";
+      return current.map((collection) =>
+        collection.id === defaultId
           ? {
               ...collection,
               projectIds: collection.projectIds.includes(id)
@@ -454,14 +462,80 @@ export function AppShell() {
                 : [...collection.projectIds, id],
             }
           : collection,
-      ),
-    );
+      );
+    });
     if (isSupabaseConfigured && user && project) {
       void toggleSaveOnline(user.id, id, project.isSaved).catch((error) => {
         setRemoteError(error instanceof Error ? error.message : "Save failed");
       });
     }
   }
+
+  async function createCollection(input: { name: string; description: string }) {
+    if (!requireAuth("create boards")) throw new Error("Sign in to create boards.");
+    const name = input.name.trim();
+    if (!name) throw new Error("Board name is required.");
+    if (isSupabaseConfigured && user && !isDemoMode) {
+      const created = await createCollectionOnline(input);
+      setCollections((current) => [...current, created]);
+      return;
+    }
+    const id = `col-${Date.now()}`;
+    setCollections((current) => [
+      ...current,
+      { id, name, description: input.description.trim(), projectIds: [], isDefault: false },
+    ]);
+  }
+
+  async function renameCollection(id: string, input: { name: string; description: string }) {
+    if (!requireAuth("edit boards")) throw new Error("Sign in to edit boards.");
+    const name = input.name.trim();
+    if (!name) throw new Error("Board name is required.");
+    if (isSupabaseConfigured && user && !isDemoMode) {
+      const updated = await renameCollectionOnline(id, input);
+      setCollections((current) => current.map((c) => (c.id === id ? updated : c)));
+      return;
+    }
+    setCollections((current) =>
+      current.map((c) => (c.id === id ? { ...c, name, description: input.description.trim() } : c)),
+    );
+  }
+
+  async function deleteCollection(id: string) {
+    if (!requireAuth("delete boards")) throw new Error("Sign in to delete boards.");
+    const target = collections.find((c) => c.id === id);
+    if (!target) return;
+    if (target.isDefault || target.id === "col1") throw new Error("Default Saved board cannot be deleted.");
+    if (isSupabaseConfigured && user && !isDemoMode) {
+      await deleteCollectionOnline({ id: target.id, isDefault: Boolean(target.isDefault) });
+    }
+    setCollections((current) => current.filter((c) => c.id !== id));
+  }
+
+  async function submitReport(input: ReportInput) {
+    if (!requireAuth("report content")) throw new Error("Sign in to submit a report.");
+    if (isDemoMode || !isSupabaseConfigured) {
+      // Demo queue: acknowledge without remote write.
+      return;
+    }
+    await submitReportOnline(input);
+  }
+
+  // Soft-load online multi-boards when signed in (best effort).
+  useEffect(() => {
+    if (!isSupabaseConfigured || !user || isDemoMode) return;
+    let cancelled = false;
+    void listCollectionsOnline(user.id)
+      .then((rows) => {
+        if (!cancelled && rows.length) setCollections(rows);
+      })
+      .catch(() => {
+        /* keep local/demo boards */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, isDemoMode]);
 
   function toggleFollow(id: string) {
     if (!requireAuth("follow people")) return;
@@ -1236,6 +1310,11 @@ export function AppShell() {
         setQuery={setQuery}
         setFilters={setFilters}
         collections={collections}
+        canManageCollections={Boolean(user) || isDemoMode || !isSupabaseConfigured}
+        onCreateCollection={(input) => createCollection(input)}
+        onRenameCollection={(id, input) => renameCollection(id, input)}
+        onDeleteCollection={(id) => deleteCollection(id)}
+        onReport={(input) => submitReport(input)}
         draft={draft}
         setDraft={setDraft}
         submitProject={(event) => void submitProject(event)}

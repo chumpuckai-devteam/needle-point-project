@@ -76,6 +76,11 @@ export type AppRoutesProps = {
   setQuery: Dispatch<SetStateAction<string>>;
   setFilters: Dispatch<SetStateAction<DiscoverFilters>>;
   collections: Collection[];
+  canManageCollections: boolean;
+  onCreateCollection: (input: { name: string; description: string }) => Promise<void>;
+  onRenameCollection: (id: string, input: { name: string; description: string }) => Promise<void>;
+  onDeleteCollection: (id: string) => Promise<void>;
+  onReport: (input: import("../api/reports").ReportInput) => Promise<void>;
   draft: DraftProject;
   setDraft: Dispatch<SetStateAction<DraftProject>>;
   submitProject: (event: FormEvent<HTMLFormElement>) => void;
@@ -211,6 +216,10 @@ export function AppRoutes(props: AppRoutesProps) {
             projects={props.accessibleProjects}
             creatorById={props.creatorById}
             setView={props.setView}
+            canManage={props.canManageCollections}
+            onCreateCollection={props.onCreateCollection}
+            onRenameCollection={props.onRenameCollection}
+            onDeleteCollection={props.onDeleteCollection}
           />
         }
       />
@@ -265,6 +274,7 @@ export function AppRoutes(props: AppRoutesProps) {
             profileSuccess={props.profileSuccess}
             onUpdateProfile={props.onUpdateProfile}
             setView={props.setView}
+            onReport={props.onReport}
           />
         }
       />
@@ -337,6 +347,7 @@ export function AppRoutes(props: AppRoutesProps) {
             stores={props.stores}
             setView={props.setView}
             projectLoading={props.projectLoading}
+            onReport={props.onReport}
           />
         }
       />
@@ -350,6 +361,7 @@ export function AppRoutes(props: AppRoutesProps) {
             followedCreators={props.followedCreators}
             toggleFollow={props.toggleFollow}
             setView={props.setView}
+            onReport={props.onReport}
           />
         }
       />

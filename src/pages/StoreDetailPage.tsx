@@ -1,11 +1,15 @@
 import { FormEvent, useEffect, useId, useState } from "react";
 import { ExternalLink, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import type { Project, Store, StoreProduct } from "../types";
 import type { StoreProductInput, StoreProfileInput } from "../api/stores";
+import type { ReportInput } from "../api/reports";
 import { recordOutboundClickEvent } from "../api/clickEvents";
 import type { View } from "../appModel";
 import { ImageFilePicker } from "../components/ImageFilePicker";
+import { ReportControl } from "../components/ReportControl";
 import { EmptyState, SectionTitle } from "../components/ui";
+import { isStoresBrowseReturnPath } from "../lib/storeLinks";
 import { uiCopy } from "../lib/uiCopy";
 
 function storeProfileFromStore(store: Store): StoreProfileInput {
@@ -81,6 +85,8 @@ export function StoreDetailView({
   onDeleteProduct,
   onUpdateProfile,
   setView,
+  browseReturnTo = "/stores",
+  onReport,
 }: {
   store: Store;
   projects: Project[];
@@ -103,7 +109,13 @@ export function StoreDetailView({
   onDeleteProduct?: (productId: string) => void | Promise<void>;
   onUpdateProfile?: (input: StoreProfileInput, files?: { avatarFile?: File | null; coverFile?: File | null }) => Promise<void>;
   setView: (view: View) => void;
+  /** Browse path (+ query) to restore city/ZIP/location context. */
+  browseReturnTo?: string;
+  onReport?: (input: ReportInput) => void | Promise<void>;
 }) {
+  const navigate = useNavigate();
+  const shopsBackPath = isStoresBrowseReturnPath(browseReturnTo) ? browseReturnTo : "/stores";
+  const shopsBackLabel = shopsBackPath.includes("?") ? "Back to shops" : "All stores";
   const blankProduct = (): StoreProductInput => ({
     name: "",
     description: "",
@@ -339,8 +351,11 @@ export function StoreDetailView({
               Visit website <ExternalLink size={14} />
             </a>
           ) : null}
-          <button type="button" className="secondary" onClick={() => setView({ name: "stores" })}>
-            All stores
+          {!isOwner && onReport ? (
+            <ReportControl targetType="store" targetId={store.id} targetLabel={store.name} onSubmit={onReport} />
+          ) : null}
+          <button type="button" className="secondary" onClick={() => navigate(shopsBackPath)}>
+            {shopsBackLabel}
           </button>
         </div>
       </div>

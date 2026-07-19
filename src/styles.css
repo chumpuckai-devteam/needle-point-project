@@ -1819,6 +1819,15 @@ ul {
   overflow: hidden;
   border: 1px solid #e5ddd3;
   cursor: pointer;
+  color: inherit;
+  text-decoration: none;
+  display: block;
+}
+
+a.store-card:hover,
+a.store-card:focus-visible {
+  border-color: rgba(63, 111, 91, 0.45);
+  outline: none;
 }
 
 .store-card-cover {
@@ -4150,3 +4159,12 @@ label textarea::placeholder {
   }
 }
 
+
+
+/* Epic P density */
+.collection-toolbar { display: flex; gap: 0.5rem; margin: 0.75rem 0 1rem; }
+.collection-card-head { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; flex-wrap: wrap; }
+.collection-create-form, .collection-edit-form { display: grid; gap: 0.75rem; margin-bottom: 1rem; }
+.report-control { display: grid; gap: 0.5rem; }
+.report-form { display: grid; gap: 0.65rem; margin-top: 0.35rem; max-width: 28rem; }
+.profile-actions { display: flex; flex-direction: column; gap: 0.5rem; align-items: stretch; }

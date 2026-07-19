@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useEffect, useId, useMemo, useRef, useState, type MutableRefObject } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { MapPin, Navigation, Search } from "lucide-react";
 import type { Store } from "../types";
 import type { View } from "../appModel";
@@ -25,6 +25,7 @@ import {
   type StoreDiscoveryMapPin,
   type StoreDiscoveryResponse,
 } from "../lib/storeDiscovery";
+import type { StoresBrowseLocationState } from "../lib/storeLinks";
 import { EmptyState, SectionHeader, SectionTitle, Skeleton } from "../components/ui";
 import { uiCopy } from "../lib/uiCopy";
 
@@ -170,7 +171,9 @@ export function StoresView({
   const searchFieldId = useId();
   const resultsHeadingId = useId();
   const onlineSectionRef = useRef<HTMLElement | null>(null);
-  const listRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const listRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
+  const location = useLocation();
+  const browseReturnTo = `${location.pathname}${location.search}`;
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchInput, setSearchInput] = useState(() => searchParams.get("zip") || searchParams.get("city") || "");
@@ -844,7 +847,7 @@ export function StoresView({
               />
               <StoreCardGrid
                 stores={discovery.list}
-                setView={setView}
+                browseReturnTo={browseReturnTo}
                 showDistance={showDistance}
                 selectedId={selectedPinId}
                 listRefs={listRefs}
@@ -916,7 +919,7 @@ export function StoresView({
               <p className="store-online-fallback-copy store-online-helper">
                 Shop profiles link out to each shop&apos;s own site. Needlepoint does not handle checkout.
               </p>
-              <StoreCardGrid stores={discovery.onlineFallback} setView={setView} showDistance={false} listRefs={listRefs} />
+              <StoreCardGrid stores={discovery.onlineFallback} browseReturnTo={browseReturnTo} showDistance={false} listRefs={listRefs} />
             </section>
           ) : null}
         </div>
@@ -926,59 +929,65 @@ export function StoresView({
 }
 function StoreCardGrid({
   stores,
-  setView,
+  browseReturnTo,
   showDistance = false,
   selectedId = null,
   listRefs,
   onHighlight,
 }: {
   stores: StoreDiscoveryListItem[];
-  setView: (view: View) => void;
+  browseReturnTo: string;
   showDistance?: boolean;
   selectedId?: string | null;
-  listRefs: MutableRefObject<Record<string, HTMLButtonElement | null>>;
+  listRefs: MutableRefObject<Record<string, HTMLAnchorElement | null>>;
   onHighlight?: (id: string | null) => void;
 }) {
   return (
     <div className="store-grid">
-      {stores.map((store) => (
-        <button
-          key={store.id}
-          type="button"
-          className={`store-card panel${selectedId === store.id ? " is-selected" : ""}`}
-          ref={(node) => {
-            listRefs.current[store.id] = node;
-          }}
-          onClick={() => setView({ name: "store", handle: store.handle })}
-          onFocus={() => onHighlight?.(store.id)}
-          data-store-id={store.id}
-        >
-          <img className="store-card-cover" src={store.coverImage || store.avatar} alt="" />
-          <div className="store-card-body">
-            <img className="store-card-avatar" src={store.avatar} alt="" />
-            <strong>{store.name}</strong>
-            <small>@{store.handle}</small>
-            <p>{store.location || store.description || "Needlepoint supplier"}</p>
-            <div className="tag-row">
-              <span>{storeTypeLabel(store.storeType)}</span>
-              {showDistance && store.distanceMiles != null ? (
-                <span className="distance-tag">{formatDistanceMiles(store.distanceMiles)}</span>
-              ) : null}
-              {store.shipsNationwide ? <span>Ships nationwide</span> : null}
-              {(store.specialties ?? []).slice(0, 3).map((specialty) => (
-                <span key={specialty}>{specialty}</span>
-              ))}
-              {store.projectCount > 0 ? <span>{store.projectCount} projects</span> : null}
-              {typeof store.followerCount === "number" && store.followerCount > 0 ? (
-                <span>
-                  {store.followerCount} follower{store.followerCount === 1 ? "" : "s"}
-                </span>
-              ) : null}
+      {stores.map((store) => {
+        const detailHref = store.detailUrl || `/stores/${store.handle}`;
+        const linkState: StoresBrowseLocationState = { storesReturnTo: browseReturnTo };
+        return (
+          <Link
+            key={store.id}
+            to={detailHref}
+            state={linkState}
+            className={`store-card panel${selectedId === store.id ? " is-selected" : ""}`}
+            ref={(node) => {
+              listRefs.current[store.id] = node;
+            }}
+            onFocus={() => onHighlight?.(store.id)}
+            data-store-id={store.id}
+            data-store-handle={store.handle}
+            aria-label={`View shop ${store.name}`}
+          >
+            <img className="store-card-cover" src={store.coverImage || store.avatar} alt="" />
+            <div className="store-card-body">
+              <img className="store-card-avatar" src={store.avatar} alt="" />
+              <strong>{store.name}</strong>
+              <small>@{store.handle}</small>
+              <p>{store.location || store.description || "Needlepoint supplier"}</p>
+              <div className="tag-row">
+                <span>{storeTypeLabel(store.storeType)}</span>
+                {showDistance && store.distanceMiles != null ? (
+                  <span className="distance-tag">{formatDistanceMiles(store.distanceMiles)}</span>
+                ) : null}
+                {store.shipsNationwide ? <span>Ships nationwide</span> : null}
+                {(store.specialties ?? []).slice(0, 3).map((specialty) => (
+                  <span key={specialty}>{specialty}</span>
+                ))}
+                {store.projectCount > 0 ? <span>{store.projectCount} projects</span> : null}
+                {typeof store.followerCount === "number" && store.followerCount > 0 ? (
+                  <span>
+                    {store.followerCount} follower{store.followerCount === 1 ? "" : "s"}
+                  </span>
+                ) : null}
+              </div>
+              <span className="store-card-cta">View shop</span>
             </div>
-            <span className="store-card-cta">View shop</span>
-          </div>
-        </button>
-      ))}
+          </Link>
+        );
+      })}
     </div>
   );
 }

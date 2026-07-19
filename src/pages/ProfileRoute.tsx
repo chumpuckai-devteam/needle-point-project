@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import type { Creator, Project } from "../types";
 import type { View } from "../appModel";
+import type { ReportInput } from "../api/reports";
 import { recordCreatorLinkClick } from "../api/creatorLinkClicks";
 import { EmptyState } from "../components/ui";
 import { ProfileView } from "./ProfilePage";
@@ -12,6 +13,7 @@ export function ProfileRoute({
   followedCreators,
   toggleFollow,
   setView,
+  onReport,
 }: {
   creatorByHandle: (handle: string) => Creator | undefined;
   projects: Project[];
@@ -19,6 +21,7 @@ export function ProfileRoute({
   followedCreators: string[];
   toggleFollow: (id: string) => void;
   setView: (view: View) => void;
+  onReport?: (input: ReportInput) => void | Promise<void>;
 }) {
   const { handle = "" } = useParams();
   const creator = creatorByHandle(handle);
@@ -35,7 +38,6 @@ export function ProfileRoute({
     );
 
   const isSelf = Boolean(viewerId && creator.id === viewerId);
-  // Other profiles: public only. Own profile: include private journal pieces with badges.
   const profileProjects = projects.filter(
     (project) => project.creatorId === creator.id && (project.visibility === "public" || isSelf),
   );
@@ -48,9 +50,16 @@ export function ProfileRoute({
       isFollowed={followedCreators.includes(creator.id)}
       toggleFollow={toggleFollow}
       onExternalLinkClick={(creatorId, link) => {
-        if (!link.id) return;
-        void recordCreatorLinkClick({ profileId: creatorId, profileLinkId: link.id, linkUrl: link.url });
+        // Online analytics only when first-class profile_link id exists.
+        if (link.id) {
+          void recordCreatorLinkClick({ profileId: creatorId, profileLinkId: link.id, linkUrl: link.url });
+        }
       }}
+      onReport={
+        !isSelf && onReport
+          ? (input) => onReport({ ...input, targetType: "profile", targetId: creator.id, targetLabel: `@${creator.handle}` })
+          : undefined
+      }
       setView={setView}
     />
   );

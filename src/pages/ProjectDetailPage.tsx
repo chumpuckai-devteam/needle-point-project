@@ -2,9 +2,11 @@ import { FormEvent, useEffect, useId, useState } from "react";
 import { Bookmark, ExternalLink, Heart, Share2, Store as StoreIcon, UserRound } from "lucide-react";
 import type { Creator, Difficulty, Project, Status, Store, StoreProduct } from "../types";
 import type { DraftProject, View } from "../appModel";
+import type { ReportInput } from "../api/reports";
 import { difficultyOptions, statusOptions, visibilityHelp, visibilityLabel } from "../appModel";
-import { recordOutboundClickEvent } from "../api/clickEvents";
 import { EmptyState, Field, Meta, SectionTitle } from "../components/ui";
+import { ReportControl } from "../components/ReportControl";
+import { recordOutboundClickEvent } from "../api/clickEvents";
 import { mapProjectEditError, uiCopy } from "../lib/uiCopy";
 
 function trackShopLinkClick(product: StoreProduct, storeId: string, surface: string, placement: string) {
@@ -51,6 +53,7 @@ export function ProjectDetail(props: {
   stores: Store[];
   projectStores: Store[];
   setView: (view: View) => void;
+  onReport?: (input: ReportInput) => void | Promise<void>;
 }) {
   const isFollowed = props.followedCreators.includes(props.creator.id);
   const [editing, setEditing] = useState(false);
@@ -269,6 +272,14 @@ export function ProjectDetail(props: {
               </button>
             </div>
           )}
+          {!props.isOwner && props.onReport ? (
+            <ReportControl
+              targetType="project"
+              targetId={props.project.id}
+              targetLabel={props.project.title}
+              onSubmit={props.onReport}
+            />
+          ) : null}
           {editing ? (
             <form className="form-grid" onSubmit={(event) => void onSaveEdits(event)}>
               <Field label="Title" value={editDraft.title} onChange={(title) => setEditDraft({ ...editDraft, title })} required className="full-field" />

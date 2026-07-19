@@ -1,7 +1,9 @@
 import { ExternalLink, UserRound } from "lucide-react";
 import type { Creator, Project } from "../types";
 import type { View } from "../appModel";
+import type { ReportInput } from "../api/reports";
 import { EmptyState, SectionTitle } from "../components/ui";
+import { ReportControl } from "../components/ReportControl";
 
 export function ProfileView({
   creator,
@@ -10,6 +12,7 @@ export function ProfileView({
   isFollowed,
   toggleFollow,
   onExternalLinkClick,
+  onReport,
   setView,
 }: {
   creator: Creator;
@@ -18,6 +21,7 @@ export function ProfileView({
   isFollowed: boolean;
   toggleFollow: (id: string) => void;
   onExternalLinkClick?: (creatorId: string, link: { id?: string; label: string; url: string }) => void;
+  onReport?: (input: ReportInput) => void | Promise<void>;
   setView: (view: View) => void;
 }) {
   const publicCount = projects.filter((project) => project.visibility === "public").length;
@@ -40,9 +44,14 @@ export function ProfileView({
           <div className="tag-row">{creator.specialties.map((tag) => <span key={tag}>{tag}</span>)}</div>
         </div>
         {!isSelf ? (
-          <button className={`secondary ${isFollowed ? "selected" : ""}`} type="button" onClick={() => toggleFollow(creator.id)}>
-            <UserRound size={17} /> {isFollowed ? "Following" : "Follow"}
-          </button>
+          <div className="profile-actions">
+            <button className={`secondary ${isFollowed ? "selected" : ""}`} type="button" onClick={() => toggleFollow(creator.id)}>
+              <UserRound size={17} /> {isFollowed ? "Following" : "Follow"}
+            </button>
+            {onReport ? (
+              <ReportControl targetType="profile" targetId={creator.id} targetLabel={`@${creator.handle}`} onSubmit={onReport} />
+            ) : null}
+          </div>
         ) : (
           <button className="secondary" type="button" onClick={() => setView({ name: "journal" })}>
             Your journal

@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import type { Creator, Project, Store } from "../types";
 import type { DraftProject, View } from "../appModel";
+import type { ReportInput } from "../api/reports";
 import { DetailSkeleton, EmptyState } from "../components/ui";
 import { uiCopy } from "../lib/uiCopy";
 import { ProjectDetail } from "./ProjectDetailPage";
@@ -34,18 +35,16 @@ export function ProjectRoute(props: {
   canUpload: boolean;
   stores: Store[];
   setView: (view: View) => void;
-  /** True until first remote project hydrate resolves. */
   projectLoading?: boolean;
+  onReport?: (input: ReportInput) => void | Promise<void>;
 }) {
   const { id = "" } = useParams();
   const project = props.projectById(id);
 
-  // Avoid "not found" flash while online boot is still hydrating projects.
   if (!project && props.projectLoading) {
     return <DetailSkeleton label="Loading project" />;
   }
 
-  // Missing or inaccessible private → identical empty chrome (no title/metadata leak).
   if (!project) {
     return (
       <EmptyState
@@ -92,6 +91,7 @@ export function ProjectRoute(props: {
       stores={props.stores}
       projectStores={projectStores}
       setView={props.setView}
+      onReport={props.onReport}
     />
   );
 }
