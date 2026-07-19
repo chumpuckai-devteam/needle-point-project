@@ -1,36 +1,4 @@
--- Interest-ranked Discover/Studio recommendations + surface-specific skips
-
-create table if not exists public.recommendation_dismissals (
-  user_id uuid not null references public.profiles (id) on delete cascade,
-  project_id uuid not null references public.projects (id) on delete cascade,
-  surface text not null,
-  dismissed_at timestamptz not null default now(),
-  constraint recommendation_dismissals_surface_check check (surface in ('discover', 'studio')),
-  primary key (user_id, project_id, surface)
-);
-
-create index if not exists recommendation_dismissals_project_idx
-  on public.recommendation_dismissals (project_id);
-create index if not exists recommendation_dismissals_user_surface_idx
-  on public.recommendation_dismissals (user_id, surface, dismissed_at desc);
-
-alter table public.recommendation_dismissals enable row level security;
-
-drop policy if exists "recommendation_dismissals_select_own" on public.recommendation_dismissals;
-create policy "recommendation_dismissals_select_own" on public.recommendation_dismissals
-  for select to authenticated
-  using ((select auth.uid()) = user_id);
-
-drop policy if exists "recommendation_dismissals_insert_own" on public.recommendation_dismissals;
-create policy "recommendation_dismissals_insert_own" on public.recommendation_dismissals
-  for insert to authenticated
-  with check ((select auth.uid()) = user_id);
-
-drop policy if exists "recommendation_dismissals_delete_own" on public.recommendation_dismissals;
-create policy "recommendation_dismissals_delete_own" on public.recommendation_dismissals
-  for delete to authenticated
-  using ((select auth.uid()) = user_id);
-
+-- Fix CTE reference in get_recommended_projects (join project_signal_text, not public.project_signal_text).
 create or replace function public.get_recommended_projects(
   p_surface text default 'discover',
   p_limit int default 50,
@@ -226,13 +194,4 @@ begin
 end;
 $$;
 
-comment on table public.recommendation_dismissals
-  is 'User-specific dismissed recommendation projects by surface. Used only to exclude future Discover/Studio recommendations.';
-comment on function public.get_recommended_projects(text, int, text)
-  is 'Returns public projects ranked by default quality plus authenticated profile interests and skill level, excluding surface-specific dismissals.';
-
-revoke all on public.recommendation_dismissals from anon, authenticated;
-grant select, insert, delete on public.recommendation_dismissals to authenticated;
-
-revoke all on function public.get_recommended_projects(text, int, text) from public;
 grant execute on function public.get_recommended_projects(text, int, text) to anon, authenticated;

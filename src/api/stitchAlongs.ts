@@ -96,7 +96,15 @@ export async function listPublicStitchAlongsOnline(currentUserId?: string | null
     .eq("is_public", true)
     .order("start_date", { ascending: true, nullsFirst: false })
     .order("updated_at", { ascending: false });
-  if (error) throw error;
+  // Rolling deploys / partial schema: never hard-fail Studio boot on SAL list.
+  if (error) {
+    const fallback = await client
+      .from("stitch_alongs")
+      .select(STITCH_ALONG_SELECT)
+      .order("updated_at", { ascending: false });
+    if (fallback.error) return [];
+    return ((fallback.data ?? []) as DbStitchAlongRow[]).map((row) => mapStitchAlong(row, currentUserId));
+  }
   return ((data ?? []) as DbStitchAlongRow[]).map((row) => mapStitchAlong(row, currentUserId));
 }
 

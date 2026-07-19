@@ -141,7 +141,8 @@ export function AppShell() {
     let cancelled = false;
     (async () => {
       try {
-        const [remoteProjects, remoteProfiles, remoteStores, remoteStoreFollows, remoteStitchAlongs] = await Promise.all([
+        // Soft-fail optional streams so one missing RPC/table never blanks Studio.
+        const settled = await Promise.allSettled([
           fetchRecommendedProjects({ surface: "studio", currentUserId: user?.id ?? null }),
           fetchProfiles(),
           fetchStores(),
@@ -149,6 +150,27 @@ export function AppShell() {
           listPublicStitchAlongsOnline(user?.id ?? null),
         ]);
         if (cancelled) return;
+
+        const remoteProjects = settled[0].status === "fulfilled" ? settled[0].value : [];
+        const remoteProfiles = settled[1].status === "fulfilled" ? settled[1].value : [];
+        const remoteStores = settled[2].status === "fulfilled" ? settled[2].value : [];
+        const remoteStoreFollows = settled[3].status === "fulfilled" ? settled[3].value : [];
+        const remoteStitchAlongs = settled[4].status === "fulfilled" ? settled[4].value : [];
+
+        const hardFailures = settled
+          .map((result, index) => ({ result, index }))
+          .filter(({ result, index }) => result.status === "rejected" && (index === 1 || index === 2));
+        // Profiles + stores are core; if both core paths fail, surface error.
+        if (hardFailures.length >= 2 && !remoteProfiles.length && !remoteStores.length && !remoteProjects.length) {
+          const reason = hardFailures[0]?.result;
+          const message =
+            reason && reason.status === "rejected" && reason.reason instanceof Error
+              ? reason.reason.message
+              : "Failed to load remote data";
+          setRemoteError(message);
+          return;
+        }
+
         if (remoteProfiles.length) setCreators(remoteProfiles);
         if (remoteStores.length) setStores(remoteStores);
         else setStores(DEMO_STORES);
@@ -159,13 +181,17 @@ export function AppShell() {
         }
         if (remoteStitchAlongs.length) {
           // Prefer full list; hydrate first detail so joins/submissions are complete when present.
-          const selected = await getStitchAlongOnline(remoteStitchAlongs[0].id, user?.id ?? null);
-          if (!cancelled) {
-            setStitchAlongs(
-              selected
-                ? [selected, ...remoteStitchAlongs.filter((event) => event.id !== selected.id)]
-                : remoteStitchAlongs,
-            );
+          try {
+            const selected = await getStitchAlongOnline(remoteStitchAlongs[0].id, user?.id ?? null);
+            if (!cancelled) {
+              setStitchAlongs(
+                selected
+                  ? [selected, ...remoteStitchAlongs.filter((event) => event.id !== selected.id)]
+                  : remoteStitchAlongs,
+              );
+            }
+          } catch {
+            if (!cancelled) setStitchAlongs(remoteStitchAlongs);
           }
         }
         if (user?.id) setFollowedStores(remoteStoreFollows);
