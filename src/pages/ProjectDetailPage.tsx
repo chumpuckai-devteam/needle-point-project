@@ -4,7 +4,8 @@ import type { Creator, Difficulty, Project, Status, Store, StoreProduct } from "
 import type { DraftProject, View } from "../appModel";
 import { difficultyOptions, statusOptions, visibilityHelp, visibilityLabel } from "../appModel";
 import { recordOutboundClickEvent } from "../api/clickEvents";
-import { Field, Meta, SectionTitle } from "../components/ui";
+import { EmptyState, Field, Meta, SectionTitle } from "../components/ui";
+import { mapProjectEditError, uiCopy } from "../lib/uiCopy";
 
 function trackShopLinkClick(product: StoreProduct, storeId: string, surface: string, placement: string) {
   void recordOutboundClickEvent({
@@ -87,11 +88,19 @@ export function ProjectDetail(props: {
       setEditPreview("");
       setEditing(false);
     } catch (error) {
-      setEditError(error instanceof Error ? error.message : "Could not save project");
+      console.error("saveProjectEdits failed", error);
+      setEditError(mapProjectEditError(error));
     } finally {
       setEditBusy(false);
     }
   }
+
+  const hasUpdates = props.project.updates.length > 0;
+  const taggedStores = props.projectStores;
+  const shopLookProducts = taggedStores.flatMap((store) =>
+    store.products.slice(0, 3).map((product) => ({ store, product })),
+  );
+  const showShopTheLook = taggedStores.length > 0;
 
   return (
     <section className="page">
@@ -155,11 +164,11 @@ export function ProjectDetail(props: {
                   />
                   <Field label="Or image URL" value={props.updateImageUrl} onChange={props.setUpdateImageUrl} placeholder="https://…" />
                 </div>
-                {props.updateError && (
-                  <p className="field-help" style={{ color: "#8a2f2f" }}>
+                {props.updateError ? (
+                  <p className="field-help field-error" role="alert">
                     {props.updateError}
                   </p>
-                )}
+                ) : null}
                 <button
                   className="primary"
                   type="button"
@@ -172,22 +181,43 @@ export function ProjectDetail(props: {
             ) : (
               <p className="field-help">Only the project owner can post progress updates.</p>
             )}
-            {props.project.updates.map((update) => (
-              <article className="timeline" key={update.id}>
-                <img src={update.image || props.project.image} alt="" />
-                <div>
-                  <strong>{update.milestone}</strong>
-                  <small>{update.date}</small>
-                  <p>{update.note}</p>
-                  {update.comments.map((comment) => (
-                    <p className="comment" key={comment.id}>
-                      <b>{comment.author}:</b> {comment.body}
-                    </p>
-                  ))}
-                </div>
-              </article>
-            ))}
-            {props.canComment === false ? (
+            {hasUpdates ? (
+              props.project.updates.map((update) => (
+                <article className="timeline" key={update.id}>
+                  <img src={update.image || props.project.image} alt="" />
+                  <div>
+                    <strong>{update.milestone}</strong>
+                    <small>{update.date}</small>
+                    <p>{update.note}</p>
+                    {update.comments.map((comment) => (
+                      <p className="comment" key={comment.id}>
+                        <b>{comment.author}:</b> {comment.body}
+                      </p>
+                    ))}
+                  </div>
+                </article>
+              ))
+            ) : (
+              <EmptyState
+                variant="inline"
+                minHeight={120}
+                title={
+                  props.isOwner
+                    ? uiCopy.projectDetail.updatesEmpty.owner.title
+                    : uiCopy.projectDetail.updatesEmpty.visitor.title
+                }
+                body={
+                  props.isOwner
+                    ? uiCopy.projectDetail.updatesEmpty.owner.body
+                    : uiCopy.projectDetail.updatesEmpty.visitor.body
+                }
+              />
+            )}
+            {!hasUpdates ? (
+              <div className="comment-box comment-box-disabled">
+                <p className="field-help">{uiCopy.projectDetail.commentsDisabledUntilUpdate}</p>
+              </div>
+            ) : props.canComment === false ? (
               <div className="comment-box comment-box-guest">
                 <p className="field-help">Sign in to leave a comment on this update.</p>
                 <button className="secondary" type="button" onClick={() => props.setView({ name: "auth" })}>
@@ -347,11 +377,11 @@ export function ProjectDetail(props: {
                   </div>
                 </div>
               )}
-              {editError && (
-                <p className="full-field field-help" style={{ color: "#8a2f2f" }}>
+              {editError ? (
+                <p className="full-field field-help field-error" role="alert">
                   {editError}
                 </p>
-              )}
+              ) : null}
               <div className="full-field card-actions wrap">
                 <button className="primary" type="submit" disabled={editBusy || !editDraft.title.trim()}>
                   {editBusy ? "Saving…" : "Save changes"}
@@ -421,36 +451,45 @@ export function ProjectDetail(props: {
                   </div>
                 </div>
               )}
-              {props.projectStores.some((store) => store.products.length > 0) && (
+              {showShopTheLook ? (
                 <div className="shop-the-look">
                   <SectionTitle title="Shop the look" />
-                  <p className="field-help">Link-outs from shops tagged on this project. No checkout on Needlepoint.</p>
-                  <div className="product-grid shop-look-grid">
-                    {props.projectStores.flatMap((store) =>
-                      store.products.slice(0, 3).map((product) => (
-                        <article key={`${store.id}-${product.id}`} className="product-card panel shop-look-card">
-                          <img src={product.image} alt={product.name} />
-                          <strong>{product.name}</strong>
-                          <p className="shop-look-store">@{store.handle}</p>
-                          <div className="metric-row product-card-meta">
-                            <span>{product.priceLabel || product.category}</span>
-                            {product.externalUrl ? (
-                              <a
-                                href={product.externalUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                onClick={() => trackShopLinkClick(product, store.id, "project_detail", "shop_the_look")}
-                              >
-                                Shop <ExternalLink size={13} />
-                              </a>
-                            ) : null}
-                          </div>
-                        </article>
-                      )),
-                    )}
-                  </div>
+                  {shopLookProducts.length > 0 ? (
+                    <>
+                      <p className="field-help">Link-outs from shops tagged on this project. No checkout on Needlepoint.</p>
+                      <div className="product-grid shop-look-grid">
+                        {shopLookProducts.map(({ store, product }) => (
+                          <article key={`${store.id}-${product.id}`} className="product-card panel shop-look-card">
+                            <img src={product.image} alt={product.name} />
+                            <strong>{product.name}</strong>
+                            <p className="shop-look-store">@{store.handle}</p>
+                            <div className="metric-row product-card-meta">
+                              <span>{product.priceLabel || product.category}</span>
+                              {product.externalUrl ? (
+                                <a
+                                  href={product.externalUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  onClick={() => trackShopLinkClick(product, store.id, "project_detail", "shop_the_look")}
+                                >
+                                  Shop <ExternalLink size={13} />
+                                </a>
+                              ) : null}
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <EmptyState
+                      variant="compact"
+                      minHeight={100}
+                      title={uiCopy.projectDetail.shopTheLookEmpty.title}
+                      body={uiCopy.projectDetail.shopTheLookEmpty.body}
+                    />
+                  )}
                 </div>
-              )}
+              ) : null}
               <a className="external" href={props.project.patternUrl} target="_blank" rel="noreferrer">
                 Pattern source: {props.project.patternSource} <ExternalLink size={15} />
               </a>

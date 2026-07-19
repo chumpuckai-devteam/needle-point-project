@@ -65,7 +65,7 @@ test.describe("shop location search backend contract", () => {
     });
     expect(normalizeStoreDiscoveryInput({ mode: "zip", zip: "unknown" })).toMatchObject({
       ok: false,
-      message: "Enter a 5-digit ZIP code.",
+      message: "Enter a 5-digit ZIP, or try a city like Austin, TX.",
     });
     expect(normalizeStoreDiscoveryInput({ mode: "city", city: " Portland, or ", radiusMiles: 999 as 60 })).toMatchObject({
       ok: true,

@@ -30,6 +30,7 @@ import type { Collection, Creator, MediaKind, Project, StitchAlong, Store } from
 import { useAuth } from "../context/AuthContext";
 import { isSupabaseConfigured, requireSupabase } from "../lib/supabase";
 import { loadFromStorage, saveToStorage } from "../lib/storage";
+import { mapJournalError, mapProjectUpdateError, uiCopy } from "../lib/uiCopy";
 import { composeStudioFeed, rankProjectsByInterest } from "../lib/interestRank";
 import {
   blankDraft,
@@ -82,6 +83,8 @@ export function AppShell() {
   });
   /** False until first online boot settles — avoids empty-state flash. */
   const [remoteReady, setRemoteReady] = useState(() => !isSupabaseConfigured);
+  /** Bump to re-run remote hydrate (Studio/Shops retry). */
+  const [remoteBootKey, setRemoteBootKey] = useState(0);
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState({ category: "all", difficulty: "all", stitch: "all", color: "all", status: "all" });
   const [draft, setDraft] = useState<DraftProject>(blankDraft);
@@ -98,7 +101,8 @@ export function AppShell() {
   const [updateError, setUpdateError] = useState("");
   const [commentText, setCommentText] = useState("");
   const [remoteError, setRemoteError] = useState("");
-  const [stores, setStores] = useState<Store[]>(DEMO_STORES);
+  // Online: start empty so production never flashes demo shops before remote hydrate.
+  const [stores, setStores] = useState<Store[]>(() => (isSupabaseConfigured ? [] : DEMO_STORES));
   const [claimBusy, setClaimBusy] = useState(false);
   /** Store ids with a pending claim request this session (online moderated flow). */
   const [pendingClaimStoreIds, setPendingClaimStoreIds] = useState<string[]>([]);
@@ -159,6 +163,7 @@ export function AppShell() {
   useEffect(() => {
     if (!isSupabaseConfigured) {
       setStores(DEMO_STORES);
+      setRemoteReady(true);
       // Demo: attach Available at tags to seed projects if missing
       setProjects((current) =>
         current.map((project) => {
@@ -173,6 +178,7 @@ export function AppShell() {
       return;
     }
     let cancelled = false;
+    setRemoteReady(false);
     (async () => {
       try {
         // Soft-fail optional streams so one missing RPC/table never blanks Studio.
@@ -194,20 +200,19 @@ export function AppShell() {
         const hardFailures = settled
           .map((result, index) => ({ result, index }))
           .filter(({ result, index }) => result.status === "rejected" && (index === 1 || index === 2));
-        // Profiles + stores are core; if both core paths fail, surface error.
+        // Profiles + stores are core; if both core paths fail, surface product copy (raw stays in console).
         if (hardFailures.length >= 2 && !remoteProfiles.length && !remoteStores.length && !remoteProjects.length) {
           const reason = hardFailures[0]?.result;
-          const message =
-            reason && reason.status === "rejected" && reason.reason instanceof Error
-              ? reason.reason.message
-              : "Failed to load remote data";
-          setRemoteError(message);
+          if (reason && reason.status === "rejected") {
+            console.warn("[needlepoint] remote boot failed", reason.reason);
+          }
+          setRemoteError("studio-refresh");
           return;
         }
 
         if (remoteProfiles.length) setCreators(remoteProfiles);
         if (remoteStores.length) setStores(remoteStores);
-        else setStores(DEMO_STORES);
+        else setStores([]);
         // Remote projects carry storeIds from project_stores (fetchPublicProjects).
         // Replace empty boot state entirely — demo localStorage must not win online.
         if (remoteProjects.length) {
@@ -232,7 +237,8 @@ export function AppShell() {
         setRemoteError("");
       } catch (error) {
         if (!cancelled) {
-          setRemoteError(error instanceof Error ? error.message : "Failed to load remote data");
+          console.warn("[needlepoint] remote boot failed", error);
+          setRemoteError("studio-refresh");
         }
       } finally {
         if (!cancelled) setRemoteReady(true);
@@ -241,7 +247,7 @@ export function AppShell() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [user?.id, remoteBootKey]);
 
   // Re-hydrate project↔store links when project/store id sets change (not merely lengths).
   useEffect(() => {
@@ -531,7 +537,8 @@ export function AppShell() {
         setClaimNotice("Claim request submitted. Ownership is assigned after review.");
       }
     } catch (error) {
-      setRemoteError(error instanceof Error ? error.message : "Could not request shop claim");
+      console.warn("[needlepoint] shop claim failed", error);
+      setRemoteError(uiCopy.shopDetail.claimError);
     } finally {
       setClaimBusy(false);
     }
@@ -571,7 +578,8 @@ export function AppShell() {
         current.map((store) => (store.id === storeId ? { ...store, products: [...store.products, product] } : store)),
       );
     } catch (error) {
-      setProductError(error instanceof Error ? error.message : "Could not add product");
+      console.warn("[needlepoint] product create failed", error);
+      setProductError(uiCopy.shopDetail.productSaveError);
       throw error;
     } finally {
       setProductBusy(false);
@@ -618,7 +626,8 @@ export function AppShell() {
         ),
       );
     } catch (error) {
-      setProductError(error instanceof Error ? error.message : "Could not update product");
+      console.warn("[needlepoint] product update failed", error);
+      setProductError(uiCopy.shopDetail.productSaveError);
       throw error;
     } finally {
       setProductBusy(false);
@@ -637,7 +646,8 @@ export function AppShell() {
         ),
       );
     } catch (error) {
-      setProductError(error instanceof Error ? error.message : "Could not delete product");
+      console.warn("[needlepoint] product delete failed", error);
+      setProductError(uiCopy.shopDetail.productDeleteError);
     } finally {
       setProductBusy(false);
     }
@@ -694,8 +704,8 @@ export function AppShell() {
       );
       setProfileSuccess("Shop profile saved.");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not save shop profile";
-      setProfileError(message);
+      console.warn("[needlepoint] shop profile save failed", error);
+      setProfileError(uiCopy.shopDetail.profileSaveError);
       throw error;
     } finally {
       setProfileBusy(false);
@@ -737,7 +747,8 @@ export function AppShell() {
     if (!file) return;
     const invalid = validateImageFile(file);
     if (invalid) {
-      setUploadError(invalid);
+      console.error("draft image validation failed", invalid);
+      setUploadError(uiCopy.journal.uploadError);
       return;
     }
     if (imagePreview.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
@@ -829,7 +840,8 @@ export function AppShell() {
       setView({ name: "project", id: project.id });
       setRemoteError("");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not save project";
+      console.error("submitProject failed", error);
+      const message = mapJournalError(error);
       setUploadError(message);
       setRemoteError(message);
     } finally {
@@ -849,7 +861,8 @@ export function AppShell() {
     if (!file) return;
     const invalid = validateImageFile(file);
     if (invalid) {
-      setUpdateError(invalid);
+      console.error("update image validation failed", invalid);
+      setUpdateError(uiCopy.projectDetail.updateError);
       return;
     }
     if (updateImagePreview.startsWith("blob:")) URL.revokeObjectURL(updateImagePreview);
@@ -996,7 +1009,8 @@ export function AppShell() {
       clearUpdateImage();
       setRemoteError("");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Update failed";
+      console.error("addProgressUpdate failed", error);
+      const message = mapProjectUpdateError(error);
       setUpdateError(message);
       setRemoteError(message);
     } finally {
@@ -1160,6 +1174,12 @@ export function AppShell() {
     }
   }
 
+  function retryRemoteHydrate() {
+    if (!isSupabaseConfigured) return;
+    setRemoteError("");
+    setRemoteReady(false);
+    setRemoteBootKey((key) => key + 1);
+  }
 
   const noticeIsShareInfo =
     remoteError.startsWith("Public post link") ||
@@ -1167,13 +1187,17 @@ export function AppShell() {
     remoteError.startsWith("This project is private") ||
     remoteError.startsWith("Share this public") ||
     remoteError.startsWith("Sign in to ");
+  const studioRefreshFailed = remoteError === "studio-refresh";
+  const bannerMessage = studioRefreshFailed
+    ? "Studio couldn't refresh. You're seeing the last stitches we have."
+    : remoteError;
 
   return (
     <AppLayout
       savedCount={savedProjects.length}
       setView={setView}
       canPost={Boolean(user) || isDemoMode || !isSupabaseConfigured}
-      banner={remoteError}
+      banner={bannerMessage}
       bannerInfo={noticeIsShareInfo}
     >
       <AppRoutes
@@ -1200,6 +1224,10 @@ export function AppShell() {
         hasInterests={hasInterests}
         canPost={Boolean(user) || isDemoMode || !isSupabaseConfigured}
         feedLoading={!remoteReady}
+        followedStoresLoading={!remoteReady}
+        storesLoading={!remoteReady}
+        feedRefreshError={studioRefreshFailed}
+        onRetryFeed={retryRemoteHydrate}
         categories={categories}
         stitches={stitches}
         colors={colors}
@@ -1212,6 +1240,7 @@ export function AppShell() {
         setDraft={setDraft}
         submitProject={(event) => void submitProject(event)}
         myProjects={myProjects}
+        journalLoading={!remoteReady}
         canUpload={Boolean(user) || !isSupabaseConfigured}
         uploadBusy={uploadBusy}
         uploadError={uploadError}
@@ -1258,6 +1287,7 @@ export function AppShell() {
         addComment={addComment}
         saveProjectEdits={saveProjectEdits}
         isOwnerFor={isOwnerOf}
+        projectLoading={!remoteReady}
       />
     </AppLayout>
   );

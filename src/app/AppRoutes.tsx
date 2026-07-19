@@ -61,6 +61,13 @@ export type AppRoutesProps = {
   canPost: boolean;
   /** Studio boot still loading remote projects. */
   feedLoading: boolean;
+  /** Followed shops rail still hydrating. */
+  followedStoresLoading: boolean;
+  /** Shop catalog still hydrating. */
+  storesLoading: boolean;
+  /** True when Studio remote refresh failed (local feed notice + retry). */
+  feedRefreshError: boolean;
+  onRetryFeed: () => void;
   categories: string[];
   stitches: string[];
   colors: string[];
@@ -79,6 +86,8 @@ export type AppRoutesProps = {
   imagePreview: string;
   onPickImage: (file: File | null) => void;
   onClearImage: () => void;
+  /** Journal list still hydrating from remote boot. */
+  journalLoading: boolean;
   toggleStoreFollow: (storeId: string) => void;
   viewerId: string | null;
   isDemoMode: boolean;
@@ -132,6 +141,8 @@ export type AppRoutesProps = {
     imageFile?: File | null,
   ) => Promise<void>;
   isOwnerFor: (project: Project) => boolean;
+  /** Project detail still waiting on first remote hydrate. */
+  projectLoading: boolean;
 };
 
 /** Declarative route tree. Data and actions come from AppShell. */
@@ -157,6 +168,7 @@ export function AppRoutes(props: AppRoutesProps) {
             stitchAlongs={props.stitchAlongs}
             followedCreators={props.followedCreators}
             followedStoreIds={props.followedStores}
+            followedStoresLoading={props.followedStoresLoading}
             savedCount={props.savedCount}
             stores={props.stores}
             openDiscover={props.openDiscover}
@@ -164,6 +176,8 @@ export function AppRoutes(props: AppRoutesProps) {
             hasInterests={props.hasInterests}
             canPost={props.canPost}
             feedLoading={props.feedLoading}
+            feedRefreshError={props.feedRefreshError}
+            onRetryFeed={props.onRetryFeed}
           />
         }
       />
@@ -216,15 +230,22 @@ export function AppRoutes(props: AppRoutesProps) {
             onPickImage={props.onPickImage}
             onClearImage={props.onClearImage}
             stores={props.stores}
+            journalLoading={props.journalLoading}
           />
         }
       />
-      <Route path="/stores" element={<StoresView stores={props.stores} setView={props.setView} />} />
+      <Route
+        path="/stores"
+        element={
+          <StoresView stores={props.stores} storesLoading={props.storesLoading} setView={props.setView} onRetry={props.onRetryFeed} />
+        }
+      />
       <Route
         path="/stores/:handle"
         element={
           <StoreRoute
             stores={props.stores}
+            storesLoading={props.storesLoading}
             projects={props.publicProjects}
             followedStores={props.followedStores}
             toggleStoreFollow={props.toggleStoreFollow}
@@ -315,6 +336,7 @@ export function AppRoutes(props: AppRoutesProps) {
             canUpload={props.canUpload}
             stores={props.stores}
             setView={props.setView}
+            projectLoading={props.projectLoading}
           />
         }
       />

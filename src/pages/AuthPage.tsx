@@ -1,13 +1,14 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { ExternalLink, Plus } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { fetchProfileById, updateProfile } from "../api/profiles";
 import { fetchPublicProjects } from "../api/projects";
 import { AuthForm, useAuth } from "../context/AuthContext";
 import { isSupabaseConfigured } from "../lib/supabase";
+import { mapAccountSaveError, uiCopy } from "../lib/uiCopy";
 import type { Project } from "../types";
 import { visibilityLabel } from "../appModel";
-import { EmptyState, PageLoading, SectionHeader } from "../components/ui";
+import { EmptyState, ErrorState, PageLoading, SectionHeader } from "../components/ui";
 
 export function AuthPage() {
   const { isDemoMode, handle, user, signOut, loading, refreshUser } = useAuth();
@@ -19,7 +20,7 @@ export function AuthPage() {
     return (
       <section className="page auth-page">
         <div className="auth-card">
-          <PageLoading eyebrow="Account" title="Loading your session…" variant="detail" minHeight={280} />
+          <PageLoading eyebrow="Account" title={uiCopy.auth.sessionLoading} variant="detail" minHeight={280} />
         </div>
       </section>
     );
@@ -110,14 +111,29 @@ function AccountSettings({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [retryToken, setRetryToken] = useState(0);
   const [myProjects, setMyProjects] = useState<Project[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(isSupabaseConfigured);
+
+  const reloadProfile = useCallback(() => {
+    setLoadingProfile(true);
+    setLoadFailed(false);
+    setError("");
+    setRetryToken((token) => token + 1);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const profile = await fetchProfileById(userId);
-        if (cancelled || !profile) return;
+        if (cancelled) return;
+        if (!profile) {
+          setLoadFailed(true);
+          setError(uiCopy.auth.account.loadError.body);
+          return;
+        }
         setName(profile.name);
         setHandle(profile.handle);
         setBio(profile.bio);
@@ -130,8 +146,14 @@ function AccountSettings({
             ? profile.links.map((link) => `${link.label} | ${link.url}`).join("\n")
             : "",
         );
+        setLoadFailed(false);
+        setError("");
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Could not load profile");
+        console.error("account profile load failed", err);
+        if (!cancelled) {
+          setLoadFailed(true);
+          setError(uiCopy.auth.account.loadError.body);
+        }
       } finally {
         if (!cancelled) setLoadingProfile(false);
       }
@@ -139,18 +161,28 @@ function AccountSettings({
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, retryToken]);
 
   // Pull current projects from local app state via a lightweight re-fetch
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        if (!isSupabaseConfigured) return;
+        if (!isSupabaseConfigured) {
+          if (!cancelled) {
+            setMyProjects([]);
+            setProjectsLoading(false);
+          }
+          return;
+        }
+        setProjectsLoading(true);
         const all = await fetchPublicProjects(userId);
         if (!cancelled) setMyProjects(all.filter((project) => project.creatorId === userId));
-      } catch {
-        // non-blocking
+      } catch (err) {
+        console.error("account journal list failed", err);
+        // non-blocking — keep empty list rather than raw error in the rail
+      } finally {
+        if (!cancelled) setProjectsLoading(false);
       }
     })();
     return () => {
@@ -187,7 +219,8 @@ function AccountSettings({
       onSaved({ name: profile.name, handle: profile.handle });
       setMessage("Account settings saved.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save account settings");
+      console.error("account settings save failed", err);
+      setError(mapAccountSaveError(err));
     } finally {
       setBusy(false);
     }
@@ -196,7 +229,22 @@ function AccountSettings({
   if (loadingProfile) {
     return (
       <section className="page">
-        <PageLoading eyebrow="Account" title="Loading your profile…" variant="detail" minHeight={320} />
+        <PageLoading eyebrow="Account" title={uiCopy.auth.account.loading} variant="detail" minHeight={320} />
+      </section>
+    );
+  }
+
+  if (loadFailed) {
+    return (
+      <section className="page">
+        <ErrorState
+          variant="detail"
+          minHeight={320}
+          title={uiCopy.auth.account.loadError.title}
+          body={error || uiCopy.auth.account.loadError.body}
+          action={uiCopy.auth.account.loadError.cta}
+          onAction={reloadProfile}
+        />
       </section>
     );
   }
@@ -205,7 +253,7 @@ function AccountSettings({
     <section className="page">
       <SectionHeader eyebrow="Account settings" title={name || "Your profile"} />
       <div className="editor-layout">
-        <form className="panel form-grid" onSubmit={(event) => void save(event)}>
+        <form className="panel form-grid" onSubmit={(event) => void save(event)} aria-busy={busy || undefined}>
           <div className="full-field account-identity">
             <img src={avatarUrl || "/assets/needlepoint-hero.png"} alt="" />
             <div>
@@ -269,12 +317,16 @@ function AccountSettings({
           <button className="primary full-field" type="submit" disabled={busy}>
             {busy ? "Saving…" : "Save account settings"}
           </button>
-          {message && <p className="full-field">{message}</p>}
-          {error && (
-            <p className="full-field" style={{ color: "#8a2f2f" }}>
+          {message ? (
+            <p className="full-field" role="status">
+              {message}
+            </p>
+          ) : null}
+          {error ? (
+            <p className="full-field field-error" role="alert">
               {error}
             </p>
-          )}
+          ) : null}
         </form>
 
         <div className="stack">
@@ -297,7 +349,11 @@ function AccountSettings({
           </div>
           <div className="panel">
             <h2>Your journal</h2>
-            {myProjects.length ? (
+            {projectsLoading ? (
+              <p className="field-help" aria-busy="true">
+                {uiCopy.journal.loading}
+              </p>
+            ) : myProjects.length ? (
               myProjects.map((project) => (
                 <button className="mini-update" key={project.id} type="button" onClick={() => navigate(`/projects/${project.id}`)}>
                   <img src={project.image} alt="" />
@@ -310,7 +366,12 @@ function AccountSettings({
                 </button>
               ))
             ) : (
-              <EmptyState title="No projects yet" body="Create a journal entry to start tracking progress." action="New project" onAction={() => navigate("/journal")} />
+              <EmptyState
+                title={uiCopy.auth.account.projectsEmpty.title}
+                body={uiCopy.auth.account.projectsEmpty.body}
+                action={uiCopy.auth.account.projectsEmpty.cta}
+                onAction={() => navigate("/journal")}
+              />
             )}
           </div>
           <div className="panel">

@@ -25,7 +25,8 @@ import {
   type StoreDiscoveryMapPin,
   type StoreDiscoveryResponse,
 } from "../lib/storeDiscovery";
-import { EmptyState, SectionHeader, SectionTitle } from "../components/ui";
+import { EmptyState, SectionHeader, SectionTitle, Skeleton } from "../components/ui";
+import { uiCopy } from "../lib/uiCopy";
 
 type LocationUiStatus = "idle" | "loading" | "ready" | "denied" | "error" | "unsupported";
 
@@ -101,20 +102,20 @@ function buildCoachModel(
       };
     case "location_ready_empty_nearby":
       return {
-        headline: `No local shops within ${radius} mi`,
+        headline: uiCopy.shops.zeroLocal.titleNearYou(radius),
         body: hasOnline
-          ? "We couldn't find a local needlepoint shop close by yet. Here are online shops that ship so you can keep stitching."
-          : "We couldn't find a nearby local shop, and online shop profiles are not available yet. Try browsing all shops or check back soon.",
+          ? uiCopy.shops.zeroLocal.body
+          : "Our directory is still growing here. Try browsing all shops or check back soon.",
         primary: hasOnline
-          ? { label: "Browse online shops", action: "browse_online" }
+          ? { label: uiCopy.shops.zeroLocal.onlineCta, action: "browse_online" }
           : allShopsCta,
         secondary: hasOnline ? allShopsCta : { label: "Refresh location", action: "refresh_location" },
         tertiary: hasOnline ? { label: "Refresh location", action: "refresh_location" } : undefined,
       };
     case "location_denied_first_time":
       return {
-        headline: "Location is off for Needlepoint",
-        body: "No worries — you can try again, or browse online shops that ship without sharing location.",
+        headline: uiCopy.shops.location.firstDenied.title,
+        body: uiCopy.shops.location.firstDenied.body,
         primary: { label: "Try location again", action: "retry_location" },
         secondary: recoverySecondary,
         helpToggle: true,
@@ -124,8 +125,8 @@ function buildCoachModel(
       };
     case "location_denied_persistent":
       return {
-        headline: "Location is blocked in your browser",
-        body: "Your browser is not allowing Needlepoint to check nearby shops. You can change site settings, then come back and try again.",
+        headline: uiCopy.shops.location.persistentDenied.title,
+        body: uiCopy.shops.location.persistentDenied.body,
         primary: recoverySecondary,
         secondary: { label: "I changed settings — try again", action: "settings_retry" },
         helper:
@@ -133,8 +134,8 @@ function buildCoachModel(
       };
     case "location_unavailable_timeout":
       return {
-        headline: "We couldn't get your location",
-        body: "The request timed out or your device could not share location. Try again, or browse online shops that ship.",
+        headline: uiCopy.shops.location.unavailable.title,
+        body: uiCopy.shops.location.unavailable.body,
         primary: { label: "Try again", action: "retry_location" },
         secondary: recoverySecondary,
       };
@@ -155,7 +156,17 @@ function buildCoachModel(
   }
 }
 
-export function StoresView({ stores, setView }: { stores: Store[]; setView: (view: View) => void }) {
+export function StoresView({
+  stores,
+  setView,
+  storesLoading = false,
+  onRetry,
+}: {
+  stores: Store[];
+  setView: (view: View) => void;
+  storesLoading?: boolean;
+  onRetry?: () => void;
+}) {
   const searchFieldId = useId();
   const resultsHeadingId = useId();
   const onlineSectionRef = useRef<HTMLElement | null>(null);
@@ -201,7 +212,7 @@ export function StoresView({ stores, setView }: { stores: Store[]; setView: (vie
 
   const applyResponse = useCallback((response: StoreDiscoveryResponse, options?: { preservePriorOnInvalid?: boolean }) => {
     if (response.status === "invalid-input") {
-      setSearchError(response.message || "Enter a ZIP or city to search.");
+      setSearchError(response.message || uiCopy.shops.invalidSearch);
       if (!options?.preservePriorOnInvalid) {
         // keep prior discovery
       }
@@ -507,7 +518,9 @@ export function StoresView({ stores, setView }: { stores: Store[]; setView: (vie
   const statusHeadline = (() => {
     if (cityCandidates?.length) return discovery.message || "Which city did you mean?";
     if (placeSearchCoaching) {
-      return discovery.message || `No local shops within ${radiusForCopy} miles`;
+      if (discovery.status === "geocode-unavailable") return uiCopy.shops.geocodeError.title;
+      const place = discovery.query.displayLabel || "this area";
+      return uiCopy.shops.zeroLocal.title(radiusForCopy, place);
     }
     if (hasActiveSearch && discovery.list.length && !isGeoPoint) {
       return `${discovery.list.length} shop${discovery.list.length === 1 ? "" : "s"} near ${discovery.query.displayLabel}`;
@@ -518,7 +531,10 @@ export function StoresView({ stores, setView }: { stores: Store[]; setView: (vie
   const statusDetail = (() => {
     if (cityCandidates?.length) return `Choose a city so we can show shops within about ${radiusMiles} miles.`;
     if (placeSearchCoaching) {
-      return "We're still growing the shop directory. You can widen the search or browse online shops that ship nationwide.";
+      if (discovery.status === "geocode-unavailable") {
+        return uiCopy.shops.geocodeError.body;
+      }
+      return uiCopy.shops.zeroLocal.body;
     }
     if (hasActiveSearch && discovery.status === "ok" && !isGeoPoint) {
       return `Local shops within about ${radiusForCopy} miles, then online shops that ship.`;
@@ -746,15 +762,53 @@ export function StoresView({ stores, setView }: { stores: Store[]; setView: (vie
         </section>
       ) : null}
 
-      {!stores.length ? (
+      {isBrowse && !storesLoading && cityCards.length === 0 && stores.length > 0 && hasOnline ? (
+        <div className="store-local-empty panel" data-empty-slot="local-cities">
+          <strong>{uiCopy.shops.localCitiesEmpty.title}</strong>
+          <p>{uiCopy.shops.localCitiesEmpty.body}</p>
+          <div className="store-location-actions store-discovery-coach-actions">
+            <button className="primary" type="button" onClick={scrollToOnline}>
+              {uiCopy.shops.zeroLocal.onlineCta}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {storesLoading ? (
+        <div className="store-discovery-results" aria-busy="true" aria-label={uiCopy.shops.loading}>
+          <SectionTitle title={uiCopy.shops.loading} />
+          <div className="store-grid store-grid-skeleton">
+            {[0, 1, 2, 3].map((index) => (
+              <article key={index} className="store-card panel store-card-skeleton" aria-hidden="true">
+                <Skeleton className="store-card-cover" height={110} radius={0} />
+                <div className="store-card-body">
+                  <Skeleton circle width={48} height={48} />
+                  <Skeleton width="55%" height={14} />
+                  <Skeleton width="38%" height={12} />
+                  <Skeleton width="92%" height={12} />
+                  <Skeleton width="70%" height={12} />
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      ) : !stores.length ? (
         <EmptyState
-          title="No shops yet"
-          body="Shop profiles will appear here once they are seeded or claimed."
+          variant="panel"
+          minHeight={240}
+          title={uiCopy.shops.allEmpty.title}
+          body={uiCopy.shops.allEmpty.body}
           cta={
             <div className="store-location-actions store-discovery-coach-actions">
-              <button className="primary" type="button" disabled>
-                Check back soon
-              </button>
+              {onRetry ? (
+                <button className="primary" type="button" onClick={onRetry}>
+                  Try again
+                </button>
+              ) : (
+                <button className="primary" type="button" disabled>
+                  Check back soon
+                </button>
+              )}
               <button className="secondary" type="button" onClick={() => setView({ name: "home" })}>
                 Back to Studio
               </button>
@@ -800,16 +854,14 @@ export function StoresView({ stores, setView }: { stores: Store[]; setView: (vie
           ) : hasActiveSearch && discovery.status !== "ambiguous-city" ? (
             <div className="store-local-empty panel" data-empty-slot="local-zero">
               <strong>
-                {isGeoPoint
-                  ? `No local shops within ${radiusForCopy} mi`
-                  : discovery.message || "No local shops in this area"}
+                {discovery.status === "geocode-unavailable"
+                  ? uiCopy.shops.geocodeError.title
+                  : isGeoPoint
+                    ? uiCopy.shops.zeroLocal.titleNearYou(radiusForCopy)
+                    : uiCopy.shops.zeroLocal.title(radiusForCopy, discovery.query.displayLabel || "this area")}
               </strong>
               <p>
-                {isGeoPoint
-                  ? hasOnline
-                    ? "We couldn't find a local needlepoint shop close by yet. Here are online shops that ship so you can keep stitching."
-                    : "We couldn't find a nearby local shop, and online shop profiles are not available yet. Try browsing all shops or check back soon."
-                  : "Widen the search, try another place, or browse online shops that ship needlepoint supplies."}
+                {discovery.status === "geocode-unavailable" ? uiCopy.shops.geocodeError.body : uiCopy.shops.zeroLocal.body}
               </p>
               <div className="store-location-actions store-discovery-coach-actions">
                 {isGeoPoint ? (

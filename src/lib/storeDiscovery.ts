@@ -516,7 +516,7 @@ export function searchStoreDiscovery(stores: Store[], input: StoreDiscoveryInput
     if (!zipMatch) {
       return emptyResponse({
         status: "invalid-input",
-        message: "Enter a 5-digit ZIP code.",
+        message: "Enter a 5-digit ZIP, or try a city like Austin, TX.",
         query: { mode: "zip", displayLabel: input.zip.trim(), zip: input.zip.trim(), radiusMiles },
         onlineFallback: sortOnline(stores),
       });
@@ -526,7 +526,7 @@ export function searchStoreDiscovery(stores: Store[], input: StoreDiscoveryInput
     if (!resolved) {
       return emptyResponse({
         status: "geocode-unavailable",
-        message: `We couldn't place ZIP ${zip} on the map yet. Try a city name or another ZIP.`,
+        message: "We couldn't place that search on the map",
         query: { mode: "zip", displayLabel: zip, zip, radiusMiles },
         onlineFallback: sortOnline(stores),
         counts: {
@@ -552,7 +552,7 @@ export function searchStoreDiscovery(stores: Store[], input: StoreDiscoveryInput
     if (!city) {
       return emptyResponse({
         status: "invalid-input",
-        message: "Enter a ZIP or city to search.",
+        message: "Enter a 5-digit ZIP, or try a city like Austin, TX.",
         query: { mode: "city", displayLabel: "", radiusMiles },
         onlineFallback: sortOnline(stores),
       });
@@ -561,7 +561,7 @@ export function searchStoreDiscovery(stores: Store[], input: StoreDiscoveryInput
     if (!candidates.length) {
       return emptyResponse({
         status: "geocode-unavailable",
-        message: `No shops listed near ${formatCityLabel(city, input.region, input.country)} yet`,
+        message: "We couldn't place that search on the map",
         query: {
           mode: "city",
           displayLabel: formatCityLabel(city, input.region, input.country),
@@ -682,7 +682,7 @@ export function parseDiscoverySearchText(raw: string):
   | { ok: true; input: Extract<StoreDiscoveryInput, { mode: "zip" | "city" }> }
   | { ok: false; message: string } {
   const text = raw.trim();
-  if (!text) return { ok: false, message: "Enter a ZIP or city to search." };
+  if (!text) return { ok: false, message: "Enter a 5-digit ZIP, or try a city like Austin, TX." };
 
   if (/^\d{5}(?:-?\d{4})?$/.test(text)) {
     return { ok: true, input: { mode: "zip", zip: text } };
@@ -690,7 +690,7 @@ export function parseDiscoverySearchText(raw: string):
 
   // Reject pure non-zip numeric garbage
   if (/^\d+$/.test(text)) {
-    return { ok: false, message: "Enter a 5-digit ZIP code." };
+    return { ok: false, message: "Enter a 5-digit ZIP, or try a city like Austin, TX." };
   }
 
   let city = text;
@@ -701,7 +701,7 @@ export function parseDiscoverySearchText(raw: string):
     region = rest.join(",").trim();
   }
 
-  if (!city) return { ok: false, message: "Enter a ZIP or city to search." };
+  if (!city) return { ok: false, message: "Enter a 5-digit ZIP, or try a city like Austin, TX." };
 
   return {
     ok: true,

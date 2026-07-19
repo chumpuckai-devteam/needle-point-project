@@ -1,7 +1,8 @@
 import { useParams } from "react-router-dom";
 import type { Creator, Project, Store } from "../types";
 import type { DraftProject, View } from "../appModel";
-import { EmptyState } from "../components/ui";
+import { DetailSkeleton, EmptyState } from "../components/ui";
+import { uiCopy } from "../lib/uiCopy";
 import { ProjectDetail } from "./ProjectDetailPage";
 
 export function ProjectRoute(props: {
@@ -33,18 +34,26 @@ export function ProjectRoute(props: {
   canUpload: boolean;
   stores: Store[];
   setView: (view: View) => void;
+  /** True until first remote project hydrate resolves. */
+  projectLoading?: boolean;
 }) {
   const { id = "" } = useParams();
   const project = props.projectById(id);
+
+  // Avoid "not found" flash while online boot is still hydrating projects.
+  if (!project && props.projectLoading) {
+    return <DetailSkeleton label="Loading project" />;
+  }
+
   // Missing or inaccessible private → identical empty chrome (no title/metadata leak).
   if (!project) {
     return (
       <EmptyState
         variant="detail"
         minHeight={320}
-        title="Project not found"
-        body="That project may have been moved, removed, or is not available."
-        action="Back to discover"
+        title={uiCopy.projectDetail.notFound.title}
+        body={uiCopy.projectDetail.notFound.body}
+        action={uiCopy.projectDetail.notFound.cta}
         onAction={() => props.setView({ name: "discover" })}
       />
     );

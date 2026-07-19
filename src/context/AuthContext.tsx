@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
+import { mapAuthSignInError, mapAuthSignUpError } from "../lib/uiCopy";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
 export type AuthUser = {
@@ -183,25 +184,30 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
   const [name, setName] = useState("");
   const [chosenHandle, setChosenHandle] = useState("");
   const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setMessage("");
+    setIsError(false);
     try {
       if (mode === "signin") await signIn(email, password);
       else await signUp(email, password, { name, handle: chosenHandle });
-      setMessage(isDemoMode ? `Demo session active as @${handle}.` : "Authentication successful.");
+      setMessage(isDemoMode ? `Demo session active as @${handle}.` : mode === "signin" ? "Signed in." : "Account created.");
+      setIsError(false);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Authentication failed.");
+      console.error(mode === "signin" ? "signIn failed" : "signUp failed", error);
+      setMessage(mode === "signin" ? mapAuthSignInError(error) : mapAuthSignUpError(error));
+      setIsError(true);
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <form className="auth-form panel form-grid" onSubmit={submit} noValidate={false}>
+    <form className="auth-form panel form-grid" onSubmit={submit} noValidate={false} aria-busy={busy || undefined}>
       {mode === "signup" && (
         <>
           <label htmlFor={`${mode}-name`} className="full-field">
@@ -263,7 +269,11 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
       <button className="primary full-field auth-submit" type="submit" disabled={busy}>
         {busy ? "Working…" : mode === "signin" ? "Sign in" : "Create account"}
       </button>
-      {message ? <p className="full-field auth-message">{message}</p> : null}
+      {message ? (
+        <p className={`full-field auth-message${isError ? " auth-message--error" : ""}`} role={isError ? "alert" : "status"}>
+          {message}
+        </p>
+      ) : null}
     </form>
   );
 }

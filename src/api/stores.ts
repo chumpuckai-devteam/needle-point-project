@@ -400,7 +400,7 @@ export function normalizeStoreDiscoveryInput(input: StoreDiscoveryInput): Normal
   if (input.mode === "zip") {
     const zip = input.zip.trim().match(/^(\d{5})(?:-?\d{4})?$/)?.[1] ?? "";
     if (!zip) {
-      return { ok: false, status: "invalid-input", message: "Enter a 5-digit ZIP code.", response: emptyDiscoveryResponse(input, "invalid-input", "Enter a 5-digit ZIP code.") };
+      return { ok: false, status: "invalid-input", message: "Enter a 5-digit ZIP, or try a city like Austin, TX.", response: emptyDiscoveryResponse(input, "invalid-input", "Enter a 5-digit ZIP, or try a city like Austin, TX.") };
     }
     return { ok: true, input: { mode: "zip", zip, radiusMiles } };
   }
@@ -411,7 +411,7 @@ export function normalizeStoreDiscoveryInput(input: StoreDiscoveryInput): Normal
     const region = normalized.region.toUpperCase();
     const country = (input.country ?? "US").trim().toUpperCase() || "US";
     if (!city) {
-      return { ok: false, status: "invalid-input", message: "Enter a ZIP or city to search.", response: emptyDiscoveryResponse(input, "invalid-input", "Enter a ZIP or city to search.") };
+      return { ok: false, status: "invalid-input", message: "Enter a 5-digit ZIP, or try a city like Austin, TX.", response: emptyDiscoveryResponse(input, "invalid-input", "Enter a 5-digit ZIP, or try a city like Austin, TX.") };
     }
     if (country !== "US") {
       return { ok: false, status: "invalid-input", message: "Local search is US-only for this beta. Try browsing online shops that ship.", response: emptyDiscoveryResponse(input, "invalid-input", "Local search is US-only for this beta. Try browsing online shops that ship.") };

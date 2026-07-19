@@ -10,7 +10,8 @@ import {
   type GeoPoint,
 } from "../lib/geo";
 import { FeedPost, FollowedStoresRail, type FollowedStoreRailItem } from "../components/feed";
-import { EmptyState } from "../components/ui";
+import { EmptyState, ErrorState, FeedListSkeleton } from "../components/ui";
+import { uiCopy } from "../lib/uiCopy";
 
 export function HomeView(props: {
   projects: Project[];
@@ -36,13 +37,21 @@ export function HomeView(props: {
   canPost?: boolean;
   /** True while remote Studio boot is still in flight. */
   feedLoading?: boolean;
+  /** True when remote Studio refresh failed after/during boot. */
+  feedRefreshError?: boolean;
+  onRetryFeed?: () => void;
 }) {
   void props.savedCount;
-  void props.openDiscover;
   const canPost = props.canPost !== false;
   const feedLoading = Boolean(props.feedLoading);
+  const feedRefreshError = Boolean(props.feedRefreshError);
   const feed = props.projects;
   const followedFeedCount = feed.filter((project) => props.followedCreators.includes(project.creatorId)).length;
+  const showFollowedEmptyCoach =
+    !feedLoading &&
+    feed.length > 0 &&
+    props.followedCreators.length > 0 &&
+    followedFeedCount === 0;
   const [userPoint, setUserPoint] = useState<GeoPoint | null>(null);
 
   const activeStitchAlongs = useMemo(() => {
@@ -161,32 +170,45 @@ export function HomeView(props: {
         </div>
       )}
 
-      <div className="feed-timeline" aria-label="Studio feed">
-        {feedLoading ? (
-          <div className="feed-list-skeleton" aria-busy="true" aria-label="Loading studio feed">
-            {[0, 1].map((i) => (
-              <article key={i} className="feed-post feed-post-skeleton" aria-hidden="true">
-                <header className="feed-post-header">
-                  <span className="feed-avatar feed-skel-avatar skeleton-bone skeleton-bone--circle" />
-                  <div className="feed-post-heading">
-                    <div className="feed-skel-meta">
-                      <span className="skeleton-text-line" style={{ width: "40%" }} />
-                      <span className="skeleton-text-line" style={{ width: "24%" }} />
-                    </div>
-                  </div>
-                </header>
-                <div className="feed-skel-media skeleton-bone" />
-                <div className="feed-skel-actions">
-                  <span className="skeleton-text-line" style={{ width: "48px" }} />
-                  <span className="skeleton-text-line" style={{ width: "48px" }} />
-                  <span className="skeleton-text-line" style={{ width: "48px" }} />
-                  <span className="skeleton-text-line" style={{ width: "48px" }} />
-                </div>
-              </article>
-            ))}
+      {feedRefreshError && !feedLoading && feed.length > 0 ? (
+        <div className="feed-refresh-notice panel" role="status">
+          <div>
+            <strong>{uiCopy.studio.feed.refreshError.title}</strong>
+            <p>{uiCopy.studio.feed.refreshError.body}</p>
           </div>
-        ) : feed.length ? (
-          feed.map((project) => (
+          {props.onRetryFeed ? (
+            <button type="button" className="secondary" onClick={props.onRetryFeed}>
+              {uiCopy.studio.feed.refreshError.cta}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {showFollowedEmptyCoach ? (
+        <div className="feed-followed-coach" role="status">
+          <p>{uiCopy.studio.feed.followedEmptyInline}</p>
+          <button type="button" className="text-button" onClick={() => props.openDiscover()}>
+            {uiCopy.studio.feed.followedEmptyCta}
+          </button>
+        </div>
+      ) : null}
+
+      {feedLoading ? (
+        <FeedListSkeleton count={4} withMedia label={uiCopy.studio.feed.loading} />
+      ) : feedRefreshError && feed.length === 0 ? (
+        <div className="feed-timeline" aria-label="Studio feed">
+          <ErrorState
+            variant="panel"
+            minHeight={280}
+            title={uiCopy.studio.feed.refreshError.title}
+            body={uiCopy.studio.feed.refreshError.body}
+            action={props.onRetryFeed ? uiCopy.studio.feed.refreshError.cta : undefined}
+            onAction={props.onRetryFeed}
+          />
+        </div>
+      ) : feed.length ? (
+        <div className="feed-timeline" aria-label="Studio feed">
+          {feed.map((project) => (
             <FeedPost
               key={project.id}
               project={project}
@@ -197,18 +219,20 @@ export function HomeView(props: {
               shareProject={props.shareProject}
               onDismiss={props.dismissRecommendation}
             />
-          ))
-        ) : (
+          ))}
+        </div>
+      ) : (
+        <div className="feed-timeline" aria-label="Studio feed">
           <EmptyState
             variant="panel"
             minHeight={280}
-            title="No posts yet"
-            body={canPost ? "Share a project photo, note, or short video." : "Sign in to share a project photo, note, or short video."}
-            action={canPost ? "Create post" : "Sign in"}
+            title={uiCopy.studio.feed.empty.title}
+            body={canPost ? uiCopy.studio.feed.empty.body : uiCopy.studio.feed.empty.guestBody}
+            action={canPost ? uiCopy.studio.feed.empty.cta : uiCopy.studio.feed.empty.guestCta}
             onAction={() => props.setView({ name: canPost ? "journal" : "auth" })}
           />
-        )}
-      </div>
+        </div>
+      )}
     </section>
   );
 }

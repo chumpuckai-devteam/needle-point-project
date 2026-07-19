@@ -2,11 +2,13 @@ import { useParams } from "react-router-dom";
 import type { Project, Store } from "../types";
 import type { StoreProductInput, StoreProfileInput } from "../api/stores";
 import type { View } from "../appModel";
-import { EmptyState } from "../components/ui";
+import { DetailSkeleton, EmptyState } from "../components/ui";
+import { uiCopy } from "../lib/uiCopy";
 import { StoreDetailView } from "./StoreDetailPage";
 
 export function StoreRoute({
   stores,
+  storesLoading = false,
   projects,
   followedStores,
   toggleStoreFollow,
@@ -28,6 +30,7 @@ export function StoreRoute({
   setView,
 }: {
   stores: Store[];
+  storesLoading?: boolean;
   projects: Project[];
   followedStores: string[];
   toggleStoreFollow: (storeId: string) => void;
@@ -55,13 +58,20 @@ export function StoreRoute({
   const { handle = "" } = useParams();
   const store = stores.find((item) => item.handle === handle);
   if (!store) {
+    if (storesLoading) {
+      return (
+        <section className="page">
+          <DetailSkeleton label={uiCopy.shops.loading} />
+        </section>
+      );
+    }
     return (
       <EmptyState
         variant="detail"
         minHeight={280}
-        title="Store not found"
-        body="That shop may have moved."
-        action="Browse stores"
+        title={uiCopy.shopDetail.notFound.title}
+        body={uiCopy.shopDetail.notFound.body}
+        action={uiCopy.shopDetail.notFound.cta}
         onAction={() => setView({ name: "stores" })}
       />
     );

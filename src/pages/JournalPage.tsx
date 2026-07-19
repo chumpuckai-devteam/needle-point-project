@@ -3,7 +3,8 @@ import { Plus } from "lucide-react";
 import type { Difficulty, Project, Status, Store } from "../types";
 import type { DraftProject, View } from "../appModel";
 import { difficultyOptions, statusOptions, visibilityHelp, visibilityLabel } from "../appModel";
-import { EmptyState, Field, SectionHeader, SectionTitle } from "../components/ui";
+import { EmptyState, Field, SectionHeader, SectionTitle, Skeleton } from "../components/ui";
+import { uiCopy } from "../lib/uiCopy";
 
 export function JournalView({
   draft,
@@ -18,6 +19,7 @@ export function JournalView({
   onPickImage,
   onClearImage,
   stores,
+  journalLoading = false,
 }: {
   draft: DraftProject;
   setDraft: (draft: DraftProject) => void;
@@ -31,6 +33,8 @@ export function JournalView({
   onPickImage: (file: File | null) => void;
   onClearImage: () => void;
   stores: Store[];
+  /** True until first project hydrate resolves (online boot). */
+  journalLoading?: boolean;
 }) {
   const fileInputId = useId();
   const preview = imagePreview || draft.image;
@@ -39,7 +43,7 @@ export function JournalView({
     <section className="page">
       <SectionHeader eyebrow="Project journal" title="Create a project entry" />
       <div className="editor-layout">
-        <form className="panel form-grid" onSubmit={submitProject}>
+        <form className="panel form-grid" onSubmit={submitProject} aria-busy={uploadBusy || undefined}>
           <Field label="Title" value={draft.title} onChange={(title) => setDraft({ ...draft, title })} placeholder="Monogram clutch canvas" required />
           <div className="full-field image-upload-field">
             <span className="field-label">Project photo</span>
@@ -78,12 +82,16 @@ export function JournalView({
             />
             <Field label="Or image URL" value={draft.image} onChange={(image) => setDraft({ ...draft, image })} placeholder="https://…" />
             <Field label="Video URL (optional)" value={draft.videoUrl} onChange={(videoUrl) => setDraft({ ...draft, videoUrl })} placeholder="https://…/clip.mp4" />
-            {uploadBusy && <p className="field-help">Uploading photo…</p>}
-            {uploadError && (
-              <p className="field-help" style={{ color: "#8a2f2f" }}>
-                {uploadError}
+            {uploadBusy && (
+              <p className="field-help" aria-live="polite">
+                Uploading photo…
               </p>
             )}
+            {uploadError ? (
+              <p className="field-help field-error" role="alert">
+                {uploadError}
+              </p>
+            ) : null}
           </div>
           <label htmlFor="project-status">
             <span className="label-text">Status</span>
@@ -164,7 +172,20 @@ export function JournalView({
         </form>
         <div className="panel">
           <SectionTitle title="Your journal" />
-          {myProjects.length > 0 ? (
+          {journalLoading ? (
+            <div className="journal-list-skeleton" aria-busy="true" aria-label={uiCopy.journal.loading} role="status">
+              <p className="field-help">{uiCopy.journal.loading}</p>
+              {[0, 1, 2].map((index) => (
+                <div className="mini-update mini-update-skeleton" key={index} aria-hidden="true">
+                  <Skeleton className="journal-skel-thumb" width={48} height={48} radius={8} />
+                  <div className="journal-skel-meta">
+                    <Skeleton width="72%" height={12} />
+                    <Skeleton width="48%" height={10} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : myProjects.length > 0 ? (
             myProjects.map((project) => (
               <button className="mini-update" key={project.id} type="button" onClick={() => setView({ name: "project", id: project.id })}>
                 <img src={project.image} alt="" />
@@ -180,7 +201,12 @@ export function JournalView({
               </button>
             ))
           ) : (
-            <EmptyState title="No journal entries yet" body="Save a project to start tracking progress." />
+            <EmptyState
+              variant="compact"
+              minHeight={160}
+              title={uiCopy.journal.empty.title}
+              body={uiCopy.journal.empty.body}
+            />
           )}
         </div>
       </div>

@@ -5,7 +5,8 @@ import type { StoreProductInput, StoreProfileInput } from "../api/stores";
 import { recordOutboundClickEvent } from "../api/clickEvents";
 import type { View } from "../appModel";
 import { ImageFilePicker } from "../components/ImageFilePicker";
-import { SectionTitle } from "../components/ui";
+import { EmptyState, SectionTitle } from "../components/ui";
+import { uiCopy } from "../lib/uiCopy";
 
 function storeProfileFromStore(store: Store): StoreProfileInput {
   return {
@@ -652,9 +653,23 @@ export function StoreDetailView({
           </div>
         </>
       ) : (
-        <p className="field-help">
-          {isOwner ? "No catalog items yet. Add your first product above." : "No catalog items yet. Check back soon."}
-        </p>
+        <EmptyState
+          variant="inline"
+          minHeight={160}
+          title={isOwner ? uiCopy.shopDetail.catalogEmpty.owner.title : uiCopy.shopDetail.catalogEmpty.visitor.title}
+          body={isOwner ? uiCopy.shopDetail.catalogEmpty.owner.body : uiCopy.shopDetail.catalogEmpty.visitor.body}
+          action={isOwner ? uiCopy.shopDetail.catalogEmpty.owner.cta : undefined}
+          onAction={
+            isOwner
+              ? () => {
+                  setShowForm(true);
+                  setEditingId(null);
+                  setDraft(blankProduct());
+                  resetProductImage();
+                }
+              : undefined
+          }
+        />
       )}
 
       <SectionTitle title="Projects available here" />
@@ -667,7 +682,12 @@ export function StoreDetailView({
           ))}
         </div>
       ) : (
-        <p className="field-help">No projects have tagged this store yet. Owners can mark “Available at” on a project.</p>
+        <EmptyState
+          variant="inline"
+          minHeight={140}
+          title={isOwner ? uiCopy.shopDetail.projectsEmpty.owner.title : uiCopy.shopDetail.projectsEmpty.visitor.title}
+          body={isOwner ? uiCopy.shopDetail.projectsEmpty.owner.body : uiCopy.shopDetail.projectsEmpty.visitor.body}
+        />
       )}
     </section>
   );

@@ -2,6 +2,7 @@ import { Bookmark, Heart, MessageCircle, Share2, X } from "lucide-react";
 import type { Creator, Project, Status, Store } from "../types";
 import type { View } from "../appModel";
 import { projectCommentCount, resolveMediaKind } from "../appModel";
+import { uiCopy } from "../lib/uiCopy";
 
 const STATUS_LABELS: Record<Status, string> = {
   planned: "Planned",
@@ -75,10 +76,10 @@ export function FollowedStoresRail({
         </div>
       ) : stores.length === 0 ? (
         <div className="followed-stores-empty">
-          <strong>You&apos;re not following any shops yet</strong>
-          <p>Follow local and online shops to pin them here on Studio.</p>
+          <strong>{uiCopy.studio.followedShops.empty.title}</strong>
+          <p>{uiCopy.studio.followedShops.empty.body}</p>
           <button type="button" className="primary" onClick={goBrowseShops}>
-            Browse shops
+            {uiCopy.studio.followedShops.empty.cta}
           </button>
         </div>
       ) : (
