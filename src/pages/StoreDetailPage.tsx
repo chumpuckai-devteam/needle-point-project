@@ -37,6 +37,8 @@ export function StoreDetailView({
   isOwner,
   canClaim,
   claimBusy,
+  claimPending = false,
+  claimNotice = "",
   productBusy,
   productError,
   profileBusy,
@@ -57,6 +59,8 @@ export function StoreDetailView({
   isOwner: boolean;
   canClaim: boolean;
   claimBusy?: boolean;
+  claimPending?: boolean;
+  claimNotice?: string;
   productBusy?: boolean;
   productError?: string;
   profileBusy?: boolean;
@@ -281,8 +285,8 @@ export function StoreDetailView({
             </button>
           ) : null}
           {canClaim && onClaimStore ? (
-            <button type="button" className="primary" disabled={claimBusy} onClick={() => onClaimStore()}>
-              {claimBusy ? "Claiming…" : "Claim this shop"}
+            <button type="button" className="primary" disabled={claimBusy || claimPending} onClick={() => onClaimStore()}>
+              {claimBusy ? "Submitting…" : claimPending ? "Claim pending review" : "Request to claim shop"}
             </button>
           ) : null}
           {isOwner ? (
@@ -306,6 +310,7 @@ export function StoreDetailView({
         </div>
       </div>
 
+      {claimNotice ? <p className="field-help success-text store-profile-banner">{claimNotice}</p> : null}
       {profileSuccess && !showProfileForm ? <p className="field-help success-text store-profile-banner">{profileSuccess}</p> : null}
 
       {isOwner && showProfileForm ? (

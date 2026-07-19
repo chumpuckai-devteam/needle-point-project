@@ -13,6 +13,8 @@ export function StoreRoute({
   currentUserId,
   isDemoMode,
   claimBusy,
+  claimPendingStoreIds = [],
+  claimNotice = "",
   productBusy,
   productError,
   profileBusy,
@@ -32,6 +34,8 @@ export function StoreRoute({
   currentUserId: string | null;
   isDemoMode: boolean;
   claimBusy: boolean;
+  claimPendingStoreIds?: string[];
+  claimNotice?: string;
   productBusy: boolean;
   productError: string;
   profileBusy: boolean;
@@ -66,7 +70,9 @@ export function StoreRoute({
   // Demo + online: owner only when current user matches store.ownerUserId.
   // DEMO_STORES seeds Canopy as owned (CRUD, no Follow); other shops stay followable.
   const isOwner = Boolean(currentUserId && store.ownerUserId && store.ownerUserId === currentUserId);
-  const canClaim = !isOwner && !store.ownerUserId && (isDemoMode || Boolean(currentUserId));
+  // Unowned shops are claimable; guests still see the CTA (requireAuth on click).
+  const canClaim = !isOwner && !store.ownerUserId;
+  const claimPending = claimPendingStoreIds.includes(store.id);
   return (
     <StoreDetailView
       store={store}
@@ -75,6 +81,8 @@ export function StoreRoute({
       isOwner={isOwner}
       canClaim={canClaim}
       claimBusy={claimBusy}
+      claimPending={claimPending}
+      claimNotice={claimNotice}
       productBusy={productBusy}
       productError={productError}
       profileBusy={profileBusy}

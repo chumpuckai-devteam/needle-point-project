@@ -81,6 +81,8 @@ export type AppRoutesProps = {
   viewerId: string | null;
   isDemoMode: boolean;
   claimBusy: boolean;
+  claimPendingStoreIds: string[];
+  claimNotice: string;
   productBusy: boolean;
   productError: string;
   onClaimStore: (storeId: string) => void;
@@ -225,6 +227,8 @@ export function AppRoutes(props: AppRoutesProps) {
             currentUserId={props.viewerId}
             isDemoMode={props.isDemoMode}
             claimBusy={props.claimBusy}
+            claimPendingStoreIds={props.claimPendingStoreIds}
+            claimNotice={props.claimNotice}
             productBusy={props.productBusy}
             productError={props.productError}
             onClaimStore={props.onClaimStore}

@@ -88,6 +88,9 @@ export function AppShell() {
   const [remoteError, setRemoteError] = useState("");
   const [stores, setStores] = useState<Store[]>(DEMO_STORES);
   const [claimBusy, setClaimBusy] = useState(false);
+  /** Store ids with a pending claim request this session (online moderated flow). */
+  const [pendingClaimStoreIds, setPendingClaimStoreIds] = useState<string[]>([]);
+  const [claimNotice, setClaimNotice] = useState("");
   const [productBusy, setProductBusy] = useState(false);
   const [productError, setProductError] = useState("");
   const [salCreateBusy, setSalCreateBusy] = useState(false);
@@ -466,15 +469,23 @@ export function AppShell() {
     if (!requireAuth("claim a shop")) return;
     setClaimBusy(true);
     setRemoteError("");
+    setClaimNotice("");
     try {
-      // Demo uses meCreatorId so StoreRoute isOwner matches after claim (not auth "demo-user" id).
-      const ownerId = isDemoMode ? meCreatorId : user!.id;
-      if (isSupabaseConfigured && user) {
-        await claimStoreOnline(storeId, user.id);
+      // Demo: instant ownership so owner manage UI is dogfoodable offline.
+      if (isDemoMode || !isSupabaseConfigured) {
+        const ownerId = meCreatorId;
+        setStores((current) => current.map((store) => (store.id === storeId ? { ...store, ownerUserId: ownerId } : store)));
+        setClaimNotice("You're now the owner of this shop (demo).");
+        return;
       }
-      setStores((current) => current.map((store) => (store.id === storeId ? { ...store, ownerUserId: ownerId } : store)));
+      // Online: moderated request — does NOT assign ownership until approve/establish.
+      if (user) {
+        await claimStoreOnline(storeId, user.id);
+        setPendingClaimStoreIds((current) => (current.includes(storeId) ? current : [...current, storeId]));
+        setClaimNotice("Claim request submitted. Ownership is assigned after review.");
+      }
     } catch (error) {
-      setRemoteError(error instanceof Error ? error.message : "Could not claim shop");
+      setRemoteError(error instanceof Error ? error.message : "Could not request shop claim");
     } finally {
       setClaimBusy(false);
     }
@@ -1164,6 +1175,8 @@ export function AppShell() {
         viewerId={viewerId}
         isDemoMode={isDemoMode}
         claimBusy={claimBusy}
+        claimPendingStoreIds={pendingClaimStoreIds}
+        claimNotice={claimNotice}
         productBusy={productBusy}
         productError={productError}
         onClaimStore={(storeId) => void claimStore(storeId)}
