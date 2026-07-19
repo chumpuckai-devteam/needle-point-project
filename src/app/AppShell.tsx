@@ -20,6 +20,7 @@ import {
   toggleStoreFollowOnline,
   updateStoreProfileOnline,
   updateStoreProductOnline,
+  uploadStoreProductImage,
   uploadStoreProfileImage,
   type StoreProductInput,
   type StoreProfileInput,
@@ -480,22 +481,34 @@ export function AppShell() {
   }
 
   async function createStoreProduct(storeId: string, input: StoreProductInput, imageFile?: File | null) {
+    if (!requireAuth("manage shop products")) return;
     setProductBusy(true);
     setProductError("");
     try {
-      // UI task stub: local blob preview until Storage wire-up (t_8b921d69).
-      let image = input.image?.trim() || "";
       if (imageFile) {
         const invalid = validateImageFile(imageFile);
         if (invalid) throw new Error(invalid);
-        image = URL.createObjectURL(imageFile);
       }
-      const payload: StoreProductInput = { ...input, image };
-      const created = await createStoreProductOnline(storeId, payload);
+
+      // Create row first so Storage RLS path storeId/productId/* can authorize upload.
+      const baseImage = input.image?.trim() || "";
+      let created = await createStoreProductOnline(storeId, { ...input, image: baseImage });
+
+      let image = created.image || baseImage;
+      if (imageFile) {
+        if (isSupabaseConfigured && user) {
+          image = await uploadStoreProductImage(storeId, created.id, imageFile);
+          created = await updateStoreProductOnline(created.id, { ...input, image });
+        } else {
+          // Demo/offline: local blob is fine for dogfood.
+          image = URL.createObjectURL(imageFile);
+        }
+      }
+
       const product = {
         ...created,
         storeId,
-        image: created.image || image || "/assets/needlepoint-hero.png",
+        image: image || created.image || "/assets/needlepoint-hero.png",
       };
       setStores((current) =>
         current.map((store) => (store.id === storeId ? { ...store, products: [...store.products, product] } : store)),
@@ -509,6 +522,7 @@ export function AppShell() {
   }
 
   async function updateStoreProduct(storeId: string, productId: string, input: StoreProductInput, imageFile?: File | null) {
+    if (!requireAuth("manage shop products")) return;
     setProductBusy(true);
     setProductError("");
     try {
@@ -516,7 +530,11 @@ export function AppShell() {
       if (imageFile) {
         const invalid = validateImageFile(imageFile);
         if (invalid) throw new Error(invalid);
-        image = URL.createObjectURL(imageFile);
+        if (isSupabaseConfigured && user) {
+          image = await uploadStoreProductImage(storeId, productId, imageFile);
+        } else {
+          image = URL.createObjectURL(imageFile);
+        }
       }
       const payload: StoreProductInput = { ...input, image };
       const updated = await updateStoreProductOnline(productId, payload);
@@ -551,6 +569,7 @@ export function AppShell() {
   }
 
   async function deleteStoreProduct(storeId: string, productId: string) {
+    if (!requireAuth("manage shop products")) return;
     setProductBusy(true);
     setProductError("");
     try {
