@@ -4189,47 +4189,123 @@ label textarea::placeholder {
   .meetup-form-row { grid-template-columns: 1fr; }
 }
 .meetup-list { display: grid; gap: 1rem; }
+
+/* Stacked cover + solid body — never put body copy on the photo. */
 .meetup-card {
-  display: grid;
-  grid-template-columns: minmax(0, 140px) 1fr;
-  gap: 0.9rem;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   padding: 0;
-}
-@media (max-width: 640px) {
-  .meetup-card { grid-template-columns: 1fr; }
+  background: var(--panel, #fffdf9);
+  color: var(--ink, #2f3a2e);
 }
 .meetup-card-cover {
+  display: block;
   width: 100%;
-  height: 100%;
-  min-height: 120px;
+  height: auto;
+  max-height: none;
+  aspect-ratio: 16 / 10;
   object-fit: cover;
-  aspect-ratio: 4 / 3;
+  object-position: center;
+  background: #ddd5ca;
+  flex: 0 0 auto;
 }
 .meetup-card-body {
-  padding: 0.9rem 1rem 1rem 0;
+  position: relative;
+  z-index: 1;
+  padding: 0.95rem 1.05rem 1.1rem;
   display: grid;
-  gap: 0.35rem;
+  gap: 0.4rem;
   align-content: start;
+  background: var(--panel, #fffdf9);
+  color: var(--ink, #2f3a2e);
 }
-@media (max-width: 640px) {
-  .meetup-card-body { padding: 0.75rem 1rem 1rem; }
+.meetup-card-body .eyebrow {
+  margin: 0;
+  color: var(--moss, #5b6b4a);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+}
+.meetup-card-body h2 {
+  margin: 0;
+  color: var(--ink, #2f3a2e);
+  font-size: 1.15rem;
+  line-height: 1.25;
+  text-shadow: none;
 }
 .meetup-meta {
   display: flex;
-  align-items: center;
-  gap: 0.35rem;
+  align-items: flex-start;
+  gap: 0.4rem;
   margin: 0;
-  color: var(--ink-muted, #5c6b5a);
+  color: var(--ink-muted, #4f5d4c);
   font-size: 0.92rem;
+  line-height: 1.35;
 }
-.meetup-detail { display: grid; gap: 0.75rem; }
+.meetup-meta svg {
+  flex: 0 0 auto;
+  margin-top: 0.15rem;
+  color: var(--moss, #5b6b4a);
+}
+.meetup-card-body .tag-row {
+  margin-top: 0.15rem;
+}
+.meetup-card-body .tag-row span {
+  background: #eef1e6;
+  color: var(--ink, #2f3a2e);
+  border: 1px solid rgba(47, 58, 46, 0.08);
+}
+.meetup-card-body .secondary {
+  margin-top: 0.35rem;
+  justify-self: stretch;
+  text-align: center;
+}
+
+/* Wider tablets+: optional side-by-side still keeps text on solid panel */
+@media (min-width: 720px) {
+  .meetup-card {
+    flex-direction: row;
+    align-items: stretch;
+  }
+  .meetup-card-cover {
+    width: 38%;
+    max-width: 220px;
+    min-height: 100%;
+    aspect-ratio: auto;
+    height: auto;
+    align-self: stretch;
+  }
+  .meetup-card-body {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 1rem 1.15rem 1.15rem;
+  }
+}
+
+.meetup-detail {
+  display: grid;
+  gap: 0.75rem;
+  background: var(--panel, #fffdf9);
+  color: var(--ink, #2f3a2e);
+}
 .meetup-detail-cover {
+  display: block;
   width: 100%;
-  max-height: 240px;
+  max-height: 260px;
   object-fit: cover;
+  object-position: center;
   border-radius: 12px;
   aspect-ratio: 16 / 9;
+  background: #ddd5ca;
+}
+.meetup-detail > h1 {
+  margin: 0;
+  color: var(--ink, #2f3a2e);
+}
+.meetup-detail > p {
+  color: var(--ink, #2f3a2e);
 }
 .meetup-host-row {
   display: flex;
@@ -4244,13 +4320,18 @@ label textarea::placeholder {
 }
 .store-meetup-card {
   display: grid;
-  gap: 0.2rem;
+  gap: 0.25rem;
   text-align: left;
   cursor: pointer;
   width: 100%;
+  background: var(--panel, #fffdf9);
+  color: var(--ink, #2f3a2e);
+}
+.store-meetup-card strong {
+  color: var(--ink, #2f3a2e);
 }
 .store-meetup-card span {
-  color: var(--ink-muted, #5c6b5a);
+  color: var(--ink-muted, #4f5d4c);
   font-size: 0.9rem;
 }
 .checkbox-row {
@@ -4259,3 +4340,4 @@ label textarea::placeholder {
   gap: 0.5rem;
   font-size: 0.95rem;
 }
+
