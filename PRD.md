@@ -2,7 +2,7 @@
 
 ## Summary
 
-A niche social platform for needlepoint enthusiasts that combines project tracking, pattern discovery, community sharing, and creator commerce. The product should not be a generic Instagram or Twitter clone. The wedge is a purpose-built craft workspace where users can document work-in-progress projects, find patterns and materials, join stitch-alongs, and discover creators with craft-specific metadata.
+A niche social platform for needlepoint enthusiasts that combines project tracking, pattern discovery, community sharing, and creator commerce. The product should not be a generic Instagram or Twitter clone. The wedge is a purpose-built craft workspace where users can document work-in-progress projects, find patterns and materials, join stitch-alongs, discover local shops, and (later) find in-person stitching meetups and guilds with craft-specific metadata.
 
 ## Product Thesis
 
@@ -15,7 +15,7 @@ The product is viable if it starts as a valuable utility for a narrow audience a
 - Hobbyist needlepoint stitchers who want to track projects, save inspiration, and share progress.
 - Advanced stitchers who participate in challenges, swaps, guilds, and stitch-alongs.
 - Pattern designers and kit makers who need better discovery and monetization.
-- Local shops, instructors, and guild organizers who want to promote classes, events, and materials.
+- Local shops, instructors, and guild organizers who want to promote classes, **stitching meetups**, events, and materials.
 
 ## Core Problem
 
@@ -34,7 +34,7 @@ This fragmentation makes it hard to find relevant patterns, remember materials, 
 - Make it easy for stitchers to document and share needlepoint projects.
 - Build a searchable library of projects, patterns, materials, stitches, and creators.
 - Give creators and shops a better way to reach high-intent craft buyers.
-- Seed social activity through project updates, comments, collections, and stitch-alongs.
+- Seed social activity through project updates, comments, collections, stitch-alongs, and (post-MVP) local stitching meetups.
 - Validate whether a niche craft audience will return weekly without relying on generic feed mechanics.
 
 ## Non-Goals
@@ -44,6 +44,7 @@ This fragmentation makes it hard to find relevant patterns, remember materials, 
 - Supporting every fiber art category at launch.
 - Creating complex creator monetization before engagement and retention are proven.
 - Building private messaging before public community behavior is validated.
+- Building full in-person event ticketing, paid RSVP checkout, or Zoom hosting in the first meetup slice (link-out or host-managed RSVP is enough at first).
 
 ## MVP Scope
 
@@ -329,6 +330,37 @@ Shows:
 - userId
 - submittedAt
 
+## StitchingMeetup (post-MVP / roadmap)
+
+In-person or hybrid local gatherings distinct from multi-week **stitch-alongs** (online challenges). Meetups are place-and-time community events; stitch-alongs are project challenges with galleries.
+
+- id
+- hostUserId (stitcher, shop owner, instructor, or guild organizer)
+- hostStoreId (optional — when a local needlepoint shop hosts)
+- title
+- description
+- coverImageUrl
+- startAt / endAt (local datetime + timezone)
+- timezone
+- locationType: `in_person` | `hybrid` | `online`
+- venueName
+- address / city / region / postalCode / country
+- latitude / longitude (optional, for near-you rank; not required for ZIP/city browse)
+- capacity (optional)
+- rsvpMode: `interest_only` | `external_link` | `in_app_rsvp` (in-app RSVP can ship after interest-only)
+- externalRsvpUrl (optional)
+- skillLevel / topics tags (e.g. beginners welcome, finishing, ornaments)
+- visibility: `public` | `unlisted`
+- status: `draft` | `scheduled` | `cancelled` | `ended`
+- createdAt / updatedAt
+
+## StitchingMeetupRsvp (when in-app RSVP ships)
+
+- meetupId
+- userId
+- status: `going` | `interested` | `cancelled`
+- createdAt / updatedAt
+
 ## Recommended Tech Stack
 
 - Frontend: Next.js with React.
@@ -346,7 +378,8 @@ Shows:
 - Craft-specific metadata instead of generic captions and hashtags.
 - Progress journals instead of isolated posts.
 - Searchable materials, stitch types, pattern sources, and difficulty.
-- Stitch-alongs as recurring community anchors.
+- Stitch-alongs as recurring **online** community anchors.
+- **Stitching meetups** as local, time-bound in-person anchors (shops, guilds, living-room stitch nights).
 - Creator and shop discovery tied to actual project outcomes.
 - Collections designed around projects and patterns, not generic image boards.
 
@@ -358,7 +391,7 @@ MVP should validate engagement before monetization, but early architecture shoul
 - Shop and instructor listings.
 - Affiliate tracking for pattern and kit purchases.
 - Marketplace take rate on patterns or kits.
-- Paid stitch-alongs or classes.
+- Paid stitch-alongs, classes, or featured meetup listings.
 - Premium user features such as advanced project tracking, private collections, and exportable project logs.
 
 ## Success Metrics
@@ -377,6 +410,7 @@ Engagement:
 - Saves per project.
 - Comments per public project.
 - Stitch-along participation rate.
+- (Post-MVP) Meetup views, RSVPs / interested counts, and meetups created by shops or guild hosts.
 
 Retention:
 
@@ -408,6 +442,7 @@ Recommended first launch path:
 3. Host one flagship stitch-along to create time-bound engagement.
 4. Launch to a waitlist of hobbyists through Instagram, Reddit, Facebook groups, newsletters, and local guilds.
 5. Track whether users create projects and return to update them.
+6. After local shop discovery is trusted, pilot **stitching meetups** with a handful of LNS hosts and guild organizers (directory + RSVP interest before full event ops).
 
 ## Risks
 
@@ -425,6 +460,69 @@ Recommended first launch path:
 - Which metadata matters most to stitchers: thread colors, stitch types, canvas mesh, pattern source, difficulty, or finishing style?
 - Should private project tracking be free, paid, or limited?
 - What is the minimum seeded content volume required for the discovery page to feel alive?
+- For stitching meetups: interest-only RSVP first, or in-app going/waitlist from day one?
+- Should meetup hosts be limited to verified shops/guilds at first, or open to any signed-in stitcher?
+- How much precise address/map detail should be public vs revealed after RSVP (safety / privacy)?
+
+## Post-MVP Roadmap
+
+Ordered themes after private-beta density (Studio, shops, stitch-alongs, collections, reporting). Dates are intentional placeholders — sequence matters more than calendar.
+
+### Phase A — Harden private beta (current / near-term)
+
+- Guest browse + auth-gated write/interact.
+- Shop connection (catalog, follow, claim, owner tools).
+- Local discovery (ZIP/city, near-you coaching).
+- Quality, smoke coverage, moderation basics.
+
+### Phase B — Stitching meetups (local community)
+
+**Goal:** Help stitchers find **in-person stitching nights**, guild sit-and-stitches, and shop-hosted open stitch times—without turning Needlepoint into Eventbrite.
+
+**Why now (after shops + local discovery):** Meetups need trustworthy local/shop context. ZIP/city and shop profiles already give a place layer; meetups attach **when + who hosts** to that layer.
+
+**In scope (first meetup slice):**
+
+- Public meetup list + detail routes (e.g. `/meetups`, `/meetups/:id`).
+- Create/edit meetup for signed-in hosts (shop owner, instructor, guild organizer, or stitcher — product choice in open questions).
+- Fields: title, description, start/end, timezone, city/region, optional venue, optional link to host shop, topics/skill tags, cover image.
+- Discovery: filter by city/ZIP/near-you radius (reuse shop discovery patterns); upcoming-only default.
+- **Interested** or **Going** (lightweight RSVP); optional external RSVP URL for guilds that already use another tool.
+- Surface meetups on Studio rail and/or shop detail (“Upcoming at this shop”).
+- Auth gate create/RSVP; public browse for guests.
+- Basic report target type `meetup` when reporting exists.
+
+**Out of scope for first meetup slice:**
+
+- Paid tickets, Stripe checkout, seat inventory sync with external box office.
+- Full calendar sync (Google/Apple) — nice-to-have later.
+- Private DMs to coordinate carpools.
+- Live video hosting inside the app.
+- Complex recurring series editor (v1 can allow manual multi-create or a simple “repeats weekly” later).
+
+**Acceptance criteria (first slice):**
+
+- Guest can browse upcoming public meetups by city without an account.
+- Signed-in user can mark Interested/Going and see the meetup on a simple “My meetups” list.
+- Host can create a public meetup and cancel it; cancelled events do not appear in default upcoming lists.
+- Shop-linked meetups appear on that shop’s public profile.
+- No marketplace checkout is required to learn about or express interest in a meetup.
+
+**Dependencies:**
+
+- Stable shop profiles + local discovery (done / in beta).
+- Auth + reporting patterns (done / in beta).
+- Optional: map pins only if list/city browse is insufficient.
+
+### Phase C — Deeper community & creator value
+
+- Richer stitch-along hosting tools.
+- Creator analytics (link clicks, meetup draw).
+- Guilds / groups (lighter than full forums).
+
+### Phase D — Commerce (only after engagement)
+
+- Explicitly parked until utility + density prove weekly return: checkout, carts, Stripe Connect, in-app kit sales.
 
 ## First Release Checklist
 
@@ -438,3 +536,4 @@ Recommended first launch path:
 - Build one stitch-along feature.
 - Add basic reporting and admin moderation.
 - Add analytics for activation, engagement, and retention.
+- **Roadmap (not first release):** stitching meetups list/detail, host create, local discovery filters, lightweight RSVP — see Post-MVP Roadmap Phase B.
