@@ -8,6 +8,8 @@ export { StoreDetailView, StoreDetailPage } from "./StoreDetailPage";
 export { ProjectDetail, ProjectDetailPage } from "./ProjectDetailPage";
 export { StitchAlongView, StitchAlongPage, StitchAlongListView } from "./StitchAlongPage";
 export { StitchAlongRoute } from "./StitchAlongRoute";
+export { MeetupsRoute } from "./MeetupsRoute";
+export { MeetupsListView, MeetupDetailView, MeetupsPage } from "./MeetupsPage";
 export { AuthPage } from "./AuthPage";
 export { OnboardingPage } from "./OnboardingPage";
 export { ProjectRoute } from "./ProjectRoute";

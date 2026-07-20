@@ -1,9 +1,10 @@
 import { FormEvent, useEffect, useId, useState } from "react";
 import { ExternalLink, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import type { Project, Store, StoreProduct } from "../types";
+import type { Project, StitchingMeetup, Store, StoreProduct } from "../types";
 import type { StoreProductInput, StoreProfileInput } from "../api/stores";
 import type { ReportInput } from "../api/reports";
+import { formatMeetupPlace, formatMeetupWhen } from "../lib/meetups";
 import { recordOutboundClickEvent } from "../api/clickEvents";
 import type { View } from "../appModel";
 import { ImageFilePicker } from "../components/ImageFilePicker";
@@ -66,6 +67,7 @@ function trackStoreWebsiteClick(store: Store, surface: string, placement: string
 export function StoreDetailView({
   store,
   projects,
+  meetups = [],
   isFollowed,
   isOwner,
   canClaim,
@@ -90,6 +92,7 @@ export function StoreDetailView({
 }: {
   store: Store;
   projects: Project[];
+  meetups?: StitchingMeetup[];
   isFollowed: boolean;
   isOwner: boolean;
   canClaim: boolean;
@@ -686,6 +689,26 @@ export function StoreDetailView({
           }
         />
       )}
+
+      {meetups.length > 0 ? (
+        <>
+          <SectionTitle title="Upcoming at this shop" />
+          <div className="store-meetup-list">
+            {meetups.map((meetup) => (
+              <button
+                key={meetup.id}
+                type="button"
+                className="panel store-meetup-card"
+                onClick={() => setView({ name: "meetup", id: meetup.id })}
+              >
+                <strong>{meetup.title}</strong>
+                <span>{formatMeetupWhen(meetup)}</span>
+                <span>{formatMeetupPlace(meetup)}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      ) : null}
 
       <SectionTitle title="Projects available here" />
       {projects.length ? (

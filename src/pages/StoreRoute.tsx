@@ -6,13 +6,14 @@ import type { View } from "../appModel";
 import { DetailSkeleton, EmptyState } from "../components/ui";
 import { findStoreByIdentifier, resolveStoresReturnTo, storeDetailPath } from "../lib/storeLinks";
 import { uiCopy } from "../lib/uiCopy";
-import type { Project, Store } from "../types";
+import type { Project, StitchingMeetup, Store } from "../types";
 import { StoreDetailView } from "./StoreDetailPage";
 
 export function StoreRoute({
   stores,
   storesLoading = false,
   projects,
+  meetups = [],
   followedStores,
   toggleStoreFollow,
   currentUserId,
@@ -36,6 +37,7 @@ export function StoreRoute({
   stores: Store[];
   storesLoading?: boolean;
   projects: Project[];
+  meetups?: StitchingMeetup[];
   followedStores: string[];
   toggleStoreFollow: (storeId: string) => void;
   currentUserId: string | null;
@@ -159,6 +161,9 @@ export function StoreRoute({
   }
 
   const linked = projects.filter((project) => (project.storeIds ?? []).includes(store.id));
+  const shopMeetups = meetups.filter(
+    (m) => m.hostStoreId === store.id && m.visibility === "public" && m.status === "scheduled",
+  );
   // Demo + online: owner only when current user matches store.ownerUserId.
   // DEMO_STORES seeds Canopy as owned (CRUD, no Follow); other shops stay followable.
   const isOwner = Boolean(currentUserId && store.ownerUserId && store.ownerUserId === currentUserId);
@@ -170,6 +175,7 @@ export function StoreRoute({
     <StoreDetailView
       store={store}
       projects={linked}
+      meetups={shopMeetups}
       isFollowed={followedStores.includes(store.id)}
       isOwner={isOwner}
       canClaim={canClaim}

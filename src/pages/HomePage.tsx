@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, Plus } from "lucide-react";
-import type { Creator, Project, StitchAlong, Store } from "../types";
+import { CalendarDays, MapPin, Plus, UsersRound } from "lucide-react";
+import type { Creator, Project, StitchAlong, StitchingMeetup, Store } from "../types";
 import type { View } from "../appModel";
 import {
   formatDistanceMiles,
@@ -9,6 +9,7 @@ import {
   requestBrowserLocation,
   type GeoPoint,
 } from "../lib/geo";
+import { filterUpcomingMeetups, formatMeetupPlace, formatMeetupWhen } from "../lib/meetups";
 import { FeedPost, FollowedStoresRail, type FollowedStoreRailItem } from "../components/feed";
 import { EmptyState, ErrorState, FeedListSkeleton } from "../components/ui";
 import { uiCopy } from "../lib/uiCopy";
@@ -18,6 +19,8 @@ export function HomeView(props: {
   stitchAlong: StitchAlong;
   /** Active stitch-alongs for the Studio rail (multi-SAL). */
   stitchAlongs?: StitchAlong[];
+  /** Upcoming public meetups for Studio rail. */
+  meetups?: StitchingMeetup[];
   followedCreators: string[];
   /** Store ids the user follows; resolved against `stores` for the rail. */
   followedStoreIds?: string[];
@@ -58,6 +61,11 @@ export function HomeView(props: {
     const list = props.stitchAlongs?.length ? props.stitchAlongs : props.stitchAlong ? [props.stitchAlong] : [];
     return list.filter((event) => event.isPublic !== false && (event.status ?? "active") !== "ended").slice(0, 6);
   }, [props.stitchAlong, props.stitchAlongs]);
+
+  const upcomingMeetups = useMemo(
+    () => filterUpcomingMeetups(props.meetups ?? []).slice(0, 6),
+    [props.meetups],
+  );
 
   const followedStoresForRail = useMemo(() => {
     const ids = props.followedStoreIds ?? [];
@@ -136,6 +144,37 @@ export function HomeView(props: {
                   {event.dates}
                   {typeof event.participantCount === "number" ? ` · ${event.participantCount} joined` : ""}
                 </small>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {upcomingMeetups.length > 0 ? (
+        <section className="studio-sal-rail studio-meetup-rail" aria-label="Upcoming stitching meetups">
+          <div className="followed-stores-rail-header">
+            <h2 className="followed-stores-rail-title">
+              <UsersRound size={16} aria-hidden /> Stitching meetups
+            </h2>
+            <button type="button" className="text-button" onClick={() => props.setView({ name: "meetups" })}>
+              See all
+            </button>
+          </div>
+          <div className="store-rail-scroll" role="list">
+            {upcomingMeetups.map((meetup) => (
+              <button
+                key={meetup.id}
+                type="button"
+                role="listitem"
+                className="sal-rail-card"
+                onClick={() => props.setView({ name: "meetup", id: meetup.id })}
+              >
+                <img src={meetup.coverImageUrl || "/assets/needlepoint-hero.png"} alt="" />
+                <span className="store-rail-card-name">{meetup.title}</span>
+                <small>
+                  <MapPin size={12} aria-hidden /> {formatMeetupPlace(meetup)}
+                </small>
+                <small>{formatMeetupWhen(meetup)}</small>
               </button>
             ))}
           </div>

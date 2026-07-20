@@ -129,3 +129,41 @@ export type StitchAlong = {
   /** Join count (preferred participant metric). */
   participantCount?: number;
 };
+
+export type StitchingMeetupLocationType = "in_person" | "hybrid" | "online";
+export type StitchingMeetupRsvpMode = "interest_only" | "external_link" | "in_app_rsvp";
+export type StitchingMeetupStatus = "draft" | "scheduled" | "cancelled" | "ended";
+export type StitchingMeetupRsvpStatus = "going" | "interested" | "cancelled";
+
+/** In-person / hybrid local stitching night (not a multi-week online stitch-along). */
+export type StitchingMeetup = {
+  id: string;
+  hostId: string;
+  hostStoreId?: string | null;
+  title: string;
+  description: string;
+  coverImageUrl?: string;
+  startsAt: string;
+  endsAt?: string | null;
+  timezone: string;
+  locationType: StitchingMeetupLocationType;
+  venueName: string;
+  address: string;
+  city: string;
+  region: string;
+  postalCode: string;
+  country: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  capacity?: number | null;
+  rsvpMode: StitchingMeetupRsvpMode;
+  externalRsvpUrl?: string;
+  topics: string[];
+  skillLevel: string;
+  visibility: "public" | "unlisted";
+  status: StitchingMeetupStatus;
+  goingCount?: number;
+  interestedCount?: number;
+  /** Viewer RSVP when known. */
+  myRsvp?: StitchingMeetupRsvpStatus | null;
+};

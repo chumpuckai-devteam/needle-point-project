@@ -13,6 +13,10 @@ export function pathForView(view: View) {
       return "/collections";
     case "stitchAlong":
       return view.id ? `/stitch-along/${view.id}` : "/stitch-along";
+    case "meetups":
+      return "/meetups";
+    case "meetup":
+      return `/meetups/${view.id}`;
     case "stores":
       return "/stores";
     case "store":
@@ -35,6 +39,8 @@ export function viewNameForPath(pathname: string) {
   if (pathname.startsWith("/journal")) return "journal";
   if (pathname.startsWith("/collections")) return "collections";
   if (pathname.startsWith("/stitch-along")) return "stitchAlong";
+  if (pathname.startsWith("/meetups/")) return "meetup";
+  if (pathname.startsWith("/meetups")) return "meetups";
   if (pathname.startsWith("/stores/")) return "store";
   if (pathname.startsWith("/stores")) return "stores";
   if (pathname.startsWith("/projects")) return "project";

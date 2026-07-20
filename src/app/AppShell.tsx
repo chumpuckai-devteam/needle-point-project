@@ -16,6 +16,14 @@ import {
   listPublicStitchAlongsOnline,
   submitToStitchAlongOnline,
 } from "../api/stitchAlongs";
+import {
+  cancelMeetupOnline,
+  createMeetupOnline,
+  fetchMyMeetupRsvpsOnline,
+  listUpcomingMeetupsOnline,
+  setMeetupRsvpOnline,
+  type StitchingMeetupInput,
+} from "../api/meetups";
 import { uploadProjectImage, validateImageFile } from "../api/images";
 import {
   claimStoreOnline,
@@ -33,10 +41,11 @@ import {
   type StoreProfileInput,
 } from "../api/stores";
 import { creators as seedCreators, initialCollections, initialProjects, initialStitchAlongs, stitchAlong as seedStitchAlong } from "../data";
-import type { Collection, Creator, MediaKind, Project, StitchAlong, Store } from "../types";
+import type { Collection, Creator, MediaKind, Project, StitchAlong, StitchingMeetup, StitchingMeetupRsvpStatus, Store } from "../types";
 import { useAuth } from "../context/AuthContext";
 import { isSupabaseConfigured, requireSupabase } from "../lib/supabase";
 import { loadFromStorage, saveToStorage } from "../lib/storage";
+import { initialMeetups } from "../lib/meetups";
 import { mapJournalError, mapProjectUpdateError, uiCopy } from "../lib/uiCopy";
 import { composeStudioFeed, rankProjectsByInterest } from "../lib/interestRank";
 import {
@@ -70,6 +79,12 @@ export function AppShell() {
   const [stitchAlongs, setStitchAlongs] = useState<StitchAlong[]>(() =>
     loadFromStorage(STORAGE_KEYS.stitchAlongs, initialStitchAlongs),
   );
+  const [meetups, setMeetups] = useState<StitchingMeetup[]>(() =>
+    isSupabaseConfigured ? [] : loadFromStorage(STORAGE_KEYS.meetups, initialMeetups),
+  );
+  const [meetupCreateBusy, setMeetupCreateBusy] = useState(false);
+  const [meetupCreateError, setMeetupCreateError] = useState("");
+  const [meetupRsvpBusy, setMeetupRsvpBusy] = useState(false);
   const [followedCreators, setFollowedCreators] = useState<string[]>(() => loadFromStorage(STORAGE_KEYS.follows, ["c1"]));
   const [followedStores, setFollowedStores] = useState<string[]>(() => loadFromStorage(STORAGE_KEYS.storeFollows, ["store-local-1"]));
   const [dismissedDiscover, setDismissedDiscover] = useState<string[]>(() => loadFromStorage(STORAGE_KEYS.dismissDiscover, [] as string[]));
@@ -136,6 +151,10 @@ export function AppShell() {
   useEffect(() => saveToStorage(STORAGE_KEYS.follows, followedCreators), [followedCreators]);
   useEffect(() => saveToStorage(STORAGE_KEYS.storeFollows, followedStores), [followedStores]);
   useEffect(() => saveToStorage(STORAGE_KEYS.stitchAlongs, stitchAlongs), [stitchAlongs]);
+  useEffect(() => {
+    if (isSupabaseConfigured) return;
+    saveToStorage(STORAGE_KEYS.meetups, meetups);
+  }, [meetups]);
   useEffect(() => saveToStorage(STORAGE_KEYS.dismissDiscover, dismissedDiscover), [dismissedDiscover]);
   useEffect(() => saveToStorage(STORAGE_KEYS.dismissStudio, dismissedStudio), [dismissedStudio]);
 
@@ -195,6 +214,8 @@ export function AppShell() {
           fetchStores(),
           user?.id ? fetchFollowedStoreIds(user.id) : Promise.resolve([] as string[]),
           listPublicStitchAlongsOnline(user?.id ?? null),
+          listUpcomingMeetupsOnline({ limit: 50 }),
+          user?.id ? fetchMyMeetupRsvpsOnline(user.id) : Promise.resolve({} as Record<string, StitchingMeetupRsvpStatus>),
         ]);
         if (cancelled) return;
 
@@ -203,6 +224,8 @@ export function AppShell() {
         const remoteStores = settled[2].status === "fulfilled" ? settled[2].value : [];
         const remoteStoreFollows = settled[3].status === "fulfilled" ? settled[3].value : [];
         const remoteStitchAlongs = settled[4].status === "fulfilled" ? settled[4].value : [];
+        const remoteMeetups = settled[5].status === "fulfilled" ? settled[5].value : [];
+        const remoteMeetupRsvps = settled[6].status === "fulfilled" ? settled[6].value : {};
 
         const hardFailures = settled
           .map((result, index) => ({ result, index }))
@@ -239,6 +262,14 @@ export function AppShell() {
           } catch {
             if (!cancelled) setStitchAlongs(remoteStitchAlongs);
           }
+        }
+        if (!cancelled) {
+          setMeetups(
+            remoteMeetups.map((meetup) => ({
+              ...meetup,
+              myRsvp: remoteMeetupRsvps[meetup.id] ?? null,
+            })),
+          );
         }
         if (user?.id) setFollowedStores(remoteStoreFollows);
         setRemoteError("");
@@ -1234,6 +1265,102 @@ export function AppShell() {
     navigate(`/stitch-along/${local.id}`);
   }
 
+  async function createMeetup(input: StitchingMeetupInput) {
+    if (!requireAuth("host a stitching meetup")) return;
+    setMeetupCreateError("");
+    const topics = (input.topics ?? []).map((t) => t.trim()).filter(Boolean);
+    const local: StitchingMeetup = {
+      id: `meetup-local-${Date.now()}`,
+      hostId: meCreatorId,
+      hostStoreId: input.hostStoreId ?? null,
+      title: (input.title ?? "").trim(),
+      description: (input.description ?? "").trim(),
+      coverImageUrl: input.coverImageUrl?.trim() || undefined,
+      startsAt: input.startsAt,
+      endsAt: input.endsAt ?? null,
+      timezone: input.timezone || "America/Los_Angeles",
+      locationType: input.locationType ?? "in_person",
+      venueName: (input.venueName ?? "").trim(),
+      address: (input.address ?? "").trim(),
+      city: (input.city ?? "").trim(),
+      region: (input.region ?? "").trim().toUpperCase(),
+      postalCode: (input.postalCode ?? "").trim(),
+      country: (input.country ?? "US").trim() || "US",
+      capacity: input.capacity ?? null,
+      rsvpMode: input.rsvpMode ?? "in_app_rsvp",
+      externalRsvpUrl: input.externalRsvpUrl?.trim() || undefined,
+      topics,
+      skillLevel: (input.skillLevel ?? "").trim(),
+      visibility: input.visibility ?? "public",
+      status: input.status ?? "scheduled",
+      goingCount: 0,
+      interestedCount: 0,
+      myRsvp: null,
+    };
+    if (!local.title) {
+      setMeetupCreateError("Title is required.");
+      return;
+    }
+    if (!local.startsAt) {
+      setMeetupCreateError("Start time is required.");
+      return;
+    }
+    if (isSupabaseConfigured && user) {
+      setMeetupCreateBusy(true);
+      try {
+        const created = await createMeetupOnline(user.id, input);
+        setMeetups((current) => [created, ...current.filter((m) => m.id !== created.id)]);
+        navigate(`/meetups/${created.id}`);
+      } catch (error) {
+        setMeetupCreateError(error instanceof Error ? error.message : "Could not create meetup");
+      } finally {
+        setMeetupCreateBusy(false);
+      }
+      return;
+    }
+    setMeetups((current) => [local, ...current]);
+    navigate(`/meetups/${local.id}`);
+  }
+
+  function setMeetupRsvp(meetupId: string, status: StitchingMeetupRsvpStatus | null) {
+    if (!requireAuth("RSVP to a meetup")) return;
+    setMeetupRsvpBusy(true);
+    setMeetups((current) =>
+      current.map((meetup) => {
+        if (meetup.id !== meetupId) return meetup;
+        const prev = meetup.myRsvp ?? null;
+        let going = meetup.goingCount ?? 0;
+        let interested = meetup.interestedCount ?? 0;
+        if (prev === "going") going = Math.max(0, going - 1);
+        if (prev === "interested") interested = Math.max(0, interested - 1);
+        if (status === "going") going += 1;
+        if (status === "interested") interested += 1;
+        return { ...meetup, myRsvp: status, goingCount: going, interestedCount: interested };
+      }),
+    );
+    if (isSupabaseConfigured && user) {
+      void setMeetupRsvpOnline(meetupId, user.id, status)
+        .catch((error) => {
+          setRemoteError(error instanceof Error ? error.message : "RSVP failed");
+        })
+        .finally(() => setMeetupRsvpBusy(false));
+      return;
+    }
+    setMeetupRsvpBusy(false);
+  }
+
+  function cancelMeetup(meetupId: string) {
+    if (!requireAuth("cancel a meetup")) return;
+    setMeetups((current) =>
+      current.map((meetup) => (meetup.id === meetupId ? { ...meetup, status: "cancelled" as const } : meetup)),
+    );
+    if (isSupabaseConfigured && user) {
+      void cancelMeetupOnline(meetupId).catch((error) => {
+        setRemoteError(error instanceof Error ? error.message : "Could not cancel meetup");
+      });
+    }
+  }
+
   function dismissRecommendation(surface: "discover" | "studio", projectId: string) {
     if (!requireAuth("skip recommendations")) return;
     if (surface === "discover") {
@@ -1348,6 +1475,14 @@ export function AppShell() {
         onCreateStitchAlong={(input) => void createStitchAlong(input)}
         salCreateBusy={salCreateBusy}
         salCreateError={salCreateError}
+        meetups={meetups}
+        onCreateMeetup={(input) => void createMeetup(input)}
+        meetupCreateBusy={meetupCreateBusy}
+        meetupCreateError={meetupCreateError}
+        onMeetupRsvp={setMeetupRsvp}
+        onCancelMeetup={cancelMeetup}
+        meetupRsvpBusy={meetupRsvpBusy}
+        ownedStoreId={stores.find((store) => store.ownerUserId === viewerId)?.id ?? null}
         updateNote={updateNote}
         updateMilestone={updateMilestone}
         commentText={commentText}

@@ -1,6 +1,6 @@
 # Needlepoint Project
 
-Needlepoint Project is a Vite + React + TypeScript private-beta app for needlepoint makers: **Studio** feed, project journals, Discover, collections, stitch-alongs, and **shop connections** (catalog link-outs, follow, owner tools).
+Needlepoint Project is a Vite + React + TypeScript private-beta app for needlepoint makers: **Studio** feed, project journals, Discover, collections, stitch-alongs, **stitching meetups**, and **shop connections** (catalog link-outs, follow, owner tools).
 
 Start with [PRD.md](./PRD.md) for product scope and **Post-MVP Roadmap** (Phase B = stitching meetups). **Out of scope for now:** marketplace checkout, carts, DMs, native mobile apps, Algolia; full event ticketing is out of the first meetup slice.
 
@@ -34,7 +34,7 @@ npm run test:smoke
 npm run preview
 ```
 
-`npm run test:smoke` runs Playwright critical paths: MVP routes, V3 matrix, auth demo, Available at / Shop the look, shop follow, owner product CRUD, guest/claim surface, outbound click contract, and critical-flows.
+`npm run test:smoke` runs Playwright critical paths: MVP routes, V3 matrix, auth demo, Available at / Shop the look, shop follow, owner product CRUD, guest/claim surface, outbound click contract, local discovery, product density, meetups, and critical-flows.
 
 ## Architecture
 

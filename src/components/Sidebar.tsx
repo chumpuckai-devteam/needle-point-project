@@ -1,4 +1,4 @@
-import { Bookmark, CalendarDays, Home, Plus, Search, Sparkles, Store as StoreIcon, UserRound } from "lucide-react";
+import { Bookmark, CalendarDays, Home, Plus, Search, Sparkles, Store as StoreIcon, UsersRound, UserRound } from "lucide-react";
 import type { View } from "../appModel";
 
 export function Sidebar({
@@ -13,10 +13,7 @@ export function Sidebar({
   /** When false (signed-out online guest), hide New post + Onboarding from nav. */
   canPost?: boolean;
 }) {
-  // Order matters on mobile: only the first 5 items appear in the bottom bar
-  // (see styles.css `.sidebar nav button:nth-child(n + 6)`).
-  // Guests: Studio · Discover · Shops · Saved · Account (no create / onboarding).
-  // Signed-in: Studio · Discover · Shops · New post · Account.
+  // Order matters on mobile: only the first 5 items appear in the bottom bar.
   const items = [
     { id: "home", label: "Studio", icon: Home, action: () => setView({ name: "home" }) },
     { id: "discover", label: "Discover", icon: Search, action: () => setView({ name: "discover" }) },
@@ -29,6 +26,7 @@ export function Sidebar({
       ? [{ id: "collections", label: `Saved (${savedCount})`, icon: Bookmark, action: () => setView({ name: "collections" }) }]
       : []),
     { id: "stitchAlong", label: "Stitch-along", icon: CalendarDays, action: () => setView({ name: "stitchAlong" }) },
+    { id: "meetups", label: "Meetups", icon: UsersRound, action: () => setView({ name: "meetups" }) },
     ...(canPost
       ? [{ id: "onboarding", label: "Onboarding", icon: Sparkles, action: () => setView({ name: "onboarding" }) }]
       : []),
@@ -46,8 +44,9 @@ export function Sidebar({
       <nav aria-label="Primary navigation">
         {items.map((item) => {
           const Icon = item.icon;
+          const active = view === item.id || (item.id === "meetups" && view === "meetup");
           return (
-            <button key={item.id} className={view === item.id ? "active" : ""} onClick={item.action}>
+            <button key={item.id} className={active ? "active" : ""} onClick={item.action}>
               <Icon size={18} />
               {item.label}
             </button>

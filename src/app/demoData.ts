@@ -175,6 +175,7 @@ export const STORAGE_KEYS = {
   storeFollows: "needle-point-project:storeFollows",
   stitchAlong: "needle-point-project:stitchAlong",
   stitchAlongs: "needle-point-project:stitchAlongs",
+  meetups: "needle-point-project:meetups",
   dismissDiscover: "needle-point-project:dismissDiscover",
   dismissStudio: "needle-point-project:dismissStudio",
   interests: "needle-point-project:interests",

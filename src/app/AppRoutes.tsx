@@ -1,14 +1,16 @@
 import type { Dispatch, FormEvent, SetStateAction } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import type { StoreProductInput, StoreProfileInput } from "../api/stores";
+import type { StitchingMeetupInput } from "../api/meetups";
 import type { DraftProject, View } from "../appModel";
-import type { Collection, Creator, Project, StitchAlong, Store } from "../types";
+import type { Collection, Creator, Project, StitchAlong, StitchingMeetup, StitchingMeetupRsvpStatus, Store } from "../types";
 import {
   AuthPage,
   CollectionsView,
   DiscoverView,
   HomeView,
   JournalView,
+  MeetupsRoute,
   OnboardingPage,
   ProfileRoute,
   ProjectRoute,
@@ -124,6 +126,14 @@ export type AppRoutesProps = {
   onCreateStitchAlong: (input: StitchAlongCreateInput) => void;
   salCreateBusy: boolean;
   salCreateError: string;
+  meetups: StitchingMeetup[];
+  onCreateMeetup: (input: StitchingMeetupInput) => void;
+  meetupCreateBusy: boolean;
+  meetupCreateError: string;
+  onMeetupRsvp: (meetupId: string, status: StitchingMeetupRsvpStatus | null) => void;
+  onCancelMeetup: (meetupId: string) => void;
+  meetupRsvpBusy: boolean;
+  ownedStoreId: string | null;
   updateNote: string;
   updateMilestone: string;
   commentText: string;
@@ -176,6 +186,7 @@ export function AppRoutes(props: AppRoutesProps) {
             followedStoresLoading={props.followedStoresLoading}
             savedCount={props.savedCount}
             stores={props.stores}
+            meetups={props.meetups}
             openDiscover={props.openDiscover}
             dismissRecommendation={(projectId) => props.dismissRecommendation("studio", projectId)}
             hasInterests={props.hasInterests}
@@ -256,6 +267,7 @@ export function AppRoutes(props: AppRoutesProps) {
             stores={props.stores}
             storesLoading={props.storesLoading}
             projects={props.publicProjects}
+            meetups={props.meetups}
             followedStores={props.followedStores}
             toggleStoreFollow={props.toggleStoreFollow}
             currentUserId={props.viewerId}
@@ -311,6 +323,46 @@ export function AppRoutes(props: AppRoutesProps) {
             onCreate={props.onCreateStitchAlong}
             createBusy={props.salCreateBusy}
             createError={props.salCreateError}
+          />
+        }
+      />
+      <Route
+        path="/meetups"
+        element={
+          <MeetupsRoute
+            meetups={props.meetups}
+            stores={props.stores}
+            creatorById={props.creatorById}
+            setView={props.setView}
+            canHost={props.canHost}
+            viewerId={props.viewerId}
+            ownedStoreId={props.ownedStoreId}
+            onCreate={props.onCreateMeetup}
+            createBusy={props.meetupCreateBusy}
+            createError={props.meetupCreateError}
+            onRsvp={props.onMeetupRsvp}
+            onCancel={props.onCancelMeetup}
+            rsvpBusy={props.meetupRsvpBusy}
+          />
+        }
+      />
+      <Route
+        path="/meetups/:id"
+        element={
+          <MeetupsRoute
+            meetups={props.meetups}
+            stores={props.stores}
+            creatorById={props.creatorById}
+            setView={props.setView}
+            canHost={props.canHost}
+            viewerId={props.viewerId}
+            ownedStoreId={props.ownedStoreId}
+            onCreate={props.onCreateMeetup}
+            createBusy={props.meetupCreateBusy}
+            createError={props.meetupCreateError}
+            onRsvp={props.onMeetupRsvp}
+            onCancel={props.onCancelMeetup}
+            rsvpBusy={props.meetupRsvpBusy}
           />
         }
       />
