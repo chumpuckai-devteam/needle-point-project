@@ -4341,3 +4341,25 @@ label textarea::placeholder {
   font-size: 0.95rem;
 }
 
+.meetup-capacity-line {
+  margin: 0.25rem 0 0;
+  font-weight: 600;
+  color: var(--ink, #2f3a2e);
+}
+.meetup-register-block {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+}
+.meetup-registered-banner {
+  margin: 0;
+  padding: 0.65rem 0.8rem;
+  border-radius: 12px;
+  background: #eef1e6;
+  color: var(--ink, #2f3a2e);
+  font-weight: 600;
+}
+.meetup-policy {
+  margin: 0;
+  line-height: 1.4;
+}

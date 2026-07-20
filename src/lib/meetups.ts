@@ -24,13 +24,15 @@ export const initialMeetups: StitchingMeetup[] = [
     latitude: 45.5265,
     longitude: -122.683,
     capacity: 18,
-    rsvpMode: "in_app_rsvp",
+    rsvpMode: "registration",
     topics: ["beginners welcome", "finishing", "WIP night"],
     skillLevel: "all levels",
     visibility: "public",
     status: "scheduled",
+    registeredCount: 6,
     goingCount: 6,
-    interestedCount: 4,
+    interestedCount: 0,
+    spotsLeft: 12,
     myRsvp: null,
   },
   {
@@ -52,13 +54,15 @@ export const initialMeetups: StitchingMeetup[] = [
     postalCode: "11215",
     country: "US",
     capacity: 24,
-    rsvpMode: "in_app_rsvp",
+    rsvpMode: "registration",
     topics: ["ornaments", "guild", "swap"],
     skillLevel: "confident beginner+",
     visibility: "public",
     status: "scheduled",
+    registeredCount: 11,
     goingCount: 11,
-    interestedCount: 7,
+    interestedCount: 0,
+    spotsLeft: 13,
     myRsvp: null,
   },
   {
@@ -85,8 +89,10 @@ export const initialMeetups: StitchingMeetup[] = [
     skillLevel: "all levels",
     visibility: "public",
     status: "scheduled",
-    goingCount: 3,
-    interestedCount: 9,
+    registeredCount: 0,
+    goingCount: 0,
+    interestedCount: 0,
+    spotsLeft: null,
     myRsvp: null,
   },
 ];
@@ -138,3 +144,36 @@ export function filterUpcomingMeetups(
     .filter((m) => !region || m.region.toLowerCase() === region)
     .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
 }
+
+export function meetupRegisteredCount(meetup: StitchingMeetup): number {
+  return meetup.registeredCount ?? meetup.goingCount ?? 0;
+}
+
+export function meetupSpotsLeft(meetup: StitchingMeetup): number | null {
+  if (meetup.spotsLeft != null) return meetup.spotsLeft;
+  if (meetup.capacity == null) return null;
+  return Math.max(meetup.capacity - meetupRegisteredCount(meetup), 0);
+}
+
+export function meetupIsFull(meetup: StitchingMeetup): boolean {
+  const left = meetupSpotsLeft(meetup);
+  return left != null && left <= 0;
+}
+
+export function formatMeetupCapacity(meetup: StitchingMeetup): string {
+  const registered = meetupRegisteredCount(meetup);
+  if (meetup.capacity == null) {
+    return registered === 1 ? "1 registered" : `${registered} registered`;
+  }
+  const left = meetupSpotsLeft(meetup) ?? 0;
+  if (left <= 0) return `Full · ${meetup.capacity} seats`;
+  return `${left} spot${left === 1 ? "" : "s"} left · ${registered}/${meetup.capacity} registered`;
+}
+
+/** Guest cancel copy — free cancel until 24h before start; frees seat for others. */
+export const MEETUP_CANCEL_POLICY =
+  "You can cancel free up to 24 hours before start. Your seat opens for someone else when you cancel. Within 24 hours, contact the host if you cannot attend.";
+
+export const MEETUP_REGISTER_HELP =
+  "Register to hold a seat. Limited capacity events fill as people register — cancel early so others can join.";
+

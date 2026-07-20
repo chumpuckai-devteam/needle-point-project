@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import type { Creator, StitchingMeetup, StitchingMeetupRsvpStatus, Store } from "../types";
+import type { Creator, StitchingMeetup, Store } from "../types";
 import type { View } from "../appModel";
 import type { StitchingMeetupInput } from "../api/meetups";
 import { EmptyState } from "../components/ui";
@@ -16,9 +16,10 @@ export function MeetupsRoute({
   onCreate,
   createBusy,
   createError,
-  onRsvp,
+  onRegister,
+  onCancelRegistration,
   onCancel,
-  rsvpBusy,
+  registerBusy,
 }: {
   meetups: StitchingMeetup[];
   stores: Store[];
@@ -30,9 +31,10 @@ export function MeetupsRoute({
   onCreate?: (input: StitchingMeetupInput) => void | Promise<void>;
   createBusy?: boolean;
   createError?: string;
-  onRsvp: (meetupId: string, status: StitchingMeetupRsvpStatus | null) => void;
+  onRegister: (meetupId: string) => void;
+  onCancelRegistration: (meetupId: string) => void;
   onCancel?: (meetupId: string) => void;
-  rsvpBusy?: boolean;
+  registerBusy?: boolean;
 }) {
   const { id } = useParams();
 
@@ -73,9 +75,10 @@ export function MeetupsRoute({
       creatorById={creatorById}
       setView={setView}
       isHost={Boolean(viewerId && meetup.hostId === viewerId)}
-      onRsvp={(status) => onRsvp(meetup.id, status)}
+      onRegister={() => onRegister(meetup.id)}
+      onCancelRegistration={() => onCancelRegistration(meetup.id)}
       onCancel={onCancel ? () => onCancel(meetup.id) : undefined}
-      rsvpBusy={rsvpBusy}
+      registerBusy={registerBusy}
     />
   );
 }

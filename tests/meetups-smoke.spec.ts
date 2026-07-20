@@ -1,15 +1,20 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Stitching meetups smoke", () => {
-  test("list shows seed meetups and detail opens", async ({ page }) => {
+  test("list shows seed meetups and detail opens with register CTA", async ({ page }) => {
     await page.goto("/meetups");
     await expect(page.getByRole("heading", { name: "Stitching meetups" })).toBeVisible();
     await expect(page.getByText(/Sit & Stitch|open stitch|ornament swap/i).first()).toBeVisible({ timeout: 15000 });
-    await page.getByRole("button", { name: "View meetup" }).first().click();
+    await page.getByRole("button", { name: /View/i }).first().click();
     await expect(page.getByRole("button", { name: /All meetups/i })).toBeVisible();
-    // In-app RSVP or external host RSVP both valid first-slice modes.
+    // Register CTA, full state, or external host register — not Going/Interested.
+    await expect(page.getByRole("button", { name: /^Going$/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /^Interested$/ })).toHaveCount(0);
     await expect(
-      page.getByRole("button", { name: /^Going/ }).or(page.getByRole("link", { name: /RSVP on host site/i })),
+      page
+        .getByRole("button", { name: /Register/i })
+        .or(page.getByRole("link", { name: /Register on host site/i }))
+        .or(page.getByRole("button", { name: /Full/i })),
     ).toBeVisible();
   });
 
@@ -22,7 +27,6 @@ test.describe("Stitching meetups smoke", () => {
 
   test("studio rail can deep-link to meetups", async ({ page }) => {
     await page.goto("/");
-    // Meetups rail may appear; route still works from empty Studio.
     await page.goto("/meetups");
     await expect(page).toHaveURL(/\/meetups/);
   });

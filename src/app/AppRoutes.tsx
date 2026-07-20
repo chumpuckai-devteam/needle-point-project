@@ -3,7 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import type { StoreProductInput, StoreProfileInput } from "../api/stores";
 import type { StitchingMeetupInput } from "../api/meetups";
 import type { DraftProject, View } from "../appModel";
-import type { Collection, Creator, Project, StitchAlong, StitchingMeetup, StitchingMeetupRsvpStatus, Store } from "../types";
+import type { Collection, Creator, Project, StitchAlong, StitchingMeetup, Store } from "../types";
 import {
   AuthPage,
   CollectionsView,
@@ -130,9 +130,10 @@ export type AppRoutesProps = {
   onCreateMeetup: (input: StitchingMeetupInput) => void;
   meetupCreateBusy: boolean;
   meetupCreateError: string;
-  onMeetupRsvp: (meetupId: string, status: StitchingMeetupRsvpStatus | null) => void;
+  onMeetupRegister: (meetupId: string) => void;
+  onMeetupCancelRegistration: (meetupId: string) => void;
   onCancelMeetup: (meetupId: string) => void;
-  meetupRsvpBusy: boolean;
+  meetupRegisterBusy: boolean;
   ownedStoreId: string | null;
   updateNote: string;
   updateMilestone: string;
@@ -340,9 +341,10 @@ export function AppRoutes(props: AppRoutesProps) {
             onCreate={props.onCreateMeetup}
             createBusy={props.meetupCreateBusy}
             createError={props.meetupCreateError}
-            onRsvp={props.onMeetupRsvp}
+            onRegister={props.onMeetupRegister}
+            onCancelRegistration={props.onMeetupCancelRegistration}
             onCancel={props.onCancelMeetup}
-            rsvpBusy={props.meetupRsvpBusy}
+            registerBusy={props.meetupRegisterBusy}
           />
         }
       />
@@ -360,9 +362,10 @@ export function AppRoutes(props: AppRoutesProps) {
             onCreate={props.onCreateMeetup}
             createBusy={props.meetupCreateBusy}
             createError={props.meetupCreateError}
-            onRsvp={props.onMeetupRsvp}
+            onRegister={props.onMeetupRegister}
+            onCancelRegistration={props.onMeetupCancelRegistration}
             onCancel={props.onCancelMeetup}
-            rsvpBusy={props.meetupRsvpBusy}
+            registerBusy={props.meetupRegisterBusy}
           />
         }
       />

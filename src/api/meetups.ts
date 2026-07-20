@@ -55,6 +55,16 @@ type DbMeetupRow = {
   updated_at?: string;
   going_count?: number | string | null;
   interested_count?: number | string | null;
+  registered_count?: number | string | null;
+  spots_left?: number | string | null;
+};
+
+export type MeetupRegistrationResult = {
+  meetupId: string;
+  registeredCount: number;
+  capacity: number | null;
+  spotsLeft: number | null;
+  status: StitchingMeetupRsvpStatus;
 };
 
 function clean(value?: string | null, max = 500): string {
@@ -94,7 +104,7 @@ function validateInput(input: StitchingMeetupInput) {
     country: clean(input.country, 8).toUpperCase() || "US",
     host_store_id: input.hostStoreId || null,
     capacity: input.capacity && input.capacity > 0 ? input.capacity : null,
-    rsvp_mode: input.rsvpMode ?? "in_app_rsvp",
+    rsvp_mode: input.rsvpMode ?? "registration",
     external_rsvp_url: clean(input.externalRsvpUrl, 500),
     topics,
     skill_level: clean(input.skillLevel, 40),
@@ -103,7 +113,24 @@ function validateInput(input: StitchingMeetupInput) {
   };
 }
 
+function num(value: number | string | null | undefined): number {
+  return Number(value) || 0;
+}
+
+export function isRegisteredStatus(status?: StitchingMeetupRsvpStatus | null): boolean {
+  return status === "registered" || status === "going" || status === "interested";
+}
+
 export function mapMeetupRow(row: DbMeetupRow, myRsvp: StitchingMeetupRsvpStatus | null = null): StitchingMeetup {
+  const registered =
+    row.registered_count != null ? num(row.registered_count) : num(row.going_count) + num(row.interested_count);
+  const capacity = row.capacity;
+  const spotsLeft =
+    row.spots_left != null && row.spots_left !== ""
+      ? Number(row.spots_left)
+      : capacity != null
+        ? Math.max(capacity - registered, 0)
+        : null;
   return {
     id: row.id,
     hostId: row.host_user_id,
@@ -123,16 +150,18 @@ export function mapMeetupRow(row: DbMeetupRow, myRsvp: StitchingMeetupRsvpStatus
     country: row.country ?? "US",
     latitude: row.latitude,
     longitude: row.longitude,
-    capacity: row.capacity,
-    rsvpMode: row.rsvp_mode,
+    capacity,
+    rsvpMode: row.rsvp_mode === "in_app_rsvp" ? "registration" : row.rsvp_mode,
     externalRsvpUrl: row.external_rsvp_url || undefined,
     topics: row.topics ?? [],
     skillLevel: row.skill_level ?? "",
     visibility: row.visibility,
     status: row.status,
-    goingCount: Number(row.going_count) || 0,
-    interestedCount: Number(row.interested_count) || 0,
-    myRsvp,
+    registeredCount: registered,
+    goingCount: registered,
+    interestedCount: 0,
+    spotsLeft,
+    myRsvp: myRsvp && isRegisteredStatus(myRsvp) ? "registered" : myRsvp,
   };
 }
 
@@ -183,11 +212,11 @@ export async function fetchMyMeetupRsvpsOnline(userId: string): Promise<Record<s
     .from("stitching_meetup_rsvps")
     .select("meetup_id,status")
     .eq("user_id", userId)
-    .in("status", ["going", "interested"]);
+    .in("status", ["registered", "going", "interested"]);
   if (error) throw error;
   const out: Record<string, StitchingMeetupRsvpStatus> = {};
   for (const row of (data as { meetup_id: string; status: StitchingMeetupRsvpStatus }[] | null) ?? []) {
-    out[row.meetup_id] = row.status;
+    out[row.meetup_id] = "registered";
   }
   return out;
 }
@@ -210,20 +239,53 @@ export async function cancelMeetupOnline(meetupId: string): Promise<void> {
   if (error) throw error;
 }
 
+function mapRegistrationRpc(data: unknown): MeetupRegistrationResult {
+  const row = Array.isArray(data) ? data[0] : data;
+  const r = row as {
+    meetup_id: string;
+    registered_count: number | string;
+    capacity: number | null;
+    spots_left: number | null;
+    status: string;
+  };
+  return {
+    meetupId: r.meetup_id,
+    registeredCount: num(r.registered_count),
+    capacity: r.capacity ?? null,
+    spotsLeft: r.spots_left == null ? null : Number(r.spots_left),
+    status: r.status === "cancelled" ? "cancelled" : "registered",
+  };
+}
+
+export async function registerForMeetupOnline(meetupId: string): Promise<MeetupRegistrationResult> {
+  const client = requireSupabase();
+  const { data, error } = await client.rpc("register_for_meetup", { p_meetup_id: meetupId });
+  if (error) {
+    const msg = error.message || "Could not register";
+    if (/full/i.test(msg)) throw new Error("This meetup is full.");
+    if (/Sign in/i.test(msg)) throw new Error("Sign in to register for a meetup.");
+    if (/not open|closed/i.test(msg)) throw new Error(msg);
+    throw new Error(msg);
+  }
+  return mapRegistrationRpc(data);
+}
+
+export async function cancelMeetupRegistrationOnline(meetupId: string): Promise<MeetupRegistrationResult> {
+  const client = requireSupabase();
+  const { data, error } = await client.rpc("cancel_meetup_registration", { p_meetup_id: meetupId });
+  if (error) throw new Error(error.message || "Could not cancel registration");
+  return mapRegistrationRpc(data);
+}
+
+/** @deprecated use registerForMeetupOnline / cancelMeetupRegistrationOnline */
 export async function setMeetupRsvpOnline(
   meetupId: string,
-  userId: string,
+  _userId: string,
   status: StitchingMeetupRsvpStatus | null,
 ): Promise<void> {
-  const client = requireSupabase();
   if (!status || status === "cancelled") {
-    const { error } = await client.from("stitching_meetup_rsvps").delete().eq("meetup_id", meetupId).eq("user_id", userId);
-    if (error) throw error;
+    await cancelMeetupRegistrationOnline(meetupId);
     return;
   }
-  const { error } = await client.from("stitching_meetup_rsvps").upsert(
-    { meetup_id: meetupId, user_id: userId, status },
-    { onConflict: "meetup_id,user_id" },
-  );
-  if (error) throw error;
+  await registerForMeetupOnline(meetupId);
 }

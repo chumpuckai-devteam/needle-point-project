@@ -131,9 +131,10 @@ export type StitchAlong = {
 };
 
 export type StitchingMeetupLocationType = "in_person" | "hybrid" | "online";
-export type StitchingMeetupRsvpMode = "interest_only" | "external_link" | "in_app_rsvp";
+export type StitchingMeetupRsvpMode = "interest_only" | "external_link" | "in_app_rsvp" | "registration";
 export type StitchingMeetupStatus = "draft" | "scheduled" | "cancelled" | "ended";
-export type StitchingMeetupRsvpStatus = "going" | "interested" | "cancelled";
+/** Soft RSVP legacy values map to registered in UI. */
+export type StitchingMeetupRsvpStatus = "registered" | "going" | "interested" | "cancelled";
 
 /** In-person / hybrid local stitching night (not a multi-week online stitch-along). */
 export type StitchingMeetup = {
@@ -162,8 +163,13 @@ export type StitchingMeetup = {
   skillLevel: string;
   visibility: "public" | "unlisted";
   status: StitchingMeetupStatus;
+  /** Active registrations (seats taken). */
+  registeredCount?: number;
+  /** @deprecated use registeredCount */
   goingCount?: number;
   interestedCount?: number;
-  /** Viewer RSVP when known. */
+  /** Remaining seats when capacity is set. */
+  spotsLeft?: number | null;
+  /** Viewer registration when known. */
   myRsvp?: StitchingMeetupRsvpStatus | null;
 };

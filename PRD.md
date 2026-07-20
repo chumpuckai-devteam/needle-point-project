@@ -347,19 +347,25 @@ In-person or hybrid local gatherings distinct from multi-week **stitch-alongs** 
 - address / city / region / postalCode / country
 - latitude / longitude (optional, for near-you rank; not required for ZIP/city browse)
 - capacity (optional)
-- rsvpMode: `interest_only` | `external_link` | `in_app_rsvp` (in-app RSVP can ship after interest-only)
+- rsvpMode: `registration` | `external_link` | `interest_only` (legacy)
 - externalRsvpUrl (optional)
 - skillLevel / topics tags (e.g. beginners welcome, finishing, ornaments)
 - visibility: `public` | `unlisted`
 - status: `draft` | `scheduled` | `cancelled` | `ended`
+- capacity (optional seat limit)
 - createdAt / updatedAt
 
-## StitchingMeetupRsvp (when in-app RSVP ships)
+## StitchingMeetupRegistration
+
+Capacity-aware seat hold (replaces soft Going/Interested).
 
 - meetupId
 - userId
-- status: `going` | `interested` | `cancelled`
+- status: `registered` | `cancelled`
 - createdAt / updatedAt
+- registeredCount derived; spotsLeft = capacity − registered when capacity set
+
+**Cancellation policy (product copy):** Guests may cancel free up to 24 hours before start; cancel frees the seat for others. Within 24 hours, contact the host. Future: enforced deadline + waitlist auto-fill.
 
 ## Recommended Tech Stack
 
@@ -487,14 +493,16 @@ Ordered themes after private-beta density (Studio, shops, stitch-alongs, collect
 - Create/edit meetup for signed-in hosts (shop owner, instructor, guild organizer, or stitcher — product choice in open questions).
 - Fields: title, description, start/end, timezone, city/region, optional venue, optional link to host shop, topics/skill tags, cover image.
 - Discovery: filter by city/ZIP/near-you radius (reuse shop discovery patterns); upcoming-only default.
-- **Interested** or **Going** (lightweight RSVP); optional external RSVP URL for guilds that already use another tool.
-- Surface meetups on Studio rail and/or shop detail (“Upcoming at this shop”).
-- Auth gate create/RSVP; public browse for guests.
+- **Register for a seat** (capacity-aware); optional external registration URL for guilds that already use another tool.
+- Spots left / full state; cancel registration frees a seat (24h free-cancel policy in UI copy).
+- Auth gate create/register; public browse for guests.
 - Basic report target type `meetup` when reporting exists.
 
 **Out of scope for first meetup slice:**
 
 - Paid tickets, Stripe checkout, seat inventory sync with external box office.
+- Host confirmation / check-in QR (future ticket confirm).
+- Waitlist auto-promote when someone cancels (v1: cancel frees seat; guests re-check).
 - Full calendar sync (Google/Apple) — nice-to-have later.
 - Private DMs to coordinate carpools.
 - Live video hosting inside the app.
@@ -503,7 +511,8 @@ Ordered themes after private-beta density (Studio, shops, stitch-alongs, collect
 **Acceptance criteria (first slice):**
 
 - Guest can browse upcoming public meetups by city without an account.
-- Signed-in user can mark Interested/Going and see the meetup on a simple “My meetups” list.
+- Signed-in user can **Register** for a seat; capacity decreases; full events block new registers.
+- Registered user can **Cancel registration**; seats free for others; cancel policy is shown on the detail page.
 - Host can create a public meetup and cancel it; cancelled events do not appear in default upcoming lists.
 - Shop-linked meetups appear on that shop’s public profile.
 - No marketplace checkout is required to learn about or express interest in a meetup.
@@ -513,6 +522,16 @@ Ordered themes after private-beta density (Studio, shops, stitch-alongs, collect
 - Stable shop profiles + local discovery (done / in beta).
 - Auth + reporting patterns (done / in beta).
 - Optional: map pins only if list/city browse is insufficient.
+
+### Phase B.1 — Meetup tickets & confirmation (future)
+
+Build only after free registration is trusted:
+
+- Paid or free **tickets** with confirmation email / in-app ticket state (`pending` → `confirmed`).
+- Host check-in (QR or name list).
+- **Waitlist**: when a registered guest cancels, next waitlisted user is offered the seat (notify + expire hold).
+- Enforce cancel deadline server-side (not only copy); optional host-defined policy.
+- Stripe / external ticketing adapters remain optional — Needlepoint can stay registration-only for free shop nights.
 
 ### Phase C — Deeper community & creator value
 
@@ -536,4 +555,4 @@ Ordered themes after private-beta density (Studio, shops, stitch-alongs, collect
 - Build one stitch-along feature.
 - Add basic reporting and admin moderation.
 - Add analytics for activation, engagement, and retention.
-- **Roadmap (not first release):** stitching meetups list/detail, host create, local discovery filters, lightweight RSVP — see Post-MVP Roadmap Phase B.
+- **Roadmap:** stitching meetups registration + capacity (Phase B); tickets/confirm/waitlist (Phase B.1).

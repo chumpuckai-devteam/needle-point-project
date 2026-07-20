@@ -18,10 +18,11 @@ import {
 } from "../api/stitchAlongs";
 import {
   cancelMeetupOnline,
+  cancelMeetupRegistrationOnline,
   createMeetupOnline,
   fetchMyMeetupRsvpsOnline,
   listUpcomingMeetupsOnline,
-  setMeetupRsvpOnline,
+  registerForMeetupOnline,
   type StitchingMeetupInput,
 } from "../api/meetups";
 import { uploadProjectImage, validateImageFile } from "../api/images";
@@ -1287,14 +1288,16 @@ export function AppShell() {
       postalCode: (input.postalCode ?? "").trim(),
       country: (input.country ?? "US").trim() || "US",
       capacity: input.capacity ?? null,
-      rsvpMode: input.rsvpMode ?? "in_app_rsvp",
+      rsvpMode: input.rsvpMode ?? "registration",
       externalRsvpUrl: input.externalRsvpUrl?.trim() || undefined,
       topics,
       skillLevel: (input.skillLevel ?? "").trim(),
       visibility: input.visibility ?? "public",
       status: input.status ?? "scheduled",
+      registeredCount: 0,
       goingCount: 0,
       interestedCount: 0,
+      spotsLeft: input.capacity ?? null,
       myRsvp: null,
     };
     if (!local.title) {
@@ -1323,25 +1326,115 @@ export function AppShell() {
   }
 
   function setMeetupRsvp(meetupId: string, status: StitchingMeetupRsvpStatus | null) {
-    if (!requireAuth("RSVP to a meetup")) return;
+    if (status === "cancelled" || !status) {
+      cancelMeetupRegistration(meetupId);
+      return;
+    }
+    registerForMeetup(meetupId);
+  }
+
+  function registerForMeetup(meetupId: string) {
+    if (!requireAuth("register for a meetup")) return;
     setMeetupRsvpBusy(true);
-    setMeetups((current) =>
-      current.map((meetup) => {
+    const current = meetups.find((m) => m.id === meetupId);
+    if (current?.capacity != null) {
+      const taken = current.registeredCount ?? current.goingCount ?? 0;
+      if (taken >= current.capacity && current.myRsvp !== "registered" && current.myRsvp !== "going") {
+        setRemoteError("This meetup is full.");
+        setMeetupRsvpBusy(false);
+        return;
+      }
+    }
+
+    setMeetups((list) =>
+      list.map((meetup) => {
         if (meetup.id !== meetupId) return meetup;
-        const prev = meetup.myRsvp ?? null;
-        let going = meetup.goingCount ?? 0;
-        let interested = meetup.interestedCount ?? 0;
-        if (prev === "going") going = Math.max(0, going - 1);
-        if (prev === "interested") interested = Math.max(0, interested - 1);
-        if (status === "going") going += 1;
-        if (status === "interested") interested += 1;
-        return { ...meetup, myRsvp: status, goingCount: going, interestedCount: interested };
+        if (meetup.myRsvp === "registered" || meetup.myRsvp === "going" || meetup.myRsvp === "interested") {
+          return meetup;
+        }
+        const registered = (meetup.registeredCount ?? meetup.goingCount ?? 0) + 1;
+        const spotsLeft = meetup.capacity != null ? Math.max(meetup.capacity - registered, 0) : null;
+        return {
+          ...meetup,
+          myRsvp: "registered" as const,
+          registeredCount: registered,
+          goingCount: registered,
+          interestedCount: 0,
+          spotsLeft,
+        };
       }),
     );
+
     if (isSupabaseConfigured && user) {
-      void setMeetupRsvpOnline(meetupId, user.id, status)
+      void registerForMeetupOnline(meetupId)
+        .then((result) => {
+          setMeetups((list) =>
+            list.map((meetup) =>
+              meetup.id === meetupId
+                ? {
+                    ...meetup,
+                    myRsvp: "registered" as const,
+                    registeredCount: result.registeredCount,
+                    goingCount: result.registeredCount,
+                    capacity: result.capacity ?? meetup.capacity,
+                    spotsLeft: result.spotsLeft,
+                  }
+                : meetup,
+            ),
+          );
+        })
         .catch((error) => {
-          setRemoteError(error instanceof Error ? error.message : "RSVP failed");
+          setRemoteError(error instanceof Error ? error.message : "Registration failed");
+          setRemoteBootKey((k) => k + 1);
+        })
+        .finally(() => setMeetupRsvpBusy(false));
+      return;
+    }
+    setMeetupRsvpBusy(false);
+  }
+
+  function cancelMeetupRegistration(meetupId: string) {
+    if (!requireAuth("cancel a meetup registration")) return;
+    setMeetupRsvpBusy(true);
+    setMeetups((list) =>
+      list.map((meetup) => {
+        if (meetup.id !== meetupId) return meetup;
+        if (meetup.myRsvp !== "registered" && meetup.myRsvp !== "going" && meetup.myRsvp !== "interested") {
+          return meetup;
+        }
+        const registered = Math.max((meetup.registeredCount ?? meetup.goingCount ?? 1) - 1, 0);
+        const spotsLeft = meetup.capacity != null ? Math.max(meetup.capacity - registered, 0) : null;
+        return {
+          ...meetup,
+          myRsvp: null,
+          registeredCount: registered,
+          goingCount: registered,
+          interestedCount: 0,
+          spotsLeft,
+        };
+      }),
+    );
+
+    if (isSupabaseConfigured && user) {
+      void cancelMeetupRegistrationOnline(meetupId)
+        .then((result) => {
+          setMeetups((list) =>
+            list.map((meetup) =>
+              meetup.id === meetupId
+                ? {
+                    ...meetup,
+                    myRsvp: null,
+                    registeredCount: result.registeredCount,
+                    goingCount: result.registeredCount,
+                    capacity: result.capacity ?? meetup.capacity,
+                    spotsLeft: result.spotsLeft,
+                  }
+                : meetup,
+            ),
+          );
+        })
+        .catch((error) => {
+          setRemoteError(error instanceof Error ? error.message : "Could not cancel registration");
         })
         .finally(() => setMeetupRsvpBusy(false));
       return;
@@ -1479,9 +1572,10 @@ export function AppShell() {
         onCreateMeetup={(input) => void createMeetup(input)}
         meetupCreateBusy={meetupCreateBusy}
         meetupCreateError={meetupCreateError}
-        onMeetupRsvp={setMeetupRsvp}
+        onMeetupRegister={registerForMeetup}
+        onMeetupCancelRegistration={cancelMeetupRegistration}
         onCancelMeetup={cancelMeetup}
-        meetupRsvpBusy={meetupRsvpBusy}
+        meetupRegisterBusy={meetupRsvpBusy}
         ownedStoreId={stores.find((store) => store.ownerUserId === viewerId)?.id ?? null}
         updateNote={updateNote}
         updateMilestone={updateMilestone}

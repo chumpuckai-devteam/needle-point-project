@@ -1,10 +1,11 @@
 import { FormEvent, useMemo, useState } from "react";
 import { CalendarDays, MapPin, Plus, Users } from "lucide-react";
-import type { Creator, StitchingMeetup, StitchingMeetupRsvpStatus, Store } from "../types";
+import type { Creator, StitchingMeetup, Store } from "../types";
 import type { View } from "../appModel";
 import type { StitchingMeetupInput } from "../api/meetups";
 import { EmptyState, SectionHeader } from "../components/ui";
-import { filterUpcomingMeetups, formatMeetupPlace, formatMeetupWhen, hostLabel } from "../lib/meetups";
+import { filterUpcomingMeetups, formatMeetupCapacity, formatMeetupPlace, formatMeetupWhen, hostLabel, MEETUP_CANCEL_POLICY, MEETUP_REGISTER_HELP, meetupIsFull } from "../lib/meetups";
+import { isRegisteredStatus } from "../api/meetups";
 
 function locationTypeLabel(type: StitchingMeetup["locationType"]) {
   if (type === "hybrid") return "Hybrid";
@@ -44,6 +45,7 @@ export function MeetupsListView({
   const [city, setCity] = useState("");
   const [region, setRegion] = useState("");
   const [topics, setTopics] = useState("beginners welcome");
+  const [capacity, setCapacity] = useState("18");
   const [linkStore, setLinkStore] = useState(Boolean(ownedStoreId));
   const [locationType, setLocationType] = useState<StitchingMeetup["locationType"]>("in_person");
 
@@ -69,9 +71,10 @@ export function MeetupsListView({
         .split(",")
         .map((t) => t.trim())
         .filter(Boolean),
+      capacity: capacity.trim() ? Number(capacity) : null,
       status: "scheduled",
       visibility: "public",
-      rsvpMode: "in_app_rsvp",
+      rsvpMode: "registration",
     });
     setTitle("");
     setDescription("");
@@ -81,6 +84,7 @@ export function MeetupsListView({
     setCity("");
     setRegion("");
     setTopics("beginners welcome");
+    setCapacity("18");
     setShowForm(false);
   }
 
@@ -157,6 +161,17 @@ export function MeetupsListView({
             <span className="label-text">Topics (comma-separated)</span>
             <input value={topics} onChange={(e) => setTopics(e.target.value)} maxLength={200} />
           </label>
+          <label className="field">
+            <span className="label-text">Capacity (optional)</span>
+            <input
+              type="number"
+              min={1}
+              max={500}
+              value={capacity}
+              onChange={(e) => setCapacity(e.target.value)}
+              placeholder="e.g. 18 — leave blank for unlimited"
+            />
+          </label>
           {ownedStoreId ? (
             <label className="checkbox-row">
               <input type="checkbox" checked={linkStore} onChange={(e) => setLinkStore(e.target.checked)} />
@@ -186,8 +201,7 @@ export function MeetupsListView({
                 <MapPin size={14} aria-hidden /> {formatMeetupPlace(meetup)}
               </p>
               <p className="meetup-meta">
-                <Users size={14} aria-hidden /> {(meetup.goingCount ?? 0) + (meetup.interestedCount ?? 0)} interested ·{" "}
-                {meetup.goingCount ?? 0} going
+                <Users size={14} aria-hidden /> {formatMeetupCapacity(meetup)}
               </p>
               {meetup.topics.length ? (
                 <div className="tag-row">
@@ -197,7 +211,7 @@ export function MeetupsListView({
                 </div>
               ) : null}
               <button className="secondary" type="button" onClick={() => setView({ name: "meetup", id: meetup.id })}>
-                View meetup
+                {meetupIsFull(meetup) ? "View · Full" : "View & register"}
               </button>
             </div>
           </article>
@@ -229,22 +243,26 @@ export function MeetupDetailView({
   creatorById,
   setView,
   isHost,
-  onRsvp,
+  onRegister,
+  onCancelRegistration,
   onCancel,
-  rsvpBusy,
+  registerBusy,
 }: {
   meetup: StitchingMeetup;
   stores: Store[];
   creatorById: (id: string) => Creator;
   setView: (view: View) => void;
   isHost: boolean;
-  onRsvp: (status: StitchingMeetupRsvpStatus | null) => void;
+  onRegister: () => void;
+  onCancelRegistration: () => void;
   onCancel?: () => void;
-  rsvpBusy?: boolean;
+  registerBusy?: boolean;
 }) {
   const host = creatorById(meetup.hostId);
   const store = meetup.hostStoreId ? stores.find((s) => s.id === meetup.hostStoreId) : undefined;
   const cancelled = meetup.status === "cancelled";
+  const registered = isRegisteredStatus(meetup.myRsvp);
+  const full = meetupIsFull(meetup) && !registered;
 
   return (
     <section className="page">
@@ -255,7 +273,7 @@ export function MeetupDetailView({
         {meetup.coverImageUrl ? <img className="meetup-detail-cover" src={meetup.coverImageUrl} alt="" /> : null}
         <p className="eyebrow">
           {locationTypeLabel(meetup.locationType)}
-          {cancelled ? " · Cancelled" : ""}
+          {cancelled ? " · Cancelled" : full ? " · Full" : ""}
         </p>
         <h1>{meetup.title}</h1>
         <p className="meetup-meta">
@@ -289,35 +307,44 @@ export function MeetupDetailView({
           ) : null}
         </div>
 
-        <p className="field-help">
-          {meetup.goingCount ?? 0} going · {meetup.interestedCount ?? 0} interested
-          {meetup.capacity ? ` · capacity ${meetup.capacity}` : ""}
+        <p className="meetup-capacity-line" aria-live="polite">
+          {formatMeetupCapacity(meetup)}
         </p>
 
         {!cancelled && meetup.rsvpMode === "external_link" && meetup.externalRsvpUrl ? (
           <a className="primary" href={meetup.externalRsvpUrl} target="_blank" rel="noreferrer">
-            RSVP on host site
+            Register on host site
           </a>
         ) : null}
 
         {!cancelled && meetup.rsvpMode !== "external_link" ? (
-          <div className="card-actions wrap">
-            <button
-              className={`primary ${meetup.myRsvp === "going" ? "selected" : ""}`}
-              type="button"
-              disabled={rsvpBusy}
-              onClick={() => onRsvp(meetup.myRsvp === "going" ? null : "going")}
-            >
-              {meetup.myRsvp === "going" ? "Going ✓" : "Going"}
-            </button>
-            <button
-              className={`secondary ${meetup.myRsvp === "interested" ? "selected" : ""}`}
-              type="button"
-              disabled={rsvpBusy}
-              onClick={() => onRsvp(meetup.myRsvp === "interested" ? null : "interested")}
-            >
-              {meetup.myRsvp === "interested" ? "Interested ✓" : "Interested"}
-            </button>
+          <div className="meetup-register-block">
+            {registered ? (
+              <>
+                <p className="meetup-registered-banner">You’re registered for this meetup.</p>
+                <button className="secondary" type="button" disabled={registerBusy} onClick={onCancelRegistration}>
+                  {registerBusy ? "Updating…" : "Cancel registration"}
+                </button>
+                <p className="field-help meetup-policy">{MEETUP_CANCEL_POLICY}</p>
+              </>
+            ) : full ? (
+              <>
+                <button className="primary" type="button" disabled>
+                  Full — no seats left
+                </button>
+                <p className="field-help meetup-policy">
+                  Spots open when someone cancels. Check back, or ask the host if a waitlist is available (waitlist coming later).
+                </p>
+              </>
+            ) : (
+              <>
+                <button className="primary" type="button" disabled={registerBusy} onClick={onRegister}>
+                  {registerBusy ? "Registering…" : meetup.capacity != null ? "Register for a seat" : "Register"}
+                </button>
+                <p className="field-help meetup-policy">{MEETUP_REGISTER_HELP}</p>
+                <p className="field-help meetup-policy">{MEETUP_CANCEL_POLICY}</p>
+              </>
+            )}
           </div>
         ) : null}
 
