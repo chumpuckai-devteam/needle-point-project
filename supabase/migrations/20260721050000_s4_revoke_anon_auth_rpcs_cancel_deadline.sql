@@ -1,0 +1,3 @@
+-- S4: revoke anon EXECUTE on auth-gated SECURITY DEFINER RPCs
+-- + cancel_meetup_registration enforces 24h free-cancel window for registered seats
+-- Applied live: s4_revoke_anon_auth_rpcs_and_cancel_deadline

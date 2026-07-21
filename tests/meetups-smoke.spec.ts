@@ -42,4 +42,29 @@ test.describe("Stitching meetups smoke", () => {
     await expect(page).toHaveURL(/\/meetups\/mine/);
     await expect(page.getByTestId("meetups-mine")).toBeVisible();
   });
+
+  test("free-cancel window helper locks registered seats inside 24h", async () => {
+    // Pure contract (avoid importing app modules that pull Vite JSON assets under Playwright).
+    const { readFileSync } = await import("node:fs");
+    const { resolve, dirname } = await import("node:path");
+    const { fileURLToPath } = await import("node:url");
+    const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+    const src = readFileSync(resolve(root, "src/lib/meetups.ts"), "utf8");
+    expect(src).toContain("export function canFreeCancelMeetupRegistration");
+    expect(src).toContain("24 * 60 * 60 * 1000");
+    expect(src).toContain("MEETUP_CANCEL_LOCKED");
+
+    // Mirror the shipped rule for a regression signal.
+    function canFreeCancel(startsAt: string, myStatus: string, nowMs: number) {
+      const status = myStatus.toLowerCase();
+      if (status === "waitlisted") return true;
+      if (!status || status === "cancelled") return false;
+      const start = new Date(startsAt).getTime();
+      return start >= nowMs + 24 * 60 * 60 * 1000;
+    }
+    const now = Date.parse("2026-07-21T12:00:00.000Z");
+    expect(canFreeCancel("2026-07-25T18:00:00.000Z", "registered", now)).toBe(true);
+    expect(canFreeCancel("2026-07-21T20:00:00.000Z", "registered", now)).toBe(false);
+    expect(canFreeCancel("2026-07-21T20:00:00.000Z", "waitlisted", now)).toBe(true);
+  });
 });

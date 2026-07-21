@@ -8,6 +8,7 @@ import { EmptyState, SectionHeader } from "../components/ui";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { downloadMeetupIcs } from "../lib/meetupIcs";
 import {
+  canFreeCancelMeetupRegistration,
   filterUpcomingMeetups,
   formatMeetupCapacity,
   formatMeetupConfirmation,
@@ -16,6 +17,7 @@ import {
   hostLabel,
   isApprovedStoreMeetupLink,
   meetupConfirmationRef,
+  MEETUP_CANCEL_LOCKED,
   MEETUP_CANCEL_POLICY,
   MEETUP_REGISTER_HELP,
   MEETUP_WAITLIST_HELP,
@@ -490,6 +492,7 @@ export function MeetupDetailView({
   const registered = isRegisteredStatus(meetup.myRsvp);
   const waitlisted = isWaitlistedStatus(meetup.myRsvp);
   const full = meetupIsFull(meetup) && !registered;
+  const canFreeCancel = canFreeCancelMeetupRegistration(meetup, meetup.myRsvp);
   const [roster, setRoster] = useState<MeetupRosterEntry[]>([]);
   const [rosterLoading, setRosterLoading] = useState(false);
   const [rosterError, setRosterError] = useState("");
@@ -656,7 +659,13 @@ export function MeetupDetailView({
                   </p>
                 </div>
                 <div className="card-actions wrap">
-                  <button className="secondary" type="button" disabled={registerBusy} onClick={onCancelRegistration}>
+                  <button
+                    className="secondary"
+                    type="button"
+                    disabled={registerBusy || !canFreeCancel}
+                    onClick={onCancelRegistration}
+                    title={!canFreeCancel ? MEETUP_CANCEL_LOCKED : undefined}
+                  >
                     {registerBusy ? "Updating…" : "Cancel registration"}
                   </button>
                   <button
@@ -674,7 +683,7 @@ export function MeetupDetailView({
                     Add to calendar
                   </button>
                 </div>
-                <p className="field-help meetup-policy">{MEETUP_CANCEL_POLICY}</p>
+                <p className="field-help meetup-policy">{canFreeCancel ? MEETUP_CANCEL_POLICY : MEETUP_CANCEL_LOCKED}</p>
               </>
             ) : waitlisted ? (
               <>
