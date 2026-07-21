@@ -105,3 +105,40 @@ test.describe("store city browse backend contract", () => {
     expect(storeRoute).toContain("storeDetailPath");
   });
 });
+
+test.describe("store Open in Maps links", () => {
+  test("builds Apple + Google URLs from coordinates and hides pure online shops", async () => {
+    const { appleMapsUrl, googleMapsUrl, storeHasMappablePlace, storeMapLinks } = await import("../src/lib/storeMaps");
+
+    const local = {
+      name: "Canopy Canvas",
+      location: "Portland, OR",
+      city: "Portland",
+      region: "OR",
+      postalCode: "97205",
+      latitude: 45.5202471,
+      longitude: -122.674194,
+      storeType: "both",
+    };
+    expect(storeHasMappablePlace(local)).toBe(true);
+    const links = storeMapLinks(local);
+    expect(links?.apple).toMatch(/^https:\/\/maps\.apple\.com\/\?/);
+    expect(links?.apple).toContain("45.5202471");
+    expect(links?.google).toMatch(/google\.com\/maps/);
+    expect(links?.google).toContain("45.5202471");
+    expect(appleMapsUrl(local)).toBeTruthy();
+    expect(googleMapsUrl(local)).toBeTruthy();
+
+    const online = {
+      name: "Thread & Tonic",
+      location: "Ships nationwide",
+      city: "",
+      region: "",
+      storeType: "online",
+      latitude: null,
+      longitude: null,
+    };
+    expect(storeHasMappablePlace(online)).toBe(false);
+    expect(storeMapLinks(online)).toBeNull();
+  });
+});

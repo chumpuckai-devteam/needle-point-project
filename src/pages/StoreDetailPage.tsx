@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useId, useState } from "react";
-import { ExternalLink, Plus } from "lucide-react";
+import { ExternalLink, MapPin, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Project, StitchingMeetup, Store, StoreProduct } from "../types";
 import type { StoreProductInput, StoreProfileInput } from "../api/stores";
@@ -11,6 +11,7 @@ import { ImageFilePicker } from "../components/ImageFilePicker";
 import { ReportControl } from "../components/ReportControl";
 import { EmptyState, SectionTitle } from "../components/ui";
 import { isStoresBrowseReturnPath } from "../lib/storeLinks";
+import { storeMapLinks } from "../lib/storeMaps";
 import { uiCopy } from "../lib/uiCopy";
 
 function storeProfileFromStore(store: Store): StoreProfileInput {
@@ -304,6 +305,7 @@ export function StoreDetailView({
   const shownAvatar = avatarPreview || profileDraft.avatar || store.avatar;
   const shownCover = coverPreview || profileDraft.coverImage || store.coverImage || store.avatar;
   const profileMessage = localProfileError || profileError || "";
+  const maps = storeMapLinks(store);
 
   return (
     <section className="page">
@@ -320,6 +322,31 @@ export function StoreDetailView({
               {store.shipsNationwide ? " · Ships nationwide" : ""}
               {typeof store.followerCount === "number" ? ` · ${store.followerCount} followers` : ""}
             </p>
+            {maps ? (
+              <div className="store-maps-links" data-testid="store-maps-links">
+                <span className="store-maps-label">
+                  <MapPin size={15} aria-hidden /> Open in maps
+                </span>
+                <a
+                  className="store-maps-link"
+                  href={maps.apple}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Open ${store.name} in Apple Maps`}
+                >
+                  Apple Maps <ExternalLink size={13} aria-hidden />
+                </a>
+                <a
+                  className="store-maps-link"
+                  href={maps.google}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Open ${store.name} in Google Maps`}
+                >
+                  Google Maps <ExternalLink size={13} aria-hidden />
+                </a>
+              </div>
+            ) : null}
             <p className="store-detail-desc">{store.description}</p>
             <div className="tag-row">
               {store.specialties.map((tag) => (

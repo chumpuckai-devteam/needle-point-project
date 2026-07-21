@@ -38,6 +38,13 @@ test.describe("shop detail smoke", () => {
 
     await expect(page.getByRole("button", { name: /All stores/i })).toBeVisible();
     await expect(page.getByRole("link", { name: /Visit website/i })).toBeVisible();
+    await expect(page.getByTestId("store-maps-links")).toBeVisible();
+    await expect(page.getByRole("link", { name: /Apple Maps/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Google Maps/i })).toBeVisible();
+    const appleHref = await page.getByRole("link", { name: /Apple Maps/i }).getAttribute("href");
+    const googleHref = await page.getByRole("link", { name: /Google Maps/i }).getAttribute("href");
+    expect(appleHref).toMatch(/maps\.apple\.com/);
+    expect(googleHref).toMatch(/google\.com\/maps/);
   });
 
   test("followable shop detail shows Follow CTA and catalog", async ({ page }) => {
