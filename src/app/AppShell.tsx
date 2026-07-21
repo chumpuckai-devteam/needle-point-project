@@ -34,6 +34,7 @@ import {
   openDmWithStoreOnline,
   openDmWithUserOnline,
   sendDmMessageOnline,
+  totalDmUnread,
   type DmMessage,
   type DmThread,
 } from "../api/dms";
@@ -1419,6 +1420,8 @@ export function AppShell() {
       void listDmMessagesOnline(threadId)
         .then((messages) => {
           setDmMessagesByThread((prev) => ({ ...prev, [threadId]: messages }));
+          // list_dm_messages marks read server-side
+          setDmThreads((prev) => prev.map((t) => (t.id === threadId ? { ...t, unreadCount: 0 } : t)));
         })
         .catch((error) => {
           setDmError(error instanceof Error ? error.message : "Could not load conversation");
@@ -1426,6 +1429,19 @@ export function AppShell() {
     },
     [user, isDemoMode],
   );
+
+  // Light poll while signed-in on Messages routes
+  useEffect(() => {
+    if (!isSupabaseConfigured || !user || isDemoMode) return;
+    if (!location.pathname.startsWith("/messages")) return;
+    const tick = () => {
+      void refreshDmThreads();
+      const match = location.pathname.match(/^\/messages\/([^/]+)/);
+      if (match?.[1]) refreshDmThread(match[1]);
+    };
+    const id = window.setInterval(tick, 8000);
+    return () => window.clearInterval(id);
+  }, [user, isDemoMode, location.pathname, refreshDmThreads, refreshDmThread]);
 
   async function messageUser(otherUserId: string) {
     if (!requireAuth("send a message")) return;
@@ -1793,6 +1809,7 @@ export function AppShell() {
   return (
     <AppLayout
       savedCount={savedProjects.length}
+      messagesUnread={totalDmUnread(dmThreads)}
       setView={setView}
       canPost={Boolean(user) || isDemoMode || !isSupabaseConfigured}
       banner={bannerMessage}

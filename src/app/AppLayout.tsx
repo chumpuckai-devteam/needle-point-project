@@ -6,6 +6,7 @@ import { viewNameForPath } from "./navigation";
 
 type AppLayoutProps = {
   savedCount: number;
+  messagesUnread?: number;
   setView: (view: View) => void;
   /** When false, hide New post from primary nav (signed-out guests). */
   canPost?: boolean;
@@ -22,6 +23,7 @@ type AppLayoutProps = {
  */
 export function AppLayout({
   savedCount,
+  messagesUnread = 0,
   setView,
   canPost = true,
   banner = "",
@@ -36,6 +38,7 @@ export function AppLayout({
         view={viewNameForPath(location.pathname)}
         setView={setView}
         savedCount={savedCount}
+        messagesUnread={messagesUnread}
         canPost={canPost}
       />
       <main>

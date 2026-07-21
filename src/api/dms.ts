@@ -17,6 +17,7 @@ export type DmThread = {
   otherAvatarUrl: string;
   storeName?: string;
   storeHandle?: string;
+  unreadCount?: number;
 };
 
 export type DmMessage = {
@@ -47,6 +48,7 @@ function mapThread(row: Record<string, unknown>): DmThread {
     otherAvatarUrl: String(row.other_avatar_url ?? ""),
     storeName: String(row.store_name ?? ""),
     storeHandle: String(row.store_handle ?? ""),
+    unreadCount: Number(row.unread_count ?? 0) || 0,
   };
 }
 
@@ -78,17 +80,26 @@ export async function listDmMessagesOnline(threadId: string, limit = 100): Promi
   return ((data as Record<string, unknown>[] | null) ?? []).map(mapMessage);
 }
 
+export async function markDmThreadReadOnline(threadId: string): Promise<void> {
+  if (!isSupabaseConfigured || !threadId) return;
+  const client = requireSupabase();
+  const { error } = await client.rpc("mark_dm_thread_read", { p_thread_id: threadId });
+  if (error) throw new Error(error.message || "Could not mark read");
+}
+
 export async function openDmWithUserOnline(otherUserId: string): Promise<DmThread> {
   const client = requireSupabase();
   const { data, error } = await client.rpc("open_dm_thread_with_user", { p_other_user_id: otherUserId });
   if (error) throw new Error(error.message || "Could not open conversation");
   const row = data as Record<string, unknown>;
+  // Prefer full list row for names; fallback until list refresh
   return mapThread({
     ...row,
     other_user_id: otherUserId,
     other_display_name: "Stitcher",
     other_handle: "",
     other_avatar_url: "",
+    unread_count: 0,
   });
 }
 
@@ -102,6 +113,7 @@ export async function openDmWithStoreOnline(storeId: string): Promise<DmThread> 
     other_display_name: "Shop",
     other_handle: "",
     other_avatar_url: "",
+    unread_count: 0,
   });
 }
 
@@ -115,4 +127,8 @@ export async function sendDmMessageOnline(threadId: string, body: string): Promi
     sender_name: "You",
     sender_handle: "",
   });
+}
+
+export function totalDmUnread(threads: DmThread[]): number {
+  return threads.reduce((sum, t) => sum + (t.unreadCount ?? 0), 0);
 }

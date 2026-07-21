@@ -531,7 +531,7 @@ Build only after free registration is trusted:
 - Richer stitch-along hosting tools.
 - Creator analytics (link clicks, meetup draw).
 - Guilds / groups (lighter than full forums).
-- **Private DMs (M3.A first slice live)** — 1:1 messaging between users, and user↔store threads. Inbox at `/messages`, Message CTAs on profiles and claimed shops. No group chats / broadcast / media / realtime yet.
+- **Private DMs (M3.A + M3.B live)** — 1:1 user↔user and user↔store. Inbox `/messages`, Message CTAs, **unread badges**, mark-read on open, light poll while viewing. No groups / media / websockets yet.
 
 ### Phase D — Commerce (only after engagement)
 

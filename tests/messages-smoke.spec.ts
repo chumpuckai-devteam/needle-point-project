@@ -9,10 +9,16 @@ test.describe("Private DMs smoke", () => {
 
   test("sidebar can open messages", async ({ page }) => {
     await page.goto("/");
-    const messagesNav = page.getByRole("button", { name: /^Messages$/i });
+    const messagesNav = page.getByRole("button", { name: /Messages/i });
     await expect(messagesNav.first()).toBeVisible({ timeout: 15000 });
     await messagesNav.first().click();
     await expect(page).toHaveURL(/\/messages/);
     await expect(page.getByRole("heading", { name: "Messages" })).toBeVisible();
+  });
+
+  test("guests have no unread badge", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("button", { name: /Messages/i }).first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId("messages-unread-badge")).toHaveCount(0);
   });
 });

@@ -60,24 +60,38 @@ export function MessagesInboxView({
         />
       ) : (
         <ul className="dm-thread-list" data-testid="dm-thread-list">
-          {threads.map((thread) => (
-            <li key={thread.id}>
-              <button type="button" className="panel dm-thread-row" onClick={() => onOpenThread(thread.id)}>
-                <span className="dm-thread-avatar" aria-hidden>
-                  {thread.otherAvatarUrl ? <img src={thread.otherAvatarUrl} alt="" /> : <MessageCircle size={18} />}
-                </span>
-                <span className="dm-thread-main">
-                  <strong>{thread.otherDisplayName || "Chat"}</strong>
-                  <small>
-                    {thread.kind === "store" ? "Shop chat" : "Direct"}
-                    {thread.otherHandle ? ` · @${thread.otherHandle}` : ""}
-                  </small>
-                  <span className="dm-thread-preview">{thread.lastMessagePreview || "No messages yet"}</span>
-                </span>
-                <span className="dm-thread-when">{formatWhen(thread.lastMessageAt || thread.createdAt)}</span>
-              </button>
-            </li>
-          ))}
+          {threads.map((thread) => {
+            const unread = thread.unreadCount ?? 0;
+            return (
+              <li key={thread.id}>
+                <button
+                  type="button"
+                  className={`panel dm-thread-row${unread > 0 ? " dm-thread-unread" : ""}`}
+                  onClick={() => onOpenThread(thread.id)}
+                >
+                  <span className="dm-thread-avatar" aria-hidden>
+                    {thread.otherAvatarUrl ? <img src={thread.otherAvatarUrl} alt="" /> : <MessageCircle size={18} />}
+                  </span>
+                  <span className="dm-thread-main">
+                    <strong>
+                      {thread.otherDisplayName || "Chat"}
+                      {unread > 0 ? (
+                        <span className="dm-unread-pill" aria-label={`${unread} unread`}>
+                          {unread > 99 ? "99+" : unread}
+                        </span>
+                      ) : null}
+                    </strong>
+                    <small>
+                      {thread.kind === "store" ? "Shop chat" : "Direct"}
+                      {thread.otherHandle ? ` · @${thread.otherHandle}` : ""}
+                    </small>
+                    <span className="dm-thread-preview">{thread.lastMessagePreview || "No messages yet"}</span>
+                  </span>
+                  <span className="dm-thread-when">{formatWhen(thread.lastMessageAt || thread.createdAt)}</span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>

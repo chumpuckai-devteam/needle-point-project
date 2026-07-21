@@ -5,15 +5,22 @@ export function Sidebar({
   view,
   setView,
   savedCount,
+  messagesUnread = 0,
   canPost = true,
 }: {
   view: string;
   setView: (view: View) => void;
   savedCount: number;
+  messagesUnread?: number;
   /** When false (signed-out online guest), hide New post + Onboarding from nav. */
   canPost?: boolean;
 }) {
   // Order matters on mobile: only the first 5 items appear in the bottom bar.
+  const messagesLabel =
+    messagesUnread > 0
+      ? `Messages (${messagesUnread > 99 ? "99+" : messagesUnread})`
+      : "Messages";
+
   const items = [
     { id: "home", label: "Studio", icon: Home, action: () => setView({ name: "home" }) },
     { id: "discover", label: "Discover", icon: Search, action: () => setView({ name: "discover" }) },
@@ -27,7 +34,7 @@ export function Sidebar({
       : []),
     { id: "stitchAlong", label: "Stitch-along", icon: CalendarDays, action: () => setView({ name: "stitchAlong" }) },
     { id: "meetups", label: "Meetups", icon: UsersRound, action: () => setView({ name: "meetups" }) },
-    { id: "messages", label: "Messages", icon: MessageCircle, action: () => setView({ name: "messages" }) },
+    { id: "messages", label: messagesLabel, icon: MessageCircle, action: () => setView({ name: "messages" }), badge: messagesUnread },
     ...(canPost
       ? [{ id: "onboarding", label: "Onboarding", icon: Sparkles, action: () => setView({ name: "onboarding" }) }]
       : []),
@@ -49,10 +56,18 @@ export function Sidebar({
             view === item.id ||
             (item.id === "meetups" && (view === "meetup" || view === "meetups")) ||
             (item.id === "messages" && view === "messages");
+          const badge = "badge" in item ? Number(item.badge || 0) : 0;
           return (
             <button key={item.id} className={active ? "active" : ""} onClick={item.action}>
               <Icon size={18} />
-              {item.label}
+              <span className="nav-label">
+                {item.id === "messages" ? "Messages" : item.label}
+                {item.id === "messages" && badge > 0 ? (
+                  <span className="nav-unread-badge" data-testid="messages-unread-badge" aria-label={`${badge} unread`}>
+                    {badge > 99 ? "99+" : badge}
+                  </span>
+                ) : null}
+              </span>
             </button>
           );
         })}
