@@ -119,7 +119,7 @@ supabase/migrations/      # schema, RLS, RPCs, storage
 Offline seed:
 
 - Creators + projects: `src/data.ts` (`initialProjects`, including private **Midnight Sampler** for access checks)
-- Shops + catalog: `src/app/demoData.ts` (`DEMO_STORES` — Canopy owned, Thread & Tonic + Bookshop unowned)
+- Shops + catalog: `src/data/us-store-catalog.json` (≥2/state, ≥5/major metro) via `npm run seed:stores`; demo maps it in `src/app/demoData.ts` (Canopy owned)
 
 Live seed (`scripts/seed.mjs`):
 

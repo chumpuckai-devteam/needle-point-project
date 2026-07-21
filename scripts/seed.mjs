@@ -189,6 +189,9 @@ const stores = [
   ["Needle Nest Studio", "needleneststudio", "local", "Small teaching studio with beginner canvases and monthly finish-it nights.", "/assets/needlepoint-hero.png", "/assets/tiny-ski-lodge-ornament.jpg", "https://example.com/needle-nest", "Brooklyn, NY", "Brooklyn", "NY", "11201", false, ["beginner classes", "ornaments", "open stitch"], 40.6943, -73.9866],
 ];
 
+// Expanded national directory (2+/state, 5+/major metro) lives in scripts/data/us-store-catalog.json
+// Run `npm run seed:stores` after generate to upsert the full catalog without touching products/auth.
+
 const products = [
   ["canopycanvas", "Persimmon Garden pillow canvas", "18 mesh painted canvas for a lush fruit pillow.", "/assets/persimmon-garden-pillow.jpg", "from $86", "https://example.com/canopy/persimmon", "canvas", 1],
   ["canopycanvas", "Bookshop Door printed canvas", "18 mesh storefront scene for framed pieces.", "/assets/bookshop-door-canvas.jpg", "from $74", "https://example.com/canopy/bookshop-door", "canvas", 2],
