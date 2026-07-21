@@ -68,6 +68,7 @@ export function StoreDetailView({
   store,
   projects,
   meetups = [],
+  pendingVenueMeetups = [],
   isFollowed,
   isOwner,
   canClaim,
@@ -89,10 +90,12 @@ export function StoreDetailView({
   setView,
   browseReturnTo = "/stores",
   onReport,
+  onRespondVenueRequest,
 }: {
   store: Store;
   projects: Project[];
   meetups?: StitchingMeetup[];
+  pendingVenueMeetups?: StitchingMeetup[];
   isFollowed: boolean;
   isOwner: boolean;
   canClaim: boolean;
@@ -115,6 +118,7 @@ export function StoreDetailView({
   /** Browse path (+ query) to restore city/ZIP/location context. */
   browseReturnTo?: string;
   onReport?: (input: ReportInput) => void | Promise<void>;
+  onRespondVenueRequest?: (meetupId: string, approve: boolean) => void | Promise<void>;
 }) {
   const navigate = useNavigate();
   const shopsBackPath = isStoresBrowseReturnPath(browseReturnTo) ? browseReturnTo : "/stores";
@@ -690,25 +694,60 @@ export function StoreDetailView({
         />
       )}
 
-      {meetups.length > 0 ? (
-        <>
-          <SectionTitle title="Upcoming at this shop" />
-          <div className="store-meetup-list">
-            {meetups.map((meetup) => (
-              <button
-                key={meetup.id}
-                type="button"
-                className="panel store-meetup-card"
-                onClick={() => setView({ name: "meetup", id: meetup.id })}
-              >
-                <strong>{meetup.title}</strong>
-                <span>{formatMeetupWhen(meetup)}</span>
-                <span>{formatMeetupPlace(meetup)}</span>
-              </button>
-            ))}
-          </div>
-        </>
-      ) : null}
+      {isOwner && pendingVenueMeetups.length > 0 ? (
+              <div className="panel store-meetup-pending">
+                <SectionTitle title="Venue requests" />
+                <p className="field-help">Community hosts asked to list your shop as the meetup location.</p>
+                <div className="store-meetup-list">
+                  {pendingVenueMeetups.map((meetup) => (
+                    <div key={meetup.id} className="panel store-meetup-card">
+                      <strong>{meetup.title}</strong>
+                      <span>{formatMeetupWhen(meetup)}</span>
+                      <span>{formatMeetupPlace(meetup)}</span>
+                      <div className="card-actions wrap">
+                        <button className="secondary" type="button" onClick={() => setView({ name: "meetup", id: meetup.id })}>
+                          View
+                        </button>
+                        <button
+                          className="primary"
+                          type="button"
+                          onClick={() => void onRespondVenueRequest?.(meetup.id, true)}
+                        >
+                          Approve shop link
+                        </button>
+                        <button
+                          className="secondary"
+                          type="button"
+                          onClick={() => void onRespondVenueRequest?.(meetup.id, false)}
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {meetups.length > 0 ? (
+              <div className="panel">
+                <SectionTitle title="Upcoming at this shop" />
+                <div className="store-meetup-list">
+                  {meetups.map((meetup) => (
+                    <button
+                      key={meetup.id}
+                      type="button"
+                      className="panel store-meetup-card"
+                      onClick={() => setView({ name: "meetup", id: meetup.id })}
+                    >
+                      <strong>{meetup.title}</strong>
+                      <span>{formatMeetupWhen(meetup)}</span>
+                      <span>{formatMeetupPlace(meetup)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
       <SectionTitle title="Projects available here" />
       {projects.length ? (

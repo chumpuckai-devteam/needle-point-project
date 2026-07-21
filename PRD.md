@@ -483,61 +483,55 @@ Ordered themes after private-beta density (Studio, shops, stitch-alongs, collect
 
 ### Phase B — Stitching meetups (local community)
 
-**Goal:** Help stitchers find **in-person stitching nights**, guild sit-and-stitches, and shop-hosted open stitch times—without turning Needlepoint into Eventbrite.
+**Goal:** Help stitchers find **in-person stitching nights**, guild sit-and-stitches, and shop-hosted open stitch times—managed **on Needlepoint**, not on an external Eventbrite-style site.
 
 **Why now (after shops + local discovery):** Meetups need trustworthy local/shop context. ZIP/city and shop profiles already give a place layer; meetups attach **when + who hosts** to that layer.
 
-**In scope (first meetup slice):**
+**Product rules (source of truth):**
 
-- Public meetup list + detail routes (e.g. `/meetups`, `/meetups/:id`).
-- Create/edit meetup for signed-in hosts (shop owner, instructor, guild organizer, or stitcher — product choice in open questions).
-- Fields: title, description, start/end, timezone, city/region, optional venue, optional link to host shop, topics/skill tags, cover image.
-- Discovery: filter by city/ZIP/near-you radius (reuse shop discovery patterns); upcoming-only default.
-- **Register for a seat** (capacity-aware); optional external registration URL for guilds that already use another tool.
-- Spots left / full state; cancel registration frees a seat (24h free-cancel policy in UI copy).
-- Auth gate create/register; public browse for guests.
-- Basic report target type `meetup` when reporting exists.
+1. **On-site registration** — Guests **Register**, waitlist, cancel, and manage seats **in this app**. New meetups always use `registration` mode. External RSVP URLs are **legacy only** (not offered on create).
+2. **Stores create meetups** — Shop owners host open-stitch nights linked to their shop immediately (`store_link_status = approved`).
+3. **Users can create meetups** — Community hosts may publish a public night with free-text venue. They **cannot** claim a shop as the meetup location unless the **store approves** a venue request (`pending` → `approved` / `rejected`).
+4. **My Meetups** — Signed-in users manage registrations and hosting from Browse | My meetups.
 
-**Out of scope for first meetup slice:**
+**In scope (shipped / current):**
 
-- Paid tickets, Stripe checkout, seat inventory sync with external box office.
-- Host confirmation / check-in QR (future ticket confirm).
-- Waitlist auto-promote when someone cancels (v1: cancel frees seat; guests re-check).
-- Full calendar sync (Google/Apple) — nice-to-have later.
-- Private DMs to coordinate carpools.
+- Public meetup list + detail + `/meetups/mine`.
+- Create meetup for signed-in hosts; store link ownership or approval gate.
+- Register / waitlist / cancel / confirmation receipt / host roster / ICS.
+- Shop profile: approved upcoming nights + owner **Venue requests** queue.
+
+**Out of scope for meetups core:**
+
+- Paid tickets, Stripe checkout.
+- Host QR check-in hardware.
 - Live video hosting inside the app.
-- Complex recurring series editor (v1 can allow manual multi-create or a simple “repeats weekly” later).
+- Complex recurring series editor.
 
-**Acceptance criteria (first slice):**
+**Acceptance criteria:**
 
-- Guest can browse upcoming public meetups by city without an account.
-- Signed-in user can **Register** for a seat; capacity decreases; full events block new registers.
-- Registered user can **Cancel registration**; seats free for others; cancel policy is shown on the detail page.
-- Host can create a public meetup and cancel it; cancelled events do not appear in default upcoming lists.
-- Shop-linked meetups appear on that shop’s public profile.
-- No marketplace checkout is required to learn about or express interest in a meetup.
-
-**Dependencies:**
-
-- Stable shop profiles + local discovery (done / in beta).
-- Auth + reporting patterns (done / in beta).
-- Optional: map pins only if list/city browse is insufficient.
+- Guest browses upcoming public meetups without an account.
+- Signed-in user registers and cancels on-site; capacity + waitlist behave correctly.
+- Store owner hosts shop-linked meetup without extra approval.
+- Non-owner requesting a shop venue stays pending until the store approves; shop page only lists approved links.
+- No marketplace checkout required.
 
 ### Phase B.1 — Meetup tickets & confirmation (future)
 
 Build only after free registration is trusted:
 
-- Paid or free **tickets** with confirmation email / in-app ticket state (`pending` → `confirmed`).
+- Paid or free **tickets** with confirmation email / in-app ticket state.
 - Host check-in (QR or name list).
-- **Waitlist**: when a registered guest cancels, next waitlisted user is offered the seat (notify + expire hold).
-- Enforce cancel deadline server-side (not only copy); optional host-defined policy.
-- Stripe / external ticketing adapters remain optional — Needlepoint can stay registration-only for free shop nights.
+- Waitlist notify + expire hold (auto-promote already ships for free seats).
+- Enforce cancel deadline server-side.
+- Stripe adapters optional.
 
 ### Phase C — Deeper community & creator value
 
 - Richer stitch-along hosting tools.
 - Creator analytics (link clicks, meetup draw).
 - Guilds / groups (lighter than full forums).
+- **Private DMs** — 1:1 messaging between users, and user↔store threads (coordinate carpools, class questions, order follow-ups). Not built yet; roadmap item for a future program after meetup/store trust loops are stable. No group chats / broadcast spam in v1.
 
 ### Phase D — Commerce (only after engagement)
 
@@ -555,4 +549,4 @@ Build only after free registration is trusted:
 - Build one stitch-along feature.
 - Add basic reporting and admin moderation.
 - Add analytics for activation, engagement, and retention.
-- **Roadmap:** stitching meetups registration + capacity (Phase B); tickets/confirm/waitlist (Phase B.1).
+- **Roadmap:** on-site meetup registration + store venue approval (Phase B); tickets (B.1); **DMs user↔user and user↔store (Phase C)**; commerce parked (D).

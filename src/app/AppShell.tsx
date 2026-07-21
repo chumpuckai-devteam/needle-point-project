@@ -24,6 +24,7 @@ import {
   joinMeetupWaitlistOnline,
   listUpcomingMeetupsOnline,
   registerForMeetupOnline,
+  respondMeetupStoreLinkOnline,
   type MyMeetupRsvpRow,
   type StitchingMeetupInput,
 } from "../api/meetups";
@@ -1276,10 +1277,30 @@ export function AppShell() {
     if (!requireAuth("host a stitching meetup")) return;
     setMeetupCreateError("");
     const topics = (input.topics ?? []).map((t) => t.trim()).filter(Boolean);
+    const ownedId = stores.find((store) => store.ownerUserId === meCreatorId)?.id ?? null;
+    let hostStoreId = input.hostStoreId ?? null;
+    let storeLinkStatus: StitchingMeetup["storeLinkStatus"] = "none";
+    let requestStoreVenue = Boolean(input.requestStoreVenue);
+
+    if (hostStoreId) {
+      if (ownedId && hostStoreId === ownedId) {
+        storeLinkStatus = "approved";
+        requestStoreVenue = false;
+      } else if (requestStoreVenue) {
+        storeLinkStatus = "pending";
+      } else {
+        setMeetupCreateError(
+          "You can only link a shop you own. Request venue approval from the shop, or leave the shop unlinked.",
+        );
+        return;
+      }
+    }
+
     const local: StitchingMeetup = {
       id: `meetup-local-${Date.now()}`,
       hostId: meCreatorId,
-      hostStoreId: input.hostStoreId ?? null,
+      hostStoreId: storeLinkStatus === "none" ? null : hostStoreId,
+      storeLinkStatus,
       title: (input.title ?? "").trim(),
       description: (input.description ?? "").trim(),
       coverImageUrl: input.coverImageUrl?.trim() || undefined,
@@ -1294,8 +1315,7 @@ export function AppShell() {
       postalCode: (input.postalCode ?? "").trim(),
       country: (input.country ?? "US").trim() || "US",
       capacity: input.capacity ?? null,
-      rsvpMode: input.rsvpMode ?? "registration",
-      externalRsvpUrl: input.externalRsvpUrl?.trim() || undefined,
+      rsvpMode: "registration",
       topics,
       skillLevel: (input.skillLevel ?? "").trim(),
       visibility: input.visibility ?? "public",
@@ -1303,6 +1323,7 @@ export function AppShell() {
       registeredCount: 0,
       goingCount: 0,
       interestedCount: 0,
+      waitlistCount: 0,
       spotsLeft: input.capacity ?? null,
       myRsvp: null,
     };
@@ -1317,7 +1338,12 @@ export function AppShell() {
     if (isSupabaseConfigured && user) {
       setMeetupCreateBusy(true);
       try {
-        const created = await createMeetupOnline(user.id, input);
+        const created = await createMeetupOnline(user.id, {
+          ...input,
+          hostStoreId,
+          requestStoreVenue,
+          rsvpMode: "registration",
+        });
         setMeetups((current) => [created, ...current.filter((m) => m.id !== created.id)]);
         navigate(`/meetups/${created.id}`);
       } catch (error) {
@@ -1329,6 +1355,26 @@ export function AppShell() {
     }
     setMeetups((current) => [local, ...current]);
     navigate(`/meetups/${local.id}`);
+  }
+
+  async function respondMeetupStoreLink(meetupId: string, approve: boolean) {
+    if (!requireAuth("manage shop venue requests")) return;
+    try {
+      if (isSupabaseConfigured && user && !isDemoMode) {
+        const updated = await respondMeetupStoreLinkOnline(meetupId, approve);
+        setMeetups((list) => list.map((m) => (m.id === meetupId ? { ...m, ...updated } : m)));
+        return;
+      }
+      setMeetups((list) =>
+        list.map((m) => {
+          if (m.id !== meetupId) return m;
+          if (approve) return { ...m, storeLinkStatus: "approved" as const };
+          return { ...m, storeLinkStatus: "rejected" as const, hostStoreId: null };
+        }),
+      );
+    } catch (error) {
+      setRemoteError(error instanceof Error ? error.message : "Could not update venue request");
+    }
   }
 
   function applyMeetupCounts(
@@ -1652,6 +1698,7 @@ export function AppShell() {
         productBusy={productBusy}
         productError={productError}
         onClaimStore={(storeId) => void claimStore(storeId)}
+        onRespondVenueRequest={(meetupId, approve) => void respondMeetupStoreLink(meetupId, approve)}
         onCreateProduct={(storeId, input, imageFile) => createStoreProduct(storeId, input, imageFile)}
         onUpdateProduct={(storeId, productId, input, imageFile) => updateStoreProduct(storeId, productId, input, imageFile)}
         onDeleteProduct={(storeId, productId) => deleteStoreProduct(storeId, productId)}

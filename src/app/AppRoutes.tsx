@@ -104,6 +104,7 @@ export type AppRoutesProps = {
   productBusy: boolean;
   productError: string;
   onClaimStore: (storeId: string) => void;
+  onRespondVenueRequest?: (meetupId: string, approve: boolean) => void | Promise<void>;
   onCreateProduct: (storeId: string, input: StoreProductInput, imageFile?: File | null) => Promise<void>;
   onUpdateProduct: (
     storeId: string,
@@ -282,6 +283,7 @@ export function AppRoutes(props: AppRoutesProps) {
             productBusy={props.productBusy}
             productError={props.productError}
             onClaimStore={props.onClaimStore}
+            onRespondVenueRequest={props.onRespondVenueRequest}
             onCreateProduct={props.onCreateProduct}
             onUpdateProduct={props.onUpdateProduct}
             onDeleteProduct={props.onDeleteProduct}

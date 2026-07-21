@@ -141,6 +141,8 @@ export type StitchingMeetup = {
   id: string;
   hostId: string;
   hostStoreId?: string | null;
+  /** none | pending | approved | rejected — shop claim on meetup. */
+  storeLinkStatus?: "none" | "pending" | "approved" | "rejected";
   title: string;
   description: string;
   coverImageUrl?: string;

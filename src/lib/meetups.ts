@@ -7,6 +7,7 @@ export const initialMeetups: StitchingMeetup[] = [
     id: "meetup-1",
     hostId: DEMO_CREATOR_ID,
     hostStoreId: "store-local-1",
+    storeLinkStatus: "approved",
     title: "Thursday Sit & Stitch at Canopy",
     description:
       "Bring a WIP and stitch with the Canopy crew. Beginners welcome — we'll help with basketweave basics and finishing questions. Coffee and scraps of canvas gossip included.",
@@ -40,6 +41,7 @@ export const initialMeetups: StitchingMeetup[] = [
     id: "meetup-2",
     hostId: "c1",
     hostStoreId: null,
+    storeLinkStatus: "none",
     title: "Guild ornament swap night",
     description:
       "Local guild open stitch and small ornament swap. Bring one finished or nearly finished ornament if you want to swap; spectators welcome.",
@@ -71,6 +73,7 @@ export const initialMeetups: StitchingMeetup[] = [
     id: "meetup-3",
     hostId: "c3",
     hostStoreId: "store-local-1",
+    storeLinkStatus: "approved",
     title: "Sunday open stitch (hybrid)",
     description:
       "Shop floor open stitch with an optional Zoom room for far-away friends. Focus theme: painted canvas backgrounds.",
@@ -85,16 +88,17 @@ export const initialMeetups: StitchingMeetup[] = [
     region: "OR",
     postalCode: "97209",
     country: "US",
-    rsvpMode: "external_link",
-    externalRsvpUrl: "https://example.com/canopy/sunday-stitch",
+    capacity: 20,
+    rsvpMode: "registration",
     topics: ["painted canvas", "open stitch"],
     skillLevel: "all levels",
     visibility: "public",
     status: "scheduled",
-    registeredCount: 0,
-    goingCount: 0,
+    registeredCount: 4,
+    goingCount: 4,
     interestedCount: 0,
-    spotsLeft: null,
+    waitlistCount: 0,
+    spotsLeft: 16,
     myRsvp: null,
   },
 ];
@@ -125,10 +129,26 @@ export function formatMeetupPlace(meetup: StitchingMeetup): string {
   return meetup.venueName || cityLine || "Location TBA";
 }
 
-export function hostLabel(meetup: StitchingMeetup, creatorById: (id: string) => Creator, stores: Store[]): string {
-  const store = meetup.hostStoreId ? stores.find((s) => s.id === meetup.hostStoreId) : undefined;
-  if (store) return store.name;
+export function hostLabel(meetup: StitchingMeetup, creatorById: (id: string) => Creator, stores: Store[]) {
+  const store =
+    meetup.hostStoreId && meetup.storeLinkStatus !== "pending" && meetup.storeLinkStatus !== "rejected"
+      ? stores.find((s) => s.id === meetup.hostStoreId)
+      : undefined;
+  if (store && (meetup.storeLinkStatus === "approved" || !meetup.storeLinkStatus)) return store.name;
   return creatorById(meetup.hostId)?.name || "Host";
+}
+
+/** Shop public page only shows approved store-linked meetups. */
+export function isApprovedStoreMeetup(meetup: StitchingMeetup, storeId: string): boolean {
+  if (!storeId || meetup.hostStoreId !== storeId) return false;
+  if (meetup.storeLinkStatus === "pending" || meetup.storeLinkStatus === "rejected") return false;
+  // approved, or legacy rows without status (treated as approved)
+  return true;
+}
+
+export function isApprovedStoreMeetupLink(meetup: StitchingMeetup): boolean {
+  if (!meetup.hostStoreId) return false;
+  return isApprovedStoreMeetup(meetup, meetup.hostStoreId);
 }
 
 export function filterUpcomingMeetups(

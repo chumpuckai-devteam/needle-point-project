@@ -16,7 +16,10 @@ export type StitchingMeetupInput = {
   postalCode?: string;
   country?: string;
   hostStoreId?: string | null;
+  /** When true and caller does not own the store, creates a pending venue request. */
+  requestStoreVenue?: boolean;
   capacity?: number | null;
+  /** Forced to registration on create (on-site). */
   rsvpMode?: StitchingMeetup["rsvpMode"];
   externalRsvpUrl?: string;
   topics?: string[];
@@ -28,31 +31,30 @@ export type StitchingMeetupInput = {
 type DbMeetupRow = {
   id: string;
   host_user_id: string;
-  host_store_id: string | null;
+  host_store_id?: string | null;
+  store_link_status?: string | null;
   title: string;
-  description: string;
-  cover_image_url: string;
+  description?: string | null;
+  cover_image_url?: string | null;
   starts_at: string;
-  ends_at: string | null;
-  timezone: string;
+  ends_at?: string | null;
+  timezone?: string | null;
   location_type: StitchingMeetup["locationType"];
-  venue_name: string;
-  address: string;
-  city: string;
-  region: string;
-  postal_code: string;
-  country: string;
-  latitude: number | null;
-  longitude: number | null;
-  capacity: number | null;
+  venue_name?: string | null;
+  address?: string | null;
+  city?: string | null;
+  region?: string | null;
+  postal_code?: string | null;
+  country?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  capacity?: number | null;
   rsvp_mode: StitchingMeetup["rsvpMode"];
-  external_rsvp_url: string;
-  topics: string[] | null;
-  skill_level: string;
+  external_rsvp_url?: string | null;
+  topics?: string[] | null;
+  skill_level?: string | null;
   visibility: StitchingMeetup["visibility"];
   status: StitchingMeetup["status"];
-  created_at?: string;
-  updated_at?: string;
   going_count?: number | string | null;
   interested_count?: number | string | null;
   registered_count?: number | string | null;
@@ -114,8 +116,9 @@ function validateInput(input: StitchingMeetupInput) {
     country: clean(input.country, 8).toUpperCase() || "US",
     host_store_id: input.hostStoreId || null,
     capacity: input.capacity && input.capacity > 0 ? input.capacity : null,
-    rsvp_mode: input.rsvpMode ?? "registration",
-    external_rsvp_url: clean(input.externalRsvpUrl, 500),
+    // Product law: registration is on-site; external is legacy only (not on create).
+    rsvp_mode: "registration" as const,
+    external_rsvp_url: "",
     topics,
     skill_level: clean(input.skillLevel, 40),
     visibility: input.visibility ?? "public",
@@ -152,6 +155,7 @@ export function mapMeetupRow(row: DbMeetupRow, myRsvp: StitchingMeetupRsvpStatus
     id: row.id,
     hostId: row.host_user_id,
     hostStoreId: row.host_store_id,
+    storeLinkStatus: (row.store_link_status as StitchingMeetup["storeLinkStatus"]) || (row.host_store_id ? "approved" : "none"),
     title: row.title,
     description: row.description ?? "",
     coverImageUrl: row.cover_image_url || undefined,
@@ -247,12 +251,46 @@ export async function fetchMyMeetupRsvpsOnline(
 export async function createMeetupOnline(userId: string, input: StitchingMeetupInput): Promise<StitchingMeetup> {
   const values = validateInput(input);
   const client = requireSupabase();
-  const { data, error } = await client
-    .from("stitching_meetups")
-    .insert({ ...values, host_user_id: userId })
-    .select("*")
-    .single();
-  if (error) throw error;
+  const { data, error } = await client.rpc("create_stitching_meetup", {
+    p_title: values.title,
+    p_description: values.description,
+    p_starts_at: values.starts_at,
+    p_ends_at: values.ends_at,
+    p_timezone: values.timezone,
+    p_location_type: values.location_type,
+    p_venue_name: values.venue_name,
+    p_address: values.address,
+    p_city: values.city,
+    p_region: values.region,
+    p_postal_code: values.postal_code,
+    p_country: values.country,
+    p_capacity: values.capacity,
+    p_topics: values.topics,
+    p_skill_level: values.skill_level,
+    p_visibility: values.visibility,
+    p_host_store_id: values.host_store_id,
+    p_request_store_venue: Boolean(input.requestStoreVenue),
+  });
+  if (error) throw new Error(error.message || "Could not create meetup");
+  void userId;
+  return mapMeetupRow(data as DbMeetupRow);
+}
+
+export async function listPendingMeetupStoreLinksOnline(storeId: string): Promise<StitchingMeetup[]> {
+  if (!isSupabaseConfigured || !storeId) return [];
+  const client = requireSupabase();
+  const { data, error } = await client.rpc("list_pending_meetup_store_links", { p_store_id: storeId });
+  if (error) throw new Error(error.message || "Could not load venue requests");
+  return ((data as DbMeetupRow[] | null) ?? []).map((row) => mapMeetupRow(row));
+}
+
+export async function respondMeetupStoreLinkOnline(meetupId: string, approve: boolean): Promise<StitchingMeetup> {
+  const client = requireSupabase();
+  const { data, error } = await client.rpc("respond_meetup_store_link", {
+    p_meetup_id: meetupId,
+    p_approve: approve,
+  });
+  if (error) throw new Error(error.message || "Could not update venue request");
   return mapMeetupRow(data as DbMeetupRow);
 }
 

@@ -5,6 +5,7 @@ import type { StoreProductInput, StoreProfileInput } from "../api/stores";
 import type { View } from "../appModel";
 import { DetailSkeleton, EmptyState } from "../components/ui";
 import { findStoreByIdentifier, resolveStoresReturnTo, storeDetailPath } from "../lib/storeLinks";
+import { isApprovedStoreMeetup } from "../lib/meetups";
 import { uiCopy } from "../lib/uiCopy";
 import type { Project, StitchingMeetup, Store } from "../types";
 import { StoreDetailView } from "./StoreDetailPage";
@@ -33,6 +34,7 @@ export function StoreRoute({
   onUpdateProfile,
   setView,
   onReport,
+  onRespondVenueRequest,
 }: {
   stores: Store[];
   storesLoading?: boolean;
@@ -61,6 +63,7 @@ export function StoreRoute({
   ) => Promise<void>;
   setView: (view: View) => void;
   onReport?: (input: import("../api/reports").ReportInput) => void | Promise<void>;
+  onRespondVenueRequest?: (meetupId: string, approve: boolean) => void | Promise<void>;
 }) {
   const { handle = "" } = useParams();
   const location = useLocation();
@@ -162,7 +165,10 @@ export function StoreRoute({
 
   const linked = projects.filter((project) => (project.storeIds ?? []).includes(store.id));
   const shopMeetups = meetups.filter(
-    (m) => m.hostStoreId === store.id && m.visibility === "public" && m.status === "scheduled",
+    (m) => isApprovedStoreMeetup(m, store.id) && m.visibility === "public" && m.status === "scheduled",
+  );
+  const pendingVenueMeetups = meetups.filter(
+    (m) => m.hostStoreId === store.id && m.storeLinkStatus === "pending" && m.status === "scheduled",
   );
   // Demo + online: owner only when current user matches store.ownerUserId.
   // DEMO_STORES seeds Canopy as owned (CRUD, no Follow); other shops stay followable.
@@ -176,6 +182,7 @@ export function StoreRoute({
       store={store}
       projects={linked}
       meetups={shopMeetups}
+      pendingVenueMeetups={isOwner ? pendingVenueMeetups : []}
       isFollowed={followedStores.includes(store.id)}
       isOwner={isOwner}
       canClaim={canClaim}
@@ -197,6 +204,7 @@ export function StoreRoute({
       setView={setView}
       browseReturnTo={browseReturnTo}
       onReport={onReport}
+      onRespondVenueRequest={onRespondVenueRequest}
     />
   );
 }

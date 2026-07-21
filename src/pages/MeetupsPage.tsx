@@ -14,6 +14,7 @@ import {
   formatMeetupPlace,
   formatMeetupWhen,
   hostLabel,
+  isApprovedStoreMeetupLink,
   meetupConfirmationRef,
   MEETUP_CANCEL_POLICY,
   MEETUP_REGISTER_HELP,
@@ -129,6 +130,7 @@ export function MeetupsListView({
   const [topics, setTopics] = useState("beginners welcome");
   const [capacity, setCapacity] = useState("18");
   const [linkStore, setLinkStore] = useState(Boolean(ownedStoreId));
+  const [requestStoreId, setRequestStoreId] = useState("");
   const [locationType, setLocationType] = useState<StitchingMeetup["locationType"]>("in_person");
 
   const filtered = useMemo(
@@ -155,6 +157,8 @@ export function MeetupsListView({
   async function handleCreate(event: FormEvent) {
     event.preventDefault();
     if (!onCreate) return;
+    const ownsSelected = Boolean(ownedStoreId && linkStore);
+    const requesting = !ownsSelected && Boolean(requestStoreId);
     await onCreate({
       title,
       description,
@@ -164,7 +168,8 @@ export function MeetupsListView({
       city,
       region,
       locationType,
-      hostStoreId: linkStore && ownedStoreId ? ownedStoreId : null,
+      hostStoreId: ownsSelected ? ownedStoreId : requesting ? requestStoreId : null,
+      requestStoreVenue: requesting,
       topics: topics
         .split(",")
         .map((t) => t.trim())
@@ -183,6 +188,7 @@ export function MeetupsListView({
     setRegion("");
     setTopics("beginners welcome");
     setCapacity("18");
+    setRequestStoreId("");
     setShowForm(false);
   }
 
@@ -384,10 +390,43 @@ export function MeetupsListView({
               </label>
               {ownedStoreId ? (
                 <label className="checkbox-row">
-                  <input type="checkbox" checked={linkStore} onChange={(e) => setLinkStore(e.target.checked)} />
-                  Link my shop on this meetup
+                  <input
+                    type="checkbox"
+                    checked={linkStore}
+                    onChange={(e) => {
+                      setLinkStore(e.target.checked);
+                      if (e.target.checked) setRequestStoreId("");
+                    }}
+                  />
+                  Host as my shop (links shop page immediately)
                 </label>
               ) : null}
+              {!linkStore || !ownedStoreId ? (
+                <label className="field">
+                  <span className="label-text">Request a shop venue (optional)</span>
+                  <select
+                    value={requestStoreId}
+                    onChange={(e) => setRequestStoreId(e.target.value)}
+                    disabled={Boolean(ownedStoreId && linkStore)}
+                  >
+                    <option value="">No shop — use venue name only</option>
+                    {stores
+                      .filter((s) => s.id !== ownedStoreId)
+                      .map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                          {s.city ? ` · ${s.city}` : ""}
+                        </option>
+                      ))}
+                  </select>
+                  <span className="field-help">
+                    Stores create and host shop nights freely. Anyone can host a community meetup, but using a shop as the location needs that shop’s approval first.
+                  </span>
+                </label>
+              ) : null}
+              <p className="field-help">
+                Registration is always on Needlepoint — guests register and manage seats here (no external Eventbrite link).
+              </p>
               <button className="primary" type="submit" disabled={createBusy}>
                 {createBusy ? "Publishing…" : "Publish meetup"}
               </button>
@@ -558,10 +597,12 @@ export function MeetupDetailView({
               <small>Host</small>
             </span>
           </button>
-          {store ? (
+          {store && isApprovedStoreMeetupLink(meetup) ? (
             <button className="secondary" type="button" onClick={() => setView({ name: "store", handle: store.handle })}>
               Shop: {store.name}
             </button>
+          ) : meetup.storeLinkStatus === "pending" ? (
+            <p className="field-help">Shop venue pending approval from the store.</p>
           ) : null}
         </div>
 
@@ -570,13 +611,22 @@ export function MeetupDetailView({
         </p>
 
         {!cancelled && meetup.rsvpMode === "external_link" && meetup.externalRsvpUrl ? (
-          <a className="primary" href={meetup.externalRsvpUrl} target="_blank" rel="noreferrer">
-            Register on host site
-          </a>
+          <div className="meetup-register-block">
+            <p className="field-help">
+              This older listing still points off-site. Prefer on-site Register below when available.
+            </p>
+            <a className="secondary" href={meetup.externalRsvpUrl} target="_blank" rel="noreferrer">
+              Open legacy host link
+            </a>
+          </div>
         ) : null}
 
-        {!cancelled && meetup.rsvpMode !== "external_link" ? (
+        {!cancelled ? (
           <div className="meetup-register-block">
+            {meetup.rsvpMode === "external_link" && !meetup.externalRsvpUrl ? null : null}
+            {meetup.rsvpMode === "external_link" ? (
+              <p className="field-help">On-site registration is preferred for new meetups.</p>
+            ) : null}
             {registered ? (
               <>
                 <div className="meetup-confirmation-card" data-testid="meetup-confirmation">
