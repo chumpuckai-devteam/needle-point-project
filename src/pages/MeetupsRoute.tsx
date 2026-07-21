@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import type { Creator, StitchingMeetup, Store } from "../types";
 import type { View } from "../appModel";
 import type { StitchingMeetupInput } from "../api/meetups";
@@ -21,6 +21,7 @@ export function MeetupsRoute({
   onCancelRegistration,
   onCancel,
   registerBusy,
+  canUseMine = true,
 }: {
   meetups: StitchingMeetup[];
   stores: Store[];
@@ -37,8 +38,11 @@ export function MeetupsRoute({
   onCancelRegistration: (meetupId: string) => void;
   onCancel?: (meetupId: string) => void;
   registerBusy?: boolean;
+  canUseMine?: boolean;
 }) {
   const { id } = useParams();
+  const location = useLocation();
+  const mineTab = location.pathname === "/meetups/mine" || location.pathname.startsWith("/meetups/mine/");
 
   if (!id) {
     return (
@@ -52,6 +56,9 @@ export function MeetupsRoute({
         createBusy={createBusy}
         createError={createError}
         ownedStoreId={ownedStoreId}
+        tab={mineTab ? "mine" : "browse"}
+        viewerId={viewerId}
+        canUseMine={canUseMine}
       />
     );
   }
@@ -65,7 +72,7 @@ export function MeetupsRoute({
         title="Meetup not found"
         body="That stitching night may have been cancelled or the link is outdated."
         action="Browse meetups"
-        onAction={() => setView({ name: "meetups" })}
+        onAction={() => setView({ name: "meetups", tab: "browse" })}
       />
     );
   }

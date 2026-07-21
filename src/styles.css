@@ -4471,3 +4471,37 @@ label textarea::placeholder {
     font-size: 0.9rem;
   }
 }
+
+.meetup-tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0.75rem 0 1rem;
+  flex-wrap: wrap;
+}
+.meetup-tab {
+  border: 1px solid color-mix(in srgb, var(--ink, #2f3a2e) 16%, transparent);
+  background: #fffdf9;
+  color: var(--ink, #2f3a2e);
+  border-radius: 999px;
+  padding: 0.45rem 0.95rem;
+  font-weight: 600;
+  min-height: 40px;
+  cursor: pointer;
+}
+.meetup-tab.active {
+  background: var(--moss, #4a5d43);
+  border-color: var(--moss, #4a5d43);
+  color: #fffdf9;
+}
+.meetup-mine {
+  display: grid;
+  gap: 1.25rem;
+}
+.meetup-mine-section {
+  display: grid;
+  gap: 0.55rem;
+}
+@media (max-width: 640px) {
+  .meetup-tabs { width: 100%; }
+  .meetup-tab { flex: 1 1 auto; text-align: center; min-height: 44px; }
+}

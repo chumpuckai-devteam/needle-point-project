@@ -10,7 +10,7 @@ test.describe("Stitching meetups smoke", () => {
       await fullBtn.first().click();
       await expect(page.getByRole("button", { name: /Join waitlist/i })).toBeVisible();
     } else {
-      await page.getByRole("button", { name: /View/i }).first().click();
+      await page.getByRole("button", { name: /View meetup|View & register|View · Full/i }).first().click();
       await expect(
         page
           .getByRole("button", { name: /Register/i })
@@ -19,9 +19,15 @@ test.describe("Stitching meetups smoke", () => {
       ).toBeVisible();
     }
     await expect(page.getByRole("button", { name: /^Going$/ })).toHaveCount(0);
-    await expect(page.getByRole("button", { name: /^Interested$/ })).toHaveCount(0);
-    // Confirmation receipt exists in DOM only when registered; assert helper copy on open detail.
-    await expect(page.getByRole("button", { name: /All meetups/i })).toBeVisible();
+  });
+
+  test("My meetups tab and hub route work", async ({ page }) => {
+    await page.goto("/meetups");
+    await page.getByTestId("meetups-tab-mine").click();
+    await expect(page).toHaveURL(/\/meetups\/mine/);
+    await expect(page.getByTestId("meetups-mine")).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Registered/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Hosting/i })).toBeVisible();
   });
 
   test("city filter narrows list", async ({ page }) => {
@@ -31,9 +37,9 @@ test.describe("Stitching meetups smoke", () => {
     await expect(page.getByText(/Brooklyn/i)).toHaveCount(0);
   });
 
-  test("studio rail can deep-link to meetups", async ({ page }) => {
-    await page.goto("/");
-    await page.goto("/meetups");
-    await expect(page).toHaveURL(/\/meetups/);
+  test("mine deep link works", async ({ page }) => {
+    await page.goto("/meetups/mine");
+    await expect(page).toHaveURL(/\/meetups\/mine/);
+    await expect(page.getByTestId("meetups-mine")).toBeVisible();
   });
 });

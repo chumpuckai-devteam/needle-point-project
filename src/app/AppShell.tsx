@@ -1675,6 +1675,7 @@ export function AppShell() {
         onCancelMeetup={cancelMeetup}
         meetupRegisterBusy={meetupRsvpBusy}
         ownedStoreId={stores.find((store) => store.ownerUserId === viewerId)?.id ?? null}
+        canUseMine={Boolean(user) || isDemoMode || !isSupabaseConfigured}
         updateNote={updateNote}
         updateMilestone={updateMilestone}
         commentText={commentText}

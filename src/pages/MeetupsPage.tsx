@@ -6,12 +6,88 @@ import type { MeetupRosterEntry, StitchingMeetupInput } from "../api/meetups";
 import { isRegisteredStatus, isWaitlistedStatus, listMeetupRegistrationsOnline } from "../api/meetups";
 import { EmptyState, SectionHeader } from "../components/ui";
 import { isSupabaseConfigured } from "../lib/supabase";
-import { filterUpcomingMeetups, formatMeetupCapacity, formatMeetupConfirmation, formatMeetupPlace, formatMeetupWhen, hostLabel, meetupConfirmationRef, MEETUP_CANCEL_POLICY, MEETUP_REGISTER_HELP, MEETUP_WAITLIST_HELP, meetupIsFull } from "../lib/meetups";
+import { downloadMeetupIcs } from "../lib/meetupIcs";
+import {
+  filterUpcomingMeetups,
+  formatMeetupCapacity,
+  formatMeetupConfirmation,
+  formatMeetupPlace,
+  formatMeetupWhen,
+  hostLabel,
+  meetupConfirmationRef,
+  MEETUP_CANCEL_POLICY,
+  MEETUP_REGISTER_HELP,
+  MEETUP_WAITLIST_HELP,
+  meetupIsFull,
+} from "../lib/meetups";
 
 function locationTypeLabel(type: StitchingMeetup["locationType"]) {
   if (type === "hybrid") return "Hybrid";
   if (type === "online") return "Online";
   return "In person";
+}
+
+function meetupPageUrl(id: string) {
+  if (typeof window === "undefined") return `/meetups/${id}`;
+  return `${window.location.origin}/meetups/${id}`;
+}
+
+function MeetupCard({
+  meetup,
+  stores,
+  creatorById,
+  setView,
+  showCalendar,
+}: {
+  meetup: StitchingMeetup;
+  stores: Store[];
+  creatorById: (id: string) => Creator;
+  setView: (view: View) => void;
+  showCalendar?: boolean;
+}) {
+  return (
+    <article className="panel meetup-card">
+      {meetup.coverImageUrl ? <img className="meetup-card-cover" src={meetup.coverImageUrl} alt="" /> : null}
+      <div className="meetup-card-body">
+        <p className="eyebrow">
+          {locationTypeLabel(meetup.locationType)} · {hostLabel(meetup, creatorById, stores)}
+          {isRegisteredStatus(meetup.myRsvp) ? " · Registered" : ""}
+          {isWaitlistedStatus(meetup.myRsvp) ? " · Waitlisted" : ""}
+        </p>
+        <h3>{meetup.title}</h3>
+        <p className="meetup-meta">
+          <CalendarDays size={14} aria-hidden /> {formatMeetupWhen(meetup)}
+        </p>
+        <p className="meetup-meta">
+          <MapPin size={14} aria-hidden /> {formatMeetupPlace(meetup)}
+        </p>
+        <p className="meetup-meta">
+          <Users size={14} aria-hidden /> {formatMeetupCapacity(meetup)}
+        </p>
+        {meetup.topics.length ? (
+          <div className="tag-row">
+            {meetup.topics.map((tag) => (
+              <span key={tag}>{tag}</span>
+            ))}
+          </div>
+        ) : null}
+        <div className="card-actions wrap">
+          <button className="secondary" type="button" onClick={() => setView({ name: "meetup", id: meetup.id })}>
+            {meetupIsFull(meetup) && !isRegisteredStatus(meetup.myRsvp) ? "View · Full" : "View meetup"}
+          </button>
+          {showCalendar ? (
+            <button
+              className="secondary"
+              type="button"
+              onClick={() => downloadMeetupIcs(meetup, { pageUrl: meetupPageUrl(meetup.id) })}
+            >
+              Add to calendar
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </article>
+  );
 }
 
 export function MeetupsListView({
@@ -24,6 +100,9 @@ export function MeetupsListView({
   createBusy,
   createError,
   ownedStoreId,
+  tab = "browse",
+  viewerId = null,
+  canUseMine = true,
 }: {
   meetups: StitchingMeetup[];
   stores: Store[];
@@ -33,8 +112,10 @@ export function MeetupsListView({
   onCreate?: (input: StitchingMeetupInput) => void | Promise<void>;
   createBusy?: boolean;
   createError?: string;
-  /** Demo/online shop the current user owns — optional link on create. */
   ownedStoreId?: string | null;
+  tab?: "browse" | "mine";
+  viewerId?: string | null;
+  canUseMine?: boolean;
 }) {
   const [showForm, setShowForm] = useState(false);
   const [cityFilter, setCityFilter] = useState("");
@@ -53,6 +134,22 @@ export function MeetupsListView({
   const filtered = useMemo(
     () => filterUpcomingMeetups(meetups, { city: cityFilter }),
     [meetups, cityFilter],
+  );
+
+  const myRegistered = useMemo(
+    () => filterUpcomingMeetups(meetups).filter((m) => isRegisteredStatus(m.myRsvp)),
+    [meetups],
+  );
+  const myWaitlisted = useMemo(
+    () => filterUpcomingMeetups(meetups).filter((m) => isWaitlistedStatus(m.myRsvp)),
+    [meetups],
+  );
+  const myHosting = useMemo(
+    () =>
+      filterUpcomingMeetups(meetups).filter(
+        (m) => Boolean(viewerId) && m.hostId === viewerId && m.status === "scheduled",
+      ),
+    [meetups, viewerId],
   );
 
   async function handleCreate(event: FormEvent) {
@@ -96,144 +193,231 @@ export function MeetupsListView({
         In-person sit-and-stitches, guild nights, and shop open-stitch hours. Different from multi-week online stitch-alongs.
       </p>
 
-      <div className="meetup-toolbar">
-        <label className="field meetup-filter-field">
-          <span className="label-text">City filter</span>
-          <input
-            value={cityFilter}
-            onChange={(e) => setCityFilter(e.target.value)}
-            placeholder="Portland, Brooklyn…"
-            maxLength={80}
-          />
-        </label>
-        {canHost ? (
-          <button className="primary" type="button" onClick={() => setShowForm((o) => !o)}>
-            <Plus size={16} /> {showForm ? "Cancel" : "Host a meetup"}
-          </button>
-        ) : null}
+      <div className="meetup-tabs" role="tablist" aria-label="Meetups sections">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "browse"}
+          className={tab === "browse" ? "meetup-tab active" : "meetup-tab"}
+          onClick={() => setView({ name: "meetups", tab: "browse" })}
+        >
+          Browse
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "mine"}
+          className={tab === "mine" ? "meetup-tab active" : "meetup-tab"}
+          onClick={() => setView({ name: "meetups", tab: "mine" })}
+          data-testid="meetups-tab-mine"
+        >
+          My meetups
+        </button>
       </div>
 
-      {showForm && canHost ? (
-        <form className="panel meetup-create-form" onSubmit={(e) => void handleCreate(e)}>
-          <h2>Host a stitching meetup</h2>
-          <label className="field">
-            <span className="label-text">Title</span>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={120} placeholder="Thursday Sit & Stitch" />
-          </label>
-          <label className="field">
-            <span className="label-text">Description</span>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={4000} rows={3} />
-          </label>
-          <div className="meetup-form-row">
-            <label className="field">
-              <span className="label-text">Starts</span>
-              <input type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} required />
-            </label>
-            <label className="field">
-              <span className="label-text">Ends (optional)</span>
-              <input type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} />
-            </label>
-          </div>
-          <div className="meetup-form-row">
-            <label className="field">
-              <span className="label-text">Venue</span>
-              <input value={venueName} onChange={(e) => setVenueName(e.target.value)} maxLength={120} placeholder="Shop or library name" />
-            </label>
-            <label className="field">
-              <span className="label-text">Type</span>
-              <select value={locationType} onChange={(e) => setLocationType(e.target.value as StitchingMeetup["locationType"])}>
-                <option value="in_person">In person</option>
-                <option value="hybrid">Hybrid</option>
-                <option value="online">Online</option>
-              </select>
-            </label>
-          </div>
-          <div className="meetup-form-row">
-            <label className="field">
-              <span className="label-text">City</span>
-              <input value={city} onChange={(e) => setCity(e.target.value)} maxLength={80} placeholder="Portland" />
-            </label>
-            <label className="field">
-              <span className="label-text">Region</span>
-              <input value={region} onChange={(e) => setRegion(e.target.value)} maxLength={8} placeholder="OR" />
-            </label>
-          </div>
-          <label className="field">
-            <span className="label-text">Topics (comma-separated)</span>
-            <input value={topics} onChange={(e) => setTopics(e.target.value)} maxLength={200} />
-          </label>
-          <label className="field">
-            <span className="label-text">Capacity (optional)</span>
-            <input
-              type="number"
-              min={1}
-              max={500}
-              value={capacity}
-              onChange={(e) => setCapacity(e.target.value)}
-              placeholder="e.g. 18 — leave blank for unlimited"
+      {tab === "mine" ? (
+        <div className="meetup-mine" data-testid="meetups-mine">
+          {!canUseMine ? (
+            <EmptyState
+              variant="panel"
+              minHeight={240}
+              title="Sign in to see your meetups"
+              body="Registered seats, waitlist spots, and nights you host show up here."
+              action="Account / sign in"
+              onAction={() => setView({ name: "auth" })}
             />
-          </label>
-          {ownedStoreId ? (
-            <label className="checkbox-row">
-              <input type="checkbox" checked={linkStore} onChange={(e) => setLinkStore(e.target.checked)} />
-              <span>Link to my shop profile</span>
-            </label>
-          ) : null}
-          {createError ? <p className="field-help error-text">{createError}</p> : null}
-          <button className="primary" type="submit" disabled={createBusy || !title.trim() || !startsAt}>
-            {createBusy ? "Publishing…" : "Publish meetup"}
-          </button>
-        </form>
-      ) : null}
+          ) : (
+            <>
+              <section className="meetup-mine-section" aria-label="Registered">
+                <h2 className="meetup-roster-title">Registered ({myRegistered.length})</h2>
+                {myRegistered.length ? (
+                  <div className="meetup-list">
+                    {myRegistered.map((meetup) => (
+                      <MeetupCard
+                        key={meetup.id}
+                        meetup={meetup}
+                        stores={stores}
+                        creatorById={creatorById}
+                        setView={setView}
+                        showCalendar
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState
+                    variant="panel"
+                    minHeight={160}
+                    title="No seats yet"
+                    body="Browse upcoming nights and register for a seat."
+                    action="Browse meetups"
+                    onAction={() => setView({ name: "meetups", tab: "browse" })}
+                  />
+                )}
+              </section>
 
-      <div className="meetup-list">
-        {filtered.map((meetup) => (
-          <article className="panel meetup-card" key={meetup.id}>
-            {meetup.coverImageUrl ? <img className="meetup-card-cover" src={meetup.coverImageUrl} alt="" /> : null}
-            <div className="meetup-card-body">
-              <p className="eyebrow">
-                {locationTypeLabel(meetup.locationType)} · {hostLabel(meetup, creatorById, stores)}
-              </p>
-              <h2>{meetup.title}</h2>
-              <p className="meetup-meta">
-                <CalendarDays size={14} aria-hidden /> {formatMeetupWhen(meetup)}
-              </p>
-              <p className="meetup-meta">
-                <MapPin size={14} aria-hidden /> {formatMeetupPlace(meetup)}
-              </p>
-              <p className="meetup-meta">
-                <Users size={14} aria-hidden /> {formatMeetupCapacity(meetup)}
-              </p>
-              {meetup.topics.length ? (
-                <div className="tag-row">
-                  {meetup.topics.map((tag) => (
-                    <span key={tag}>{tag}</span>
-                  ))}
-                </div>
-              ) : null}
-              <button className="secondary" type="button" onClick={() => setView({ name: "meetup", id: meetup.id })}>
-                {meetupIsFull(meetup) ? "View · Full" : "View & register"}
+              <section className="meetup-mine-section" aria-label="Waitlist">
+                <h2 className="meetup-roster-title">Waitlisted ({myWaitlisted.length})</h2>
+                {myWaitlisted.length ? (
+                  <div className="meetup-list">
+                    {myWaitlisted.map((meetup) => (
+                      <MeetupCard
+                        key={meetup.id}
+                        meetup={meetup}
+                        stores={stores}
+                        creatorById={creatorById}
+                        setView={setView}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="field-help">You are not on any waitlists.</p>
+                )}
+              </section>
+
+              <section className="meetup-mine-section" aria-label="Hosting">
+                <h2 className="meetup-roster-title">Hosting ({myHosting.length})</h2>
+                {myHosting.length ? (
+                  <div className="meetup-list">
+                    {myHosting.map((meetup) => (
+                      <MeetupCard
+                        key={meetup.id}
+                        meetup={meetup}
+                        stores={stores}
+                        creatorById={creatorById}
+                        setView={setView}
+                        showCalendar
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState
+                    variant="panel"
+                    minHeight={160}
+                    title="Not hosting yet"
+                    body={canHost ? "Create a public stitching night for your shop or guild." : "Sign in to host."}
+                    action={canHost ? "Browse to host" : undefined}
+                    onAction={canHost ? () => setView({ name: "meetups", tab: "browse" }) : undefined}
+                  />
+                )}
+              </section>
+            </>
+          )}
+        </div>
+      ) : (
+        <>
+          <div className="meetup-toolbar">
+            <label className="field meetup-filter-field">
+              <span className="label-text">City</span>
+              <input
+                value={cityFilter}
+                onChange={(e) => setCityFilter(e.target.value)}
+                placeholder="Portland, Brooklyn…"
+              />
+            </label>
+            {canHost ? (
+              <button className="primary" type="button" onClick={() => setShowForm((v) => !v)}>
+                <Plus size={16} /> {showForm ? "Close" : "Host a meetup"}
               </button>
-            </div>
-          </article>
-        ))}
-        {!filtered.length ? (
-          <EmptyState
-            variant="panel"
-            minHeight={220}
-            title="No upcoming meetups"
-            body={
-              cityFilter
-                ? "Try another city, or clear the filter to see all public nights."
-                : canHost
-                  ? "Host the first sit-and-stitch for your city or shop."
-                  : "Check back soon — shops and guilds can post local stitch nights here."
-            }
-            action={canHost ? "Host a meetup" : undefined}
-            onAction={canHost ? () => setShowForm(true) : undefined}
-          />
-        ) : null}
-      </div>
+            ) : null}
+          </div>
+
+          {showForm && canHost && onCreate ? (
+            <form className="panel meetup-create-form" onSubmit={(e) => void handleCreate(e)}>
+              <h2>Host a stitching meetup</h2>
+              {createError ? <p className="form-error">{createError}</p> : null}
+              <label className="field">
+                <span className="label-text">Title</span>
+                <input value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={120} />
+              </label>
+              <label className="field">
+                <span className="label-text">Description</span>
+                <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} maxLength={4000} />
+              </label>
+              <div className="form-grid-2">
+                <label className="field">
+                  <span className="label-text">Starts</span>
+                  <input type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} required />
+                </label>
+                <label className="field">
+                  <span className="label-text">Ends</span>
+                  <input type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} />
+                </label>
+              </div>
+              <div className="form-grid-2">
+                <label className="field">
+                  <span className="label-text">Venue</span>
+                  <input value={venueName} onChange={(e) => setVenueName(e.target.value)} maxLength={120} />
+                </label>
+                <label className="field">
+                  <span className="label-text">Type</span>
+                  <select value={locationType} onChange={(e) => setLocationType(e.target.value as StitchingMeetup["locationType"])}>
+                    <option value="in_person">In person</option>
+                    <option value="hybrid">Hybrid</option>
+                    <option value="online">Online</option>
+                  </select>
+                </label>
+              </div>
+              <div className="form-grid-2">
+                <label className="field">
+                  <span className="label-text">City</span>
+                  <input value={city} onChange={(e) => setCity(e.target.value)} maxLength={80} />
+                </label>
+                <label className="field">
+                  <span className="label-text">Region / state</span>
+                  <input value={region} onChange={(e) => setRegion(e.target.value)} maxLength={40} />
+                </label>
+              </div>
+              <label className="field">
+                <span className="label-text">Topics (comma-separated)</span>
+                <input value={topics} onChange={(e) => setTopics(e.target.value)} maxLength={200} />
+              </label>
+              <label className="field">
+                <span className="label-text">Capacity (optional)</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={500}
+                  value={capacity}
+                  onChange={(e) => setCapacity(e.target.value)}
+                  placeholder="e.g. 18 — leave blank for unlimited"
+                />
+              </label>
+              {ownedStoreId ? (
+                <label className="checkbox-row">
+                  <input type="checkbox" checked={linkStore} onChange={(e) => setLinkStore(e.target.checked)} />
+                  Link my shop on this meetup
+                </label>
+              ) : null}
+              <button className="primary" type="submit" disabled={createBusy}>
+                {createBusy ? "Publishing…" : "Publish meetup"}
+              </button>
+            </form>
+          ) : null}
+
+          <div className="meetup-list">
+            {filtered.map((meetup) => (
+              <MeetupCard
+                key={meetup.id}
+                meetup={meetup}
+                stores={stores}
+                creatorById={creatorById}
+                setView={setView}
+              />
+            ))}
+          </div>
+
+          {!filtered.length ? (
+            <EmptyState
+              variant="panel"
+              minHeight={240}
+              title="No meetups match"
+              body="Try another city, or host the first night in your area."
+              action={canHost ? "Host a meetup" : undefined}
+              onAction={canHost ? () => setShowForm(true) : undefined}
+            />
+          ) : null}
+        </>
+      )}
     </section>
   );
 }
@@ -421,9 +605,25 @@ export function MeetupDetailView({
                     Screenshot this confirmation for your records. Email tickets and host check-in come later — this holds your seat now.
                   </p>
                 </div>
-                <button className="secondary" type="button" disabled={registerBusy} onClick={onCancelRegistration}>
-                  {registerBusy ? "Updating…" : "Cancel registration"}
-                </button>
+                <div className="card-actions wrap">
+                  <button className="secondary" type="button" disabled={registerBusy} onClick={onCancelRegistration}>
+                    {registerBusy ? "Updating…" : "Cancel registration"}
+                  </button>
+                  <button
+                    className="secondary"
+                    type="button"
+                    onClick={() =>
+                      downloadMeetupIcs(meetup, {
+                        pageUrl:
+                          typeof window !== "undefined"
+                            ? `${window.location.origin}/meetups/${meetup.id}`
+                            : `/meetups/${meetup.id}`,
+                      })
+                    }
+                  >
+                    Add to calendar
+                  </button>
+                </div>
                 <p className="field-help meetup-policy">{MEETUP_CANCEL_POLICY}</p>
               </>
             ) : waitlisted ? (
@@ -499,6 +699,23 @@ export function MeetupDetailView({
               </>
             ) : null}
           </section>
+        ) : null}
+
+        {isHost && !cancelled ? (
+          <button
+            className="secondary"
+            type="button"
+            onClick={() =>
+              downloadMeetupIcs(meetup, {
+                pageUrl:
+                  typeof window !== "undefined"
+                    ? `${window.location.origin}/meetups/${meetup.id}`
+                    : `/meetups/${meetup.id}`,
+              })
+            }
+          >
+            Add to calendar
+          </button>
         ) : null}
 
         {isHost && !cancelled && onCancel ? (

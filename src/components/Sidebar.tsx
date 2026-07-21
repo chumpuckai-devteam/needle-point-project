@@ -27,6 +27,7 @@ export function Sidebar({
       : []),
     { id: "stitchAlong", label: "Stitch-along", icon: CalendarDays, action: () => setView({ name: "stitchAlong" }) },
     { id: "meetups", label: "Meetups", icon: UsersRound, action: () => setView({ name: "meetups" }) },
+    // active for meetups + meetup detail + mine
     ...(canPost
       ? [{ id: "onboarding", label: "Onboarding", icon: Sparkles, action: () => setView({ name: "onboarding" }) }]
       : []),
@@ -44,7 +45,9 @@ export function Sidebar({
       <nav aria-label="Primary navigation">
         {items.map((item) => {
           const Icon = item.icon;
-          const active = view === item.id || (item.id === "meetups" && view === "meetup");
+          const active =
+            view === item.id ||
+            (item.id === "meetups" && (view === "meetup" || view === "meetups"));
           return (
             <button key={item.id} className={active ? "active" : ""} onClick={item.action}>
               <Icon size={18} />

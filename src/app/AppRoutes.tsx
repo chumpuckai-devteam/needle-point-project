@@ -136,6 +136,8 @@ export type AppRoutesProps = {
   onCancelMeetup: (meetupId: string) => void;
   meetupRegisterBusy: boolean;
   ownedStoreId: string | null;
+  /** Signed-out online guests cannot open My Meetups content. */
+  canUseMine?: boolean;
   updateNote: string;
   updateMilestone: string;
   commentText: string;
@@ -347,6 +349,30 @@ export function AppRoutes(props: AppRoutesProps) {
             onCancelRegistration={props.onMeetupCancelRegistration}
             onCancel={props.onCancelMeetup}
             registerBusy={props.meetupRegisterBusy}
+            canUseMine={props.canUseMine !== false}
+          />
+        }
+      />
+      <Route
+        path="/meetups/mine"
+        element={
+          <MeetupsRoute
+            meetups={props.meetups}
+            stores={props.stores}
+            creatorById={props.creatorById}
+            setView={props.setView}
+            canHost={props.canHost}
+            viewerId={props.viewerId}
+            ownedStoreId={props.ownedStoreId}
+            onCreate={props.onCreateMeetup}
+            createBusy={props.meetupCreateBusy}
+            createError={props.meetupCreateError}
+            onRegister={props.onMeetupRegister}
+            onJoinWaitlist={props.onMeetupJoinWaitlist}
+            onCancelRegistration={props.onMeetupCancelRegistration}
+            onCancel={props.onCancelMeetup}
+            registerBusy={props.meetupRegisterBusy}
+            canUseMine={props.canUseMine !== false}
           />
         }
       />
@@ -369,6 +395,7 @@ export function AppRoutes(props: AppRoutesProps) {
             onCancelRegistration={props.onMeetupCancelRegistration}
             onCancel={props.onCancelMeetup}
             registerBusy={props.meetupRegisterBusy}
+            canUseMine={props.canUseMine !== false}
           />
         }
       />

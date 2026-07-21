@@ -8,7 +8,7 @@ export type View =
   | { name: "profile"; id: string }
   | { name: "collections" }
   | { name: "stitchAlong"; id?: string }
-  | { name: "meetups" }
+  | { name: "meetups"; tab?: "browse" | "mine" }
   | { name: "meetup"; id: string }
   | { name: "stores" }
   | { name: "store"; handle: string }
