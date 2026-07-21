@@ -4569,6 +4569,19 @@ label textarea::placeholder {
   letter-spacing: 0.04em;
   color: color-mix(in srgb, var(--ink, #2f3a2e) 55%, transparent);
 }
+.meetup-roster-status.is-in {
+  color: var(--moss, #2f5646);
+  font-weight: 700;
+}
+.meetup-roster-list li.is-checked-in {
+  background: color-mix(in srgb, var(--moss, #3f6f5b) 10%, #f7f4ee);
+  border: 1px solid color-mix(in srgb, var(--moss, #3f6f5b) 22%, transparent);
+}
+.meetup-checkin-btn {
+  font-size: 0.78rem !important;
+  padding: 0.28rem 0.65rem !important;
+  margin-left: 0;
+}
 
 @media (max-width: 640px) {
   .meetup-register-block .primary,

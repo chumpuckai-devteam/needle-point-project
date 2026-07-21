@@ -521,7 +521,7 @@ Ordered themes after private-beta density (Studio, shops, stitch-alongs, collect
 Build only after free registration is trusted:
 
 - Paid or free **tickets** with confirmation email / in-app ticket state.
-- Host check-in (QR or name list).
+- Host check-in (QR or name list). **Name-list check-in (shipped)** — host taps Check in on roster; QR later.
 - Waitlist notify + expire hold (auto-promote already ships for free seats). **In-app promote notify (shipped)** — when a seat opens, the next waitlist guest gets a notification (“You got a seat!”).
 - **Cancel deadline server-side (shipped)** — free cancel until **48h** before start (more time for last-minute seat fills); UI locks cancel; waitlist leave anytime.
 - Stripe adapters optional.

@@ -1,0 +1,5 @@
+-- B.1 host name-list check-in
+-- Applied live: meetup_host_check_in
+-- stitching_meetup_rsvps.checked_in_at
+-- list_meetup_registrations returns checked_in_at
+-- set_meetup_guest_check_in(p_meetup_id, p_guest_user_id, p_checked_in)

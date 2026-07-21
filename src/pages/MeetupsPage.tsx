@@ -3,7 +3,7 @@ import { CalendarDays, MapPin, Plus, Users } from "lucide-react";
 import type { Creator, StitchingMeetup, Store } from "../types";
 import type { View } from "../appModel";
 import type { MeetupRosterEntry, StitchingMeetupInput } from "../api/meetups";
-import { isRegisteredStatus, isWaitlistedStatus, listMeetupRegistrationsOnline } from "../api/meetups";
+import { isRegisteredStatus, isWaitlistedStatus, listMeetupRegistrationsOnline, setMeetupGuestCheckInOnline } from "../api/meetups";
 import { EmptyState, SectionHeader } from "../components/ui";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { downloadMeetupIcs } from "../lib/meetupIcs";
@@ -496,6 +496,7 @@ export function MeetupDetailView({
   const [roster, setRoster] = useState<MeetupRosterEntry[]>([]);
   const [rosterLoading, setRosterLoading] = useState(false);
   const [rosterError, setRosterError] = useState("");
+  const [checkInBusyId, setCheckInBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isHost || cancelled) {
@@ -563,6 +564,34 @@ export function MeetupDetailView({
 
   const rosterRegistered = roster.filter((r) => r.status === "registered");
   const rosterWaitlisted = roster.filter((r) => r.status === "waitlisted");
+  const checkedInCount = rosterRegistered.filter((r) => Boolean(r.checkedInAt)).length;
+
+  async function toggleGuestCheckIn(entry: MeetupRosterEntry) {
+    if (!isHost || entry.status !== "registered") return;
+    const next = !entry.checkedInAt;
+    setCheckInBusyId(entry.userId);
+    setRosterError("");
+    try {
+      if (!isSupabaseConfigured) {
+        setRoster((rows) =>
+          rows.map((r) =>
+            r.userId === entry.userId
+              ? { ...r, checkedInAt: next ? new Date().toISOString() : null }
+              : r,
+          ),
+        );
+        return;
+      }
+      const result = await setMeetupGuestCheckInOnline(meetup.id, entry.userId, next);
+      setRoster((rows) =>
+        rows.map((r) => (r.userId === entry.userId ? { ...r, checkedInAt: result.checkedInAt } : r)),
+      );
+    } catch (error) {
+      setRosterError(error instanceof Error ? error.message : "Could not update check-in");
+    } finally {
+      setCheckInBusyId(null);
+    }
+  }
 
   return (
     <section className="page">
@@ -720,21 +749,42 @@ export function MeetupDetailView({
         {isHost && !cancelled ? (
           <section className="meetup-host-roster" aria-label="Host roster" data-testid="meetup-host-roster">
             <h2 className="meetup-roster-title">Guest roster</h2>
-            <p className="field-help">Only you (the host) can see names. No-show tools come later.</p>
+            <p className="field-help">
+              Only you (the host) can see names. Tap <strong>Check in</strong> when a guest arrives.
+              {rosterRegistered.length ? ` · ${checkedInCount}/${rosterRegistered.length} checked in` : ""}
+            </p>
             {rosterLoading ? <p className="field-help">Loading roster…</p> : null}
             {rosterError ? <p className="form-error">{rosterError}</p> : null}
             {!rosterLoading && !rosterError ? (
               <>
-                <h3 className="meetup-roster-sub">Registered ({rosterRegistered.length})</h3>
+                <h3 className="meetup-roster-sub">
+                  Registered ({rosterRegistered.length}
+                  {rosterRegistered.length ? ` · ${checkedInCount} in` : ""})
+                </h3>
                 {rosterRegistered.length ? (
                   <ul className="meetup-roster-list">
-                    {rosterRegistered.map((entry) => (
-                      <li key={entry.userId}>
-                        <span className="meetup-roster-name">{entry.displayName}</span>
-                        {entry.handle ? <span className="meetup-roster-handle">@{entry.handle}</span> : null}
-                        <span className="meetup-roster-status">confirmed</span>
-                      </li>
-                    ))}
+                    {rosterRegistered.map((entry) => {
+                      const inDoor = Boolean(entry.checkedInAt);
+                      const busy = checkInBusyId === entry.userId;
+                      return (
+                        <li key={entry.userId} className={inDoor ? "is-checked-in" : undefined}>
+                          <span className="meetup-roster-name">{entry.displayName}</span>
+                          {entry.handle ? <span className="meetup-roster-handle">@{entry.handle}</span> : null}
+                          <span className={`meetup-roster-status${inDoor ? " is-in" : ""}`}>
+                            {inDoor ? "checked in" : "confirmed"}
+                          </span>
+                          <button
+                            type="button"
+                            className={inDoor ? "secondary meetup-checkin-btn" : "primary meetup-checkin-btn"}
+                            disabled={busy}
+                            aria-pressed={inDoor}
+                            onClick={() => void toggleGuestCheckIn(entry)}
+                          >
+                            {busy ? "…" : inDoor ? "Undo check-in" : "Check in"}
+                          </button>
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : (
                   <p className="field-help">No registrations yet.</p>

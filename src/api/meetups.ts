@@ -372,6 +372,7 @@ export type MeetupRosterEntry = {
   status: "registered" | "waitlisted" | string;
   confirmedAt?: string | null;
   createdAt?: string | null;
+  checkedInAt?: string | null;
 };
 
 export async function listMeetupRegistrationsOnline(meetupId: string): Promise<MeetupRosterEntry[]> {
@@ -387,6 +388,7 @@ export async function listMeetupRegistrationsOnline(meetupId: string): Promise<M
     status: string;
     confirmed_at: string | null;
     created_at: string | null;
+    checked_in_at?: string | null;
   }[] | null) ?? []).map((row) => ({
     userId: row.user_id,
     handle: row.handle ?? "",
@@ -395,7 +397,28 @@ export async function listMeetupRegistrationsOnline(meetupId: string): Promise<M
     status: row.status,
     confirmedAt: row.confirmed_at,
     createdAt: row.created_at,
+    checkedInAt: row.checked_in_at ?? null,
   }));
+}
+
+/** Host marks a registered guest as arrived (or clears check-in). */
+export async function setMeetupGuestCheckInOnline(
+  meetupId: string,
+  guestUserId: string,
+  checkedIn = true,
+): Promise<{ userId: string; checkedInAt: string | null }> {
+  const client = requireSupabase();
+  const { data, error } = await client.rpc("set_meetup_guest_check_in", {
+    p_meetup_id: meetupId,
+    p_guest_user_id: guestUserId,
+    p_checked_in: checkedIn,
+  });
+  if (error) throw new Error(error.message || "Could not update check-in");
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    userId: String((row as { user_id?: string })?.user_id ?? guestUserId),
+    checkedInAt: ((row as { checked_in_at?: string | null })?.checked_in_at as string | null) ?? null,
+  };
 }
 
 /** @deprecated use registerForMeetupOnline / cancelMeetupRegistrationOnline */

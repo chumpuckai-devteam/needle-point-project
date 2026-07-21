@@ -89,4 +89,22 @@ test.describe("Stitching meetups smoke", () => {
     expect(layout).toContain("NotificationsPanel");
     expect(layout).toContain("notifications-rail");
   });
+
+  test("host check-in is wired in API and roster UI", async () => {
+    const { readFileSync, readdirSync } = await import("node:fs");
+    const { resolve, dirname } = await import("node:path");
+    const { fileURLToPath } = await import("node:url");
+    const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+    const migrations = readdirSync(resolve(root, "supabase/migrations"))
+      .filter((n) => n.endsWith(".sql"))
+      .map((n) => readFileSync(resolve(root, "supabase/migrations", n), "utf8"))
+      .join("\n");
+    expect(migrations).toContain("checked_in_at");
+    expect(migrations).toContain("set_meetup_guest_check_in");
+    const api = readFileSync(resolve(root, "src/api/meetups.ts"), "utf8");
+    expect(api).toContain("setMeetupGuestCheckInOnline");
+    const page = readFileSync(resolve(root, "src/pages/MeetupsPage.tsx"), "utf8");
+    expect(page).toContain("Check in");
+    expect(page).toContain("toggleGuestCheckIn");
+  });
 });
