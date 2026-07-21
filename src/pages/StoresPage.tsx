@@ -26,6 +26,7 @@ import {
   type StoreDiscoveryResponse,
 } from "../lib/storeDiscovery";
 import type { StoresBrowseLocationState } from "../lib/storeLinks";
+import { storeMapLinks } from "../lib/storeMaps";
 import { EmptyState, SectionHeader, SectionTitle, Skeleton } from "../components/ui";
 import { StorePinMap } from "../components/StorePinMap";
 import { uiCopy } from "../lib/uiCopy";
@@ -948,45 +949,77 @@ function StoreCardGrid({
       {stores.map((store) => {
         const detailHref = store.detailUrl || `/stores/${store.handle}`;
         const linkState: StoresBrowseLocationState = { storesReturnTo: browseReturnTo };
+        const maps = storeMapLinks(store);
         return (
-          <Link
+          <article
             key={store.id}
-            to={detailHref}
-            state={linkState}
             className={`store-card panel${selectedId === store.id ? " is-selected" : ""}`}
-            ref={(node) => {
-              listRefs.current[store.id] = node;
-            }}
-            onFocus={() => onHighlight?.(store.id)}
             data-store-id={store.id}
             data-store-handle={store.handle}
-            aria-label={`View shop ${store.name}`}
           >
-            <img className="store-card-cover" src={store.coverImage || store.avatar} alt="" />
-            <div className="store-card-body">
-              <img className="store-card-avatar" src={store.avatar} alt="" />
-              <strong>{store.name}</strong>
-              <small>@{store.handle}</small>
-              <p>{store.location || store.description || "Needlepoint supplier"}</p>
-              <div className="tag-row">
-                <span>{storeTypeLabel(store.storeType)}</span>
-                {showDistance && store.distanceMiles != null ? (
-                  <span className="distance-tag">{formatDistanceMiles(store.distanceMiles)}</span>
-                ) : null}
-                {store.shipsNationwide ? <span>Ships nationwide</span> : null}
-                {(store.specialties ?? []).slice(0, 3).map((specialty) => (
-                  <span key={specialty}>{specialty}</span>
-                ))}
-                {store.projectCount > 0 ? <span>{store.projectCount} projects</span> : null}
-                {typeof store.followerCount === "number" && store.followerCount > 0 ? (
-                  <span>
-                    {store.followerCount} follower{store.followerCount === 1 ? "" : "s"}
-                  </span>
-                ) : null}
+            <Link
+              to={detailHref}
+              state={linkState}
+              className="store-card-main"
+              ref={(node) => {
+                listRefs.current[store.id] = node;
+              }}
+              onFocus={() => onHighlight?.(store.id)}
+              aria-label={`View shop ${store.name}`}
+            >
+              <img className="store-card-cover" src={store.coverImage || store.avatar} alt="" />
+              <div className="store-card-body">
+                <img className="store-card-avatar" src={store.avatar} alt="" />
+                <strong>{store.name}</strong>
+                <small>@{store.handle}</small>
+                <p>{store.location || store.description || "Needlepoint supplier"}</p>
+                <div className="tag-row">
+                  <span>{storeTypeLabel(store.storeType)}</span>
+                  {showDistance && store.distanceMiles != null ? (
+                    <span className="distance-tag">{formatDistanceMiles(store.distanceMiles)}</span>
+                  ) : null}
+                  {store.shipsNationwide ? <span>Ships nationwide</span> : null}
+                  {(store.specialties ?? []).slice(0, 3).map((specialty) => (
+                    <span key={specialty}>{specialty}</span>
+                  ))}
+                  {store.projectCount > 0 ? <span>{store.projectCount} projects</span> : null}
+                  {typeof store.followerCount === "number" && store.followerCount > 0 ? (
+                    <span>
+                      {store.followerCount} follower{store.followerCount === 1 ? "" : "s"}
+                    </span>
+                  ) : null}
+                </div>
+                <span className="store-card-cta">View shop</span>
               </div>
-              <span className="store-card-cta">View shop</span>
-            </div>
-          </Link>
+            </Link>
+            {maps ? (
+              <div className="store-maps-links store-card-maps" data-testid="store-card-maps">
+                <span className="store-maps-label">
+                  <MapPin size={14} aria-hidden /> Open in maps
+                </span>
+                <a
+                  className="store-maps-link"
+                  href={maps.apple}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Open ${store.name} in Apple Maps`}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  Apple Maps
+                </a>
+                <a
+                  className="store-maps-link"
+                  href={maps.google}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Open ${store.name} in Google Maps`}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  Google Maps
+                </a>
+              </div>
+            ) : null}
+          </article>
         );
       })}
     </div>

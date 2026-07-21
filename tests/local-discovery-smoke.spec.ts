@@ -61,10 +61,15 @@ test.describe("local discovery shops UI", () => {
       await expect(page).toHaveURL(/[?&]city=/i, { timeout: 10_000 });
     }
 
-    const card = page.locator("a.store-card").filter({ hasText: /Canopy Canvas/i }).first();
+    const card = page.locator(".store-card").filter({ hasText: /Canopy Canvas/i }).first();
     await expect(card).toBeVisible({ timeout: 15_000 });
-    await expect(card).toHaveAttribute("href", /\/stores\/canopycanvas/i);
-    await card.click();
+    const mainLink = card.locator("a.store-card-main");
+    await expect(mainLink).toHaveAttribute("href", /\/stores\/canopycanvas/i);
+    // Maps shortcuts on mappable local cards
+    await expect(card.getByTestId("store-card-maps")).toBeVisible();
+    await expect(card.getByRole("link", { name: /Apple Maps/i })).toBeVisible();
+    await expect(card.getByRole("link", { name: /Google Maps/i })).toBeVisible();
+    await mainLink.click();
 
     await expect(page).toHaveURL(/\/stores\/canopycanvas/i, { timeout: 15_000 });
     await expect(page.getByRole("heading", { name: /Canopy Canvas/i })).toBeVisible();

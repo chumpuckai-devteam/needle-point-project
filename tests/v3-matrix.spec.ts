@@ -6,7 +6,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const shotDir = path.resolve(__dirname, "../dogfood-output/screenshots");
 
 async function shot(page: Page, name: string) {
-  await page.screenshot({ path: path.join(shotDir, `${name}.png`), fullPage: true });
+  // Viewport shot only — full-page screenshots time out with the national shop catalog.
+  await page.screenshot({ path: path.join(shotDir, `${name}.png`), fullPage: false, timeout: 10_000 });
 }
 
 async function dismissGeoIfAny(page: Page) {
@@ -37,7 +38,7 @@ test.describe("V3 acceptance matrix", () => {
     await expect(page.getByText(/Bookshop Windows/i).first()).toBeVisible();
 
     // Owned demo shop (Canopy): CRUD visible, Follow hidden
-    await page.locator(".store-card").filter({ hasText: /Canopy Canvas/i }).first().click();
+    await page.locator(".store-card").filter({ hasText: /Canopy Canvas/i }).first().locator("a.store-card-main").click();
     await expect(page).toHaveURL(/\/stores\/canopycanvas/i, { timeout: 15_000 });
     await expect(page.getByRole("heading", { name: /Canopy Canvas/i })).toBeVisible();
     await expect(page.getByText(/Your shop/i).first()).toBeVisible();

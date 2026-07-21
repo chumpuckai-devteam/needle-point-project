@@ -99,6 +99,8 @@ test.describe("store city browse backend contract", () => {
     expect(storesPage).toContain("to={detailHref}");
     expect(storesPage).toContain("storesReturnTo");
     expect(storesPage).toContain("data-store-handle");
+    expect(storesPage).toContain("store-card-maps");
+    expect(storesPage).toContain("storeMapLinks");
     expect(storeRoute).toContain("fetchStoreByIdentifier");
     expect(storeRoute).toContain("findStoreByIdentifier");
     expect(storeRoute).toContain("browseReturnTo");
