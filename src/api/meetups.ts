@@ -326,6 +326,40 @@ export async function cancelMeetupRegistrationOnline(meetupId: string): Promise<
   return mapRegistrationRpc(data);
 }
 
+export type MeetupRosterEntry = {
+  userId: string;
+  handle: string;
+  displayName: string;
+  avatarUrl: string;
+  status: "registered" | "waitlisted" | string;
+  confirmedAt?: string | null;
+  createdAt?: string | null;
+};
+
+export async function listMeetupRegistrationsOnline(meetupId: string): Promise<MeetupRosterEntry[]> {
+  if (!isSupabaseConfigured || !meetupId) return [];
+  const client = requireSupabase();
+  const { data, error } = await client.rpc("list_meetup_registrations", { p_meetup_id: meetupId });
+  if (error) throw new Error(error.message || "Could not load roster");
+  return ((data as {
+    user_id: string;
+    handle: string;
+    display_name: string;
+    avatar_url: string;
+    status: string;
+    confirmed_at: string | null;
+    created_at: string | null;
+  }[] | null) ?? []).map((row) => ({
+    userId: row.user_id,
+    handle: row.handle ?? "",
+    displayName: row.display_name || row.handle || "Guest",
+    avatarUrl: row.avatar_url || "",
+    status: row.status,
+    confirmedAt: row.confirmed_at,
+    createdAt: row.created_at,
+  }));
+}
+
 /** @deprecated use registerForMeetupOnline / cancelMeetupRegistrationOnline */
 export async function setMeetupRsvpOnline(
   meetupId: string,

@@ -1,11 +1,12 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { CalendarDays, MapPin, Plus, Users } from "lucide-react";
 import type { Creator, StitchingMeetup, Store } from "../types";
 import type { View } from "../appModel";
-import type { StitchingMeetupInput } from "../api/meetups";
+import type { MeetupRosterEntry, StitchingMeetupInput } from "../api/meetups";
+import { isRegisteredStatus, isWaitlistedStatus, listMeetupRegistrationsOnline } from "../api/meetups";
 import { EmptyState, SectionHeader } from "../components/ui";
+import { isSupabaseConfigured } from "../lib/supabase";
 import { filterUpcomingMeetups, formatMeetupCapacity, formatMeetupConfirmation, formatMeetupPlace, formatMeetupWhen, hostLabel, meetupConfirmationRef, MEETUP_CANCEL_POLICY, MEETUP_REGISTER_HELP, MEETUP_WAITLIST_HELP, meetupIsFull } from "../lib/meetups";
-import { isRegisteredStatus, isWaitlistedStatus } from "../api/meetups";
 
 function locationTypeLabel(type: StitchingMeetup["locationType"]) {
   if (type === "hybrid") return "Hybrid";
@@ -266,6 +267,76 @@ export function MeetupDetailView({
   const registered = isRegisteredStatus(meetup.myRsvp);
   const waitlisted = isWaitlistedStatus(meetup.myRsvp);
   const full = meetupIsFull(meetup) && !registered;
+  const [roster, setRoster] = useState<MeetupRosterEntry[]>([]);
+  const [rosterLoading, setRosterLoading] = useState(false);
+  const [rosterError, setRosterError] = useState("");
+
+  useEffect(() => {
+    if (!isHost || cancelled) {
+      setRoster([]);
+      setRosterError("");
+      return;
+    }
+    let cancelledFetch = false;
+    setRosterLoading(true);
+    setRosterError("");
+
+    if (!isSupabaseConfigured) {
+      // Demo roster: synthetic from capacity counts only
+      const registeredN = meetup.registeredCount ?? meetup.goingCount ?? 0;
+      const waitN = meetup.waitlistCount ?? 0;
+      const demo: MeetupRosterEntry[] = [];
+      for (let i = 0; i < Math.min(registeredN, 8); i += 1) {
+        demo.push({
+          userId: `demo-reg-${i}`,
+          handle: `guest${i + 1}`,
+          displayName: `Registered guest ${i + 1}`,
+          avatarUrl: "",
+          status: "registered",
+          confirmedAt: new Date().toISOString(),
+        });
+      }
+      for (let i = 0; i < Math.min(waitN, 5); i += 1) {
+        demo.push({
+          userId: `demo-wl-${i}`,
+          handle: `wait${i + 1}`,
+          displayName: `Waitlist guest ${i + 1}`,
+          avatarUrl: "",
+          status: "waitlisted",
+        });
+      }
+      setRoster(demo);
+      setRosterLoading(false);
+      return () => {
+        cancelledFetch = true;
+      };
+    }
+
+    void listMeetupRegistrationsOnline(meetup.id)
+      .then((rows) => {
+        if (!cancelledFetch) setRoster(rows);
+      })
+      .catch((error) => {
+        if (!cancelledFetch) setRosterError(error instanceof Error ? error.message : "Could not load roster");
+      })
+      .finally(() => {
+        if (!cancelledFetch) setRosterLoading(false);
+      });
+
+    return () => {
+      cancelledFetch = true;
+    };
+  }, [
+    isHost,
+    cancelled,
+    meetup.id,
+    meetup.registeredCount,
+    meetup.goingCount,
+    meetup.waitlistCount,
+  ]);
+
+  const rosterRegistered = roster.filter((r) => r.status === "registered");
+  const rosterWaitlisted = roster.filter((r) => r.status === "waitlisted");
 
   return (
     <section className="page">
@@ -385,6 +456,49 @@ export function MeetupDetailView({
               </>
             )}
           </div>
+        ) : null}
+
+        {isHost && !cancelled ? (
+          <section className="meetup-host-roster" aria-label="Host roster" data-testid="meetup-host-roster">
+            <h2 className="meetup-roster-title">Guest roster</h2>
+            <p className="field-help">Only you (the host) can see names. No-show tools come later.</p>
+            {rosterLoading ? <p className="field-help">Loading roster…</p> : null}
+            {rosterError ? <p className="form-error">{rosterError}</p> : null}
+            {!rosterLoading && !rosterError ? (
+              <>
+                <h3 className="meetup-roster-sub">Registered ({rosterRegistered.length})</h3>
+                {rosterRegistered.length ? (
+                  <ul className="meetup-roster-list">
+                    {rosterRegistered.map((entry) => (
+                      <li key={entry.userId}>
+                        <span className="meetup-roster-name">{entry.displayName}</span>
+                        {entry.handle ? <span className="meetup-roster-handle">@{entry.handle}</span> : null}
+                        <span className="meetup-roster-status">confirmed</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="field-help">No registrations yet.</p>
+                )}
+                <h3 className="meetup-roster-sub">Waitlist ({rosterWaitlisted.length})</h3>
+                {rosterWaitlisted.length ? (
+                  <ul className="meetup-roster-list">
+                    {rosterWaitlisted.map((entry, index) => (
+                      <li key={entry.userId}>
+                        <span className="meetup-roster-name">
+                          #{index + 1} {entry.displayName}
+                        </span>
+                        {entry.handle ? <span className="meetup-roster-handle">@{entry.handle}</span> : null}
+                        <span className="meetup-roster-status">waitlisted</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="field-help">Waitlist empty.</p>
+                )}
+              </>
+            ) : null}
+          </section>
         ) : null}
 
         {isHost && !cancelled && onCancel ? (
