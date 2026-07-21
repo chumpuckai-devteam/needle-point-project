@@ -1,0 +1,3 @@
+-- Fix register/waitlist/cancel: #variable_conflict use_column so OUT meetup_id/user_id
+-- do not clash with table columns (was: "column reference meetup_id is ambiguous").
+-- Applied live as fix_register_meetup_id_ambiguous.

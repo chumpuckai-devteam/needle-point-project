@@ -1456,6 +1456,7 @@ export function AppShell() {
         })
         .catch((error) => {
           setRemoteError(error instanceof Error ? error.message : "Registration failed");
+          // Roll back optimistic UI by reloading meetups + rsvps
           setRemoteBootKey((k) => k + 1);
         })
         .finally(() => setMeetupRsvpBusy(false));
