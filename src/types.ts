@@ -133,8 +133,8 @@ export type StitchAlong = {
 export type StitchingMeetupLocationType = "in_person" | "hybrid" | "online";
 export type StitchingMeetupRsvpMode = "interest_only" | "external_link" | "in_app_rsvp" | "registration";
 export type StitchingMeetupStatus = "draft" | "scheduled" | "cancelled" | "ended";
-/** Soft RSVP legacy values map to registered in UI. */
-export type StitchingMeetupRsvpStatus = "registered" | "going" | "interested" | "cancelled";
+/** Soft RSVP legacy values map to registered in UI. Waitlisted = capacity queue. */
+export type StitchingMeetupRsvpStatus = "registered" | "going" | "interested" | "waitlisted" | "cancelled";
 
 /** In-person / hybrid local stitching night (not a multi-week online stitch-along). */
 export type StitchingMeetup = {
@@ -168,6 +168,10 @@ export type StitchingMeetup = {
   /** @deprecated use registeredCount */
   goingCount?: number;
   interestedCount?: number;
+  /** People waiting when full. */
+  waitlistCount?: number;
+  /** 1-based position when viewer is waitlisted. */
+  myWaitlistPosition?: number | null;
   /** Remaining seats when capacity is set. */
   spotsLeft?: number | null;
   /** Viewer registration when known. */

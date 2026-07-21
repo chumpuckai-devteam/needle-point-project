@@ -131,6 +131,7 @@ export type AppRoutesProps = {
   meetupCreateBusy: boolean;
   meetupCreateError: string;
   onMeetupRegister: (meetupId: string) => void;
+  onMeetupJoinWaitlist: (meetupId: string) => void;
   onMeetupCancelRegistration: (meetupId: string) => void;
   onCancelMeetup: (meetupId: string) => void;
   meetupRegisterBusy: boolean;
@@ -342,6 +343,7 @@ export function AppRoutes(props: AppRoutesProps) {
             createBusy={props.meetupCreateBusy}
             createError={props.meetupCreateError}
             onRegister={props.onMeetupRegister}
+            onJoinWaitlist={props.onMeetupJoinWaitlist}
             onCancelRegistration={props.onMeetupCancelRegistration}
             onCancel={props.onCancelMeetup}
             registerBusy={props.meetupRegisterBusy}
@@ -363,6 +365,7 @@ export function AppRoutes(props: AppRoutesProps) {
             createBusy={props.meetupCreateBusy}
             createError={props.meetupCreateError}
             onRegister={props.onMeetupRegister}
+            onJoinWaitlist={props.onMeetupJoinWaitlist}
             onCancelRegistration={props.onMeetupCancelRegistration}
             onCancel={props.onCancelMeetup}
             registerBusy={props.meetupRegisterBusy}

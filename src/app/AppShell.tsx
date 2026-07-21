@@ -21,6 +21,7 @@ import {
   cancelMeetupRegistrationOnline,
   createMeetupOnline,
   fetchMyMeetupRsvpsOnline,
+  joinMeetupWaitlistOnline,
   listUpcomingMeetupsOnline,
   registerForMeetupOnline,
   type StitchingMeetupInput,
@@ -1325,12 +1326,25 @@ export function AppShell() {
     navigate(`/meetups/${local.id}`);
   }
 
-  function setMeetupRsvp(meetupId: string, status: StitchingMeetupRsvpStatus | null) {
-    if (status === "cancelled" || !status) {
-      cancelMeetupRegistration(meetupId);
-      return;
-    }
-    registerForMeetup(meetupId);
+  function applyMeetupCounts(
+    meetup: StitchingMeetup,
+    patch: {
+      registeredCount?: number;
+      waitlistCount?: number;
+      spotsLeft?: number | null;
+      capacity?: number | null;
+      myRsvp?: StitchingMeetup["myRsvp"];
+      myWaitlistPosition?: number | null;
+    },
+  ): StitchingMeetup {
+    const registered = patch.registeredCount ?? meetup.registeredCount ?? meetup.goingCount ?? 0;
+    return {
+      ...meetup,
+      ...patch,
+      registeredCount: registered,
+      goingCount: registered,
+      waitlistCount: patch.waitlistCount ?? meetup.waitlistCount ?? 0,
+    };
   }
 
   function registerForMeetup(meetupId: string) {
@@ -1340,7 +1354,7 @@ export function AppShell() {
     if (current?.capacity != null) {
       const taken = current.registeredCount ?? current.goingCount ?? 0;
       if (taken >= current.capacity && current.myRsvp !== "registered" && current.myRsvp !== "going") {
-        setRemoteError("This meetup is full.");
+        setRemoteError("This meetup is full — join the waitlist.");
         setMeetupRsvpBusy(false);
         return;
       }
@@ -1352,16 +1366,19 @@ export function AppShell() {
         if (meetup.myRsvp === "registered" || meetup.myRsvp === "going" || meetup.myRsvp === "interested") {
           return meetup;
         }
+        const wasWaitlisted = meetup.myRsvp === "waitlisted";
         const registered = (meetup.registeredCount ?? meetup.goingCount ?? 0) + 1;
+        const waitlistCount = wasWaitlisted
+          ? Math.max((meetup.waitlistCount ?? 1) - 1, 0)
+          : (meetup.waitlistCount ?? 0);
         const spotsLeft = meetup.capacity != null ? Math.max(meetup.capacity - registered, 0) : null;
-        return {
-          ...meetup,
-          myRsvp: "registered" as const,
+        return applyMeetupCounts(meetup, {
+          myRsvp: "registered",
           registeredCount: registered,
-          goingCount: registered,
-          interestedCount: 0,
+          waitlistCount,
           spotsLeft,
-        };
+          myWaitlistPosition: null,
+        });
       }),
     );
 
@@ -1371,14 +1388,14 @@ export function AppShell() {
           setMeetups((list) =>
             list.map((meetup) =>
               meetup.id === meetupId
-                ? {
-                    ...meetup,
-                    myRsvp: "registered" as const,
+                ? applyMeetupCounts(meetup, {
+                    myRsvp: "registered",
                     registeredCount: result.registeredCount,
-                    goingCount: result.registeredCount,
+                    waitlistCount: result.waitlistCount,
                     capacity: result.capacity ?? meetup.capacity,
                     spotsLeft: result.spotsLeft,
-                  }
+                    myWaitlistPosition: null,
+                  })
                 : meetup,
             ),
           );
@@ -1393,25 +1410,91 @@ export function AppShell() {
     setMeetupRsvpBusy(false);
   }
 
+  function joinMeetupWaitlist(meetupId: string) {
+    if (!requireAuth("join a meetup waitlist")) return;
+    setMeetupRsvpBusy(true);
+    setMeetups((list) =>
+      list.map((meetup) => {
+        if (meetup.id !== meetupId) return meetup;
+        if (meetup.myRsvp === "waitlisted" || meetup.myRsvp === "registered" || meetup.myRsvp === "going") {
+          return meetup;
+        }
+        const waitlistCount = (meetup.waitlistCount ?? 0) + 1;
+        return applyMeetupCounts(meetup, {
+          myRsvp: "waitlisted",
+          waitlistCount,
+          myWaitlistPosition: waitlistCount,
+        });
+      }),
+    );
+
+    if (isSupabaseConfigured && user) {
+      void joinMeetupWaitlistOnline(meetupId)
+        .then((result) => {
+          setMeetups((list) =>
+            list.map((meetup) =>
+              meetup.id === meetupId
+                ? applyMeetupCounts(meetup, {
+                    myRsvp: "waitlisted",
+                    registeredCount: result.registeredCount,
+                    waitlistCount: result.waitlistCount,
+                    capacity: result.capacity ?? meetup.capacity,
+                    spotsLeft: result.spotsLeft,
+                    myWaitlistPosition: result.waitlistPosition ?? null,
+                  })
+                : meetup,
+            ),
+          );
+        })
+        .catch((error) => {
+          setRemoteError(error instanceof Error ? error.message : "Could not join waitlist");
+          setRemoteBootKey((k) => k + 1);
+        })
+        .finally(() => setMeetupRsvpBusy(false));
+      return;
+    }
+    setMeetupRsvpBusy(false);
+  }
+
   function cancelMeetupRegistration(meetupId: string) {
     if (!requireAuth("cancel a meetup registration")) return;
     setMeetupRsvpBusy(true);
     setMeetups((list) =>
       list.map((meetup) => {
         if (meetup.id !== meetupId) return meetup;
-        if (meetup.myRsvp !== "registered" && meetup.myRsvp !== "going" && meetup.myRsvp !== "interested") {
-          return meetup;
+        const wasReg =
+          meetup.myRsvp === "registered" || meetup.myRsvp === "going" || meetup.myRsvp === "interested";
+        const wasWl = meetup.myRsvp === "waitlisted";
+        if (!wasReg && !wasWl) return meetup;
+
+        // Demo auto-promote: if registered cancelled and waitlist > 0, keep registered count same and drop waitlist by 1
+        if (wasReg) {
+          const wl = meetup.waitlistCount ?? 0;
+          if (wl > 0 && meetup.capacity != null) {
+            return applyMeetupCounts(meetup, {
+              myRsvp: null,
+              registeredCount: meetup.registeredCount ?? meetup.goingCount ?? 0,
+              waitlistCount: Math.max(wl - 1, 0),
+              spotsLeft: 0,
+              myWaitlistPosition: null,
+            });
+          }
+          const registered = Math.max((meetup.registeredCount ?? meetup.goingCount ?? 1) - 1, 0);
+          const spotsLeft = meetup.capacity != null ? Math.max(meetup.capacity - registered, 0) : null;
+          return applyMeetupCounts(meetup, {
+            myRsvp: null,
+            registeredCount: registered,
+            spotsLeft,
+            myWaitlistPosition: null,
+          });
         }
-        const registered = Math.max((meetup.registeredCount ?? meetup.goingCount ?? 1) - 1, 0);
-        const spotsLeft = meetup.capacity != null ? Math.max(meetup.capacity - registered, 0) : null;
-        return {
-          ...meetup,
+
+        const waitlistCount = Math.max((meetup.waitlistCount ?? 1) - 1, 0);
+        return applyMeetupCounts(meetup, {
           myRsvp: null,
-          registeredCount: registered,
-          goingCount: registered,
-          interestedCount: 0,
-          spotsLeft,
-        };
+          waitlistCount,
+          myWaitlistPosition: null,
+        });
       }),
     );
 
@@ -1421,14 +1504,14 @@ export function AppShell() {
           setMeetups((list) =>
             list.map((meetup) =>
               meetup.id === meetupId
-                ? {
-                    ...meetup,
+                ? applyMeetupCounts(meetup, {
                     myRsvp: null,
                     registeredCount: result.registeredCount,
-                    goingCount: result.registeredCount,
+                    waitlistCount: result.waitlistCount,
                     capacity: result.capacity ?? meetup.capacity,
                     spotsLeft: result.spotsLeft,
-                  }
+                    myWaitlistPosition: null,
+                  })
                 : meetup,
             ),
           );
@@ -1573,6 +1656,7 @@ export function AppShell() {
         meetupCreateBusy={meetupCreateBusy}
         meetupCreateError={meetupCreateError}
         onMeetupRegister={registerForMeetup}
+        onMeetupJoinWaitlist={joinMeetupWaitlist}
         onMeetupCancelRegistration={cancelMeetupRegistration}
         onCancelMeetup={cancelMeetup}
         meetupRegisterBusy={meetupRsvpBusy}

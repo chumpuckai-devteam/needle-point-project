@@ -4,8 +4,8 @@ import type { Creator, StitchingMeetup, Store } from "../types";
 import type { View } from "../appModel";
 import type { StitchingMeetupInput } from "../api/meetups";
 import { EmptyState, SectionHeader } from "../components/ui";
-import { filterUpcomingMeetups, formatMeetupCapacity, formatMeetupPlace, formatMeetupWhen, hostLabel, MEETUP_CANCEL_POLICY, MEETUP_REGISTER_HELP, meetupIsFull } from "../lib/meetups";
-import { isRegisteredStatus } from "../api/meetups";
+import { filterUpcomingMeetups, formatMeetupCapacity, formatMeetupPlace, formatMeetupWhen, hostLabel, MEETUP_CANCEL_POLICY, MEETUP_REGISTER_HELP, MEETUP_WAITLIST_HELP, meetupIsFull } from "../lib/meetups";
+import { isRegisteredStatus, isWaitlistedStatus } from "../api/meetups";
 
 function locationTypeLabel(type: StitchingMeetup["locationType"]) {
   if (type === "hybrid") return "Hybrid";
@@ -244,6 +244,7 @@ export function MeetupDetailView({
   setView,
   isHost,
   onRegister,
+  onJoinWaitlist,
   onCancelRegistration,
   onCancel,
   registerBusy,
@@ -254,6 +255,7 @@ export function MeetupDetailView({
   setView: (view: View) => void;
   isHost: boolean;
   onRegister: () => void;
+  onJoinWaitlist: () => void;
   onCancelRegistration: () => void;
   onCancel?: () => void;
   registerBusy?: boolean;
@@ -262,6 +264,7 @@ export function MeetupDetailView({
   const store = meetup.hostStoreId ? stores.find((s) => s.id === meetup.hostStoreId) : undefined;
   const cancelled = meetup.status === "cancelled";
   const registered = isRegisteredStatus(meetup.myRsvp);
+  const waitlisted = isWaitlistedStatus(meetup.myRsvp);
   const full = meetupIsFull(meetup) && !registered;
 
   return (
@@ -327,14 +330,25 @@ export function MeetupDetailView({
                 </button>
                 <p className="field-help meetup-policy">{MEETUP_CANCEL_POLICY}</p>
               </>
-            ) : full ? (
+            ) : waitlisted ? (
               <>
-                <button className="primary" type="button" disabled>
-                  Full — no seats left
+                <p className="meetup-waitlist-banner">
+                  You’re on the waitlist
+                  {meetup.myWaitlistPosition ? ` · #${meetup.myWaitlistPosition} in line` : ""}.
+                </p>
+                <button className="secondary" type="button" disabled={registerBusy} onClick={onCancelRegistration}>
+                  {registerBusy ? "Updating…" : "Leave waitlist"}
                 </button>
                 <p className="field-help meetup-policy">
-                  Spots open when someone cancels. Check back, or ask the host if a waitlist is available (waitlist coming later).
+                  If a seat opens, you’re registered automatically in order. Leave anytime.
                 </p>
+              </>
+            ) : full ? (
+              <>
+                <button className="primary" type="button" disabled={registerBusy} onClick={onJoinWaitlist}>
+                  {registerBusy ? "Joining…" : "Join waitlist"}
+                </button>
+                <p className="field-help meetup-policy">{MEETUP_WAITLIST_HELP}</p>
               </>
             ) : (
               <>

@@ -4363,3 +4363,12 @@ label textarea::placeholder {
   margin: 0;
   line-height: 1.4;
 }
+
+.meetup-waitlist-banner {
+  margin: 0;
+  padding: 0.65rem 0.8rem;
+  border-radius: 12px;
+  background: #f3ebe0;
+  color: var(--ink, #2f3a2e);
+  font-weight: 600;
+}

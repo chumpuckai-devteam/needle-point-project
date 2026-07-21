@@ -32,6 +32,7 @@ export const initialMeetups: StitchingMeetup[] = [
     registeredCount: 6,
     goingCount: 6,
     interestedCount: 0,
+    waitlistCount: 0,
     spotsLeft: 12,
     myRsvp: null,
   },
@@ -59,10 +60,11 @@ export const initialMeetups: StitchingMeetup[] = [
     skillLevel: "confident beginner+",
     visibility: "public",
     status: "scheduled",
-    registeredCount: 11,
-    goingCount: 11,
+    registeredCount: 24,
+    goingCount: 24,
     interestedCount: 0,
-    spotsLeft: 13,
+    waitlistCount: 2,
+    spotsLeft: 0,
     myRsvp: null,
   },
   {
@@ -162,18 +164,27 @@ export function meetupIsFull(meetup: StitchingMeetup): boolean {
 
 export function formatMeetupCapacity(meetup: StitchingMeetup): string {
   const registered = meetupRegisteredCount(meetup);
+  const wl = meetup.waitlistCount ?? 0;
   if (meetup.capacity == null) {
     return registered === 1 ? "1 registered" : `${registered} registered`;
   }
   const left = meetupSpotsLeft(meetup) ?? 0;
-  if (left <= 0) return `Full · ${meetup.capacity} seats`;
-  return `${left} spot${left === 1 ? "" : "s"} left · ${registered}/${meetup.capacity} registered`;
+  if (left <= 0) {
+    return wl > 0
+      ? `Full · ${meetup.capacity} seats · ${wl} waitlisted`
+      : `Full · ${meetup.capacity} seats`;
+  }
+  const base = `${left} spot${left === 1 ? "" : "s"} left · ${registered}/${meetup.capacity} registered`;
+  return wl > 0 ? `${base} · ${wl} waitlisted` : base;
 }
 
-/** Guest cancel copy — free cancel until 24h before start; frees seat for others. */
+/** Guest cancel copy — free cancel until 24h before start; frees seat for others / waitlist. */
 export const MEETUP_CANCEL_POLICY =
-  "You can cancel free up to 24 hours before start. Your seat opens for someone else when you cancel. Within 24 hours, contact the host if you cannot attend.";
+  "You can cancel free up to 24 hours before start. Your seat opens for the next person on the waitlist (or anyone who registers). Within 24 hours, contact the host if you cannot attend.";
 
 export const MEETUP_REGISTER_HELP =
-  "Register to hold a seat. Limited capacity events fill as people register — cancel early so others can join.";
+  "Register to hold a seat. Limited capacity events fill as people register — cancel early so the waitlist can move up.";
+
+export const MEETUP_WAITLIST_HELP =
+  "This meetup is full. Join the waitlist — if someone cancels, the next person in line is registered automatically.";
 

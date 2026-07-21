@@ -17,6 +17,7 @@ export function MeetupsRoute({
   createBusy,
   createError,
   onRegister,
+  onJoinWaitlist,
   onCancelRegistration,
   onCancel,
   registerBusy,
@@ -32,6 +33,7 @@ export function MeetupsRoute({
   createBusy?: boolean;
   createError?: string;
   onRegister: (meetupId: string) => void;
+  onJoinWaitlist: (meetupId: string) => void;
   onCancelRegistration: (meetupId: string) => void;
   onCancel?: (meetupId: string) => void;
   registerBusy?: boolean;
@@ -76,6 +78,7 @@ export function MeetupsRoute({
       setView={setView}
       isHost={Boolean(viewerId && meetup.hostId === viewerId)}
       onRegister={() => onRegister(meetup.id)}
+      onJoinWaitlist={() => onJoinWaitlist(meetup.id)}
       onCancelRegistration={() => onCancelRegistration(meetup.id)}
       onCancel={onCancel ? () => onCancel(meetup.id) : undefined}
       registerBusy={registerBusy}

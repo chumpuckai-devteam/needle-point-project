@@ -56,15 +56,19 @@ type DbMeetupRow = {
   going_count?: number | string | null;
   interested_count?: number | string | null;
   registered_count?: number | string | null;
+  waitlist_count?: number | string | null;
   spots_left?: number | string | null;
 };
 
 export type MeetupRegistrationResult = {
   meetupId: string;
   registeredCount: number;
+  waitlistCount: number;
   capacity: number | null;
   spotsLeft: number | null;
   status: StitchingMeetupRsvpStatus;
+  waitlistPosition?: number | null;
+  promotedUserId?: string | null;
 };
 
 function clean(value?: string | null, max = 500): string {
@@ -121,16 +125,23 @@ export function isRegisteredStatus(status?: StitchingMeetupRsvpStatus | null): b
   return status === "registered" || status === "going" || status === "interested";
 }
 
+export function isWaitlistedStatus(status?: StitchingMeetupRsvpStatus | null): boolean {
+  return status === "waitlisted";
+}
+
 export function mapMeetupRow(row: DbMeetupRow, myRsvp: StitchingMeetupRsvpStatus | null = null): StitchingMeetup {
   const registered =
     row.registered_count != null ? num(row.registered_count) : num(row.going_count) + num(row.interested_count);
   const capacity = row.capacity;
+  const waitlistCount = num(row.waitlist_count);
   const spotsLeft =
     row.spots_left != null && row.spots_left !== ""
       ? Number(row.spots_left)
       : capacity != null
         ? Math.max(capacity - registered, 0)
         : null;
+  let normalized: StitchingMeetupRsvpStatus | null = myRsvp;
+  if (myRsvp && isRegisteredStatus(myRsvp)) normalized = "registered";
   return {
     id: row.id,
     hostId: row.host_user_id,
@@ -160,8 +171,9 @@ export function mapMeetupRow(row: DbMeetupRow, myRsvp: StitchingMeetupRsvpStatus
     registeredCount: registered,
     goingCount: registered,
     interestedCount: 0,
+    waitlistCount,
     spotsLeft,
-    myRsvp: myRsvp && isRegisteredStatus(myRsvp) ? "registered" : myRsvp,
+    myRsvp: normalized,
   };
 }
 
@@ -212,11 +224,11 @@ export async function fetchMyMeetupRsvpsOnline(userId: string): Promise<Record<s
     .from("stitching_meetup_rsvps")
     .select("meetup_id,status")
     .eq("user_id", userId)
-    .in("status", ["registered", "going", "interested"]);
+    .in("status", ["registered", "going", "interested", "waitlisted"]);
   if (error) throw error;
   const out: Record<string, StitchingMeetupRsvpStatus> = {};
   for (const row of (data as { meetup_id: string; status: StitchingMeetupRsvpStatus }[] | null) ?? []) {
-    out[row.meetup_id] = "registered";
+    out[row.meetup_id] = isRegisteredStatus(row.status) ? "registered" : row.status;
   }
   return out;
 }
@@ -244,16 +256,29 @@ function mapRegistrationRpc(data: unknown): MeetupRegistrationResult {
   const r = row as {
     meetup_id: string;
     registered_count: number | string;
+    waitlist_count?: number | string | null;
+    waitlist_position?: number | string | null;
     capacity: number | null;
     spots_left: number | null;
     status: string;
+    promoted_user_id?: string | null;
   };
+  const statusRaw = r.status;
+  const status: StitchingMeetupRsvpStatus =
+    statusRaw === "waitlisted"
+      ? "waitlisted"
+      : statusRaw === "cancelled"
+        ? "cancelled"
+        : "registered";
   return {
     meetupId: r.meetup_id,
     registeredCount: num(r.registered_count),
+    waitlistCount: num(r.waitlist_count),
     capacity: r.capacity ?? null,
     spotsLeft: r.spots_left == null ? null : Number(r.spots_left),
-    status: r.status === "cancelled" ? "cancelled" : "registered",
+    status,
+    waitlistPosition: r.waitlist_position == null ? null : Number(r.waitlist_position),
+    promotedUserId: r.promoted_user_id ?? null,
   };
 }
 
@@ -262,9 +287,20 @@ export async function registerForMeetupOnline(meetupId: string): Promise<MeetupR
   const { data, error } = await client.rpc("register_for_meetup", { p_meetup_id: meetupId });
   if (error) {
     const msg = error.message || "Could not register";
-    if (/full/i.test(msg)) throw new Error("This meetup is full.");
+    if (/full|waitlist/i.test(msg)) throw new Error(msg.includes("waitlist") ? msg : "This meetup is full — join the waitlist.");
     if (/Sign in/i.test(msg)) throw new Error("Sign in to register for a meetup.");
     if (/not open|closed/i.test(msg)) throw new Error(msg);
+    throw new Error(msg);
+  }
+  return mapRegistrationRpc(data);
+}
+
+export async function joinMeetupWaitlistOnline(meetupId: string): Promise<MeetupRegistrationResult> {
+  const client = requireSupabase();
+  const { data, error } = await client.rpc("join_meetup_waitlist", { p_meetup_id: meetupId });
+  if (error) {
+    const msg = error.message || "Could not join waitlist";
+    if (/Sign in/i.test(msg)) throw new Error("Sign in to join the waitlist.");
     throw new Error(msg);
   }
   return mapRegistrationRpc(data);
