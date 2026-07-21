@@ -188,3 +188,24 @@ export const MEETUP_REGISTER_HELP =
 export const MEETUP_WAITLIST_HELP =
   "This meetup is full. Join the waitlist — if someone cancels, the next person in line is registered automatically.";
 
+export function formatMeetupConfirmation(confirmedAt?: string | null): string {
+  if (!confirmedAt) return "Confirmed";
+  try {
+    return `Confirmed ${new Date(confirmedAt).toLocaleString(undefined, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    })}`;
+  } catch {
+    return "Confirmed";
+  }
+}
+
+/** Short reference guests can screenshot (not a paid ticket). */
+export function meetupConfirmationRef(meetup: StitchingMeetup): string {
+  const tail = meetup.id.replace(/[^a-zA-Z0-9]/g, "").slice(-6).toUpperCase() || "MEETUP";
+  return `NP-${tail}`;
+}
+

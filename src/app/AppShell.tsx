@@ -24,6 +24,7 @@ import {
   joinMeetupWaitlistOnline,
   listUpcomingMeetupsOnline,
   registerForMeetupOnline,
+  type MyMeetupRsvpRow,
   type StitchingMeetupInput,
 } from "../api/meetups";
 import { uploadProjectImage, validateImageFile } from "../api/images";
@@ -43,7 +44,7 @@ import {
   type StoreProfileInput,
 } from "../api/stores";
 import { creators as seedCreators, initialCollections, initialProjects, initialStitchAlongs, stitchAlong as seedStitchAlong } from "../data";
-import type { Collection, Creator, MediaKind, Project, StitchAlong, StitchingMeetup, StitchingMeetupRsvpStatus, Store } from "../types";
+import type { Collection, Creator, MediaKind, Project, StitchAlong, StitchingMeetup, Store } from "../types";
 import { useAuth } from "../context/AuthContext";
 import { isSupabaseConfigured, requireSupabase } from "../lib/supabase";
 import { loadFromStorage, saveToStorage } from "../lib/storage";
@@ -217,7 +218,7 @@ export function AppShell() {
           user?.id ? fetchFollowedStoreIds(user.id) : Promise.resolve([] as string[]),
           listPublicStitchAlongsOnline(user?.id ?? null),
           listUpcomingMeetupsOnline({ limit: 50 }),
-          user?.id ? fetchMyMeetupRsvpsOnline(user.id) : Promise.resolve({} as Record<string, StitchingMeetupRsvpStatus>),
+          user?.id ? fetchMyMeetupRsvpsOnline(user.id) : Promise.resolve({} as Record<string, MyMeetupRsvpRow>),
         ]);
         if (cancelled) return;
 
@@ -267,10 +268,14 @@ export function AppShell() {
         }
         if (!cancelled) {
           setMeetups(
-            remoteMeetups.map((meetup) => ({
-              ...meetup,
-              myRsvp: remoteMeetupRsvps[meetup.id] ?? null,
-            })),
+            remoteMeetups.map((meetup) => {
+              const mine = remoteMeetupRsvps[meetup.id];
+              return {
+                ...meetup,
+                myRsvp: mine?.status ?? null,
+                myRegistrationConfirmedAt: mine?.confirmedAt ?? null,
+              };
+            }),
           );
         }
         if (user?.id) setFollowedStores(remoteStoreFollows);
@@ -1335,6 +1340,7 @@ export function AppShell() {
       capacity?: number | null;
       myRsvp?: StitchingMeetup["myRsvp"];
       myWaitlistPosition?: number | null;
+      myRegistrationConfirmedAt?: string | null;
     },
   ): StitchingMeetup {
     const registered = patch.registeredCount ?? meetup.registeredCount ?? meetup.goingCount ?? 0;
@@ -1378,6 +1384,7 @@ export function AppShell() {
           waitlistCount,
           spotsLeft,
           myWaitlistPosition: null,
+          myRegistrationConfirmedAt: new Date().toISOString(),
         });
       }),
     );
@@ -1395,6 +1402,7 @@ export function AppShell() {
                     capacity: result.capacity ?? meetup.capacity,
                     spotsLeft: result.spotsLeft,
                     myWaitlistPosition: null,
+                    myRegistrationConfirmedAt: result.confirmedAt ?? new Date().toISOString(),
                   })
                 : meetup,
             ),
@@ -1424,6 +1432,7 @@ export function AppShell() {
           myRsvp: "waitlisted",
           waitlistCount,
           myWaitlistPosition: waitlistCount,
+          myRegistrationConfirmedAt: null,
         });
       }),
     );
@@ -1441,6 +1450,7 @@ export function AppShell() {
                     capacity: result.capacity ?? meetup.capacity,
                     spotsLeft: result.spotsLeft,
                     myWaitlistPosition: result.waitlistPosition ?? null,
+                    myRegistrationConfirmedAt: null,
                   })
                 : meetup,
             ),
@@ -1477,6 +1487,7 @@ export function AppShell() {
               waitlistCount: Math.max(wl - 1, 0),
               spotsLeft: 0,
               myWaitlistPosition: null,
+              myRegistrationConfirmedAt: null,
             });
           }
           const registered = Math.max((meetup.registeredCount ?? meetup.goingCount ?? 1) - 1, 0);
@@ -1486,6 +1497,7 @@ export function AppShell() {
             registeredCount: registered,
             spotsLeft,
             myWaitlistPosition: null,
+            myRegistrationConfirmedAt: null,
           });
         }
 
@@ -1494,6 +1506,7 @@ export function AppShell() {
           myRsvp: null,
           waitlistCount,
           myWaitlistPosition: null,
+          myRegistrationConfirmedAt: null,
         });
       }),
     );
@@ -1511,6 +1524,7 @@ export function AppShell() {
                     capacity: result.capacity ?? meetup.capacity,
                     spotsLeft: result.spotsLeft,
                     myWaitlistPosition: null,
+                    myRegistrationConfirmedAt: null,
                   })
                 : meetup,
             ),

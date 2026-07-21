@@ -172,6 +172,8 @@ export type StitchingMeetup = {
   waitlistCount?: number;
   /** 1-based position when viewer is waitlisted. */
   myWaitlistPosition?: number | null;
+  /** When the viewer’s seat was confirmed (ISO). */
+  myRegistrationConfirmedAt?: string | null;
   /** Remaining seats when capacity is set. */
   spotsLeft?: number | null;
   /** Viewer registration when known. */

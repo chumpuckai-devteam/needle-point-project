@@ -69,6 +69,12 @@ export type MeetupRegistrationResult = {
   status: StitchingMeetupRsvpStatus;
   waitlistPosition?: number | null;
   promotedUserId?: string | null;
+  confirmedAt?: string | null;
+};
+
+export type MyMeetupRsvpRow = {
+  status: StitchingMeetupRsvpStatus;
+  confirmedAt?: string | null;
 };
 
 function clean(value?: string | null, max = 500): string {
@@ -217,18 +223,23 @@ export async function getMeetupOnline(id: string): Promise<StitchingMeetup | nul
   return mapMeetupRow(data as DbMeetupRow);
 }
 
-export async function fetchMyMeetupRsvpsOnline(userId: string): Promise<Record<string, StitchingMeetupRsvpStatus>> {
+export async function fetchMyMeetupRsvpsOnline(
+  userId: string,
+): Promise<Record<string, MyMeetupRsvpRow>> {
   if (!isSupabaseConfigured || !userId) return {};
   const client = requireSupabase();
   const { data, error } = await client
     .from("stitching_meetup_rsvps")
-    .select("meetup_id,status")
+    .select("meetup_id,status,confirmed_at")
     .eq("user_id", userId)
     .in("status", ["registered", "going", "interested", "waitlisted"]);
   if (error) throw error;
-  const out: Record<string, StitchingMeetupRsvpStatus> = {};
-  for (const row of (data as { meetup_id: string; status: StitchingMeetupRsvpStatus }[] | null) ?? []) {
-    out[row.meetup_id] = isRegisteredStatus(row.status) ? "registered" : row.status;
+  const out: Record<string, MyMeetupRsvpRow> = {};
+  for (const row of (data as { meetup_id: string; status: StitchingMeetupRsvpStatus; confirmed_at: string | null }[] | null) ?? []) {
+    out[row.meetup_id] = {
+      status: isRegisteredStatus(row.status) ? "registered" : row.status,
+      confirmedAt: row.confirmed_at,
+    };
   }
   return out;
 }
@@ -262,6 +273,7 @@ function mapRegistrationRpc(data: unknown): MeetupRegistrationResult {
     spots_left: number | null;
     status: string;
     promoted_user_id?: string | null;
+    confirmed_at?: string | null;
   };
   const statusRaw = r.status;
   const status: StitchingMeetupRsvpStatus =
@@ -279,6 +291,7 @@ function mapRegistrationRpc(data: unknown): MeetupRegistrationResult {
     status,
     waitlistPosition: r.waitlist_position == null ? null : Number(r.waitlist_position),
     promotedUserId: r.promoted_user_id ?? null,
+    confirmedAt: r.confirmed_at ?? null,
   };
 }
 

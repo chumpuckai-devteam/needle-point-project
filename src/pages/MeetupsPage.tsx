@@ -4,7 +4,7 @@ import type { Creator, StitchingMeetup, Store } from "../types";
 import type { View } from "../appModel";
 import type { StitchingMeetupInput } from "../api/meetups";
 import { EmptyState, SectionHeader } from "../components/ui";
-import { filterUpcomingMeetups, formatMeetupCapacity, formatMeetupPlace, formatMeetupWhen, hostLabel, MEETUP_CANCEL_POLICY, MEETUP_REGISTER_HELP, MEETUP_WAITLIST_HELP, meetupIsFull } from "../lib/meetups";
+import { filterUpcomingMeetups, formatMeetupCapacity, formatMeetupConfirmation, formatMeetupPlace, formatMeetupWhen, hostLabel, meetupConfirmationRef, MEETUP_CANCEL_POLICY, MEETUP_REGISTER_HELP, MEETUP_WAITLIST_HELP, meetupIsFull } from "../lib/meetups";
 import { isRegisteredStatus, isWaitlistedStatus } from "../api/meetups";
 
 function locationTypeLabel(type: StitchingMeetup["locationType"]) {
@@ -324,7 +324,32 @@ export function MeetupDetailView({
           <div className="meetup-register-block">
             {registered ? (
               <>
-                <p className="meetup-registered-banner">You’re registered for this meetup.</p>
+                <div className="meetup-confirmation-card" data-testid="meetup-confirmation">
+                  <p className="meetup-registered-banner">You’re registered — seat confirmed.</p>
+                  <dl className="meetup-confirmation-meta">
+                    <div>
+                      <dt>Status</dt>
+                      <dd>{formatMeetupConfirmation(meetup.myRegistrationConfirmedAt)}</dd>
+                    </div>
+                    <div>
+                      <dt>Reference</dt>
+                      <dd>
+                        <code>{meetupConfirmationRef(meetup)}</code>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>When</dt>
+                      <dd>{formatMeetupWhen(meetup)}</dd>
+                    </div>
+                    <div>
+                      <dt>Where</dt>
+                      <dd>{formatMeetupPlace(meetup)}</dd>
+                    </div>
+                  </dl>
+                  <p className="field-help meetup-policy">
+                    Screenshot this confirmation for your records. Email tickets and host check-in come later — this holds your seat now.
+                  </p>
+                </div>
                 <button className="secondary" type="button" disabled={registerBusy} onClick={onCancelRegistration}>
                   {registerBusy ? "Updating…" : "Cancel registration"}
                 </button>

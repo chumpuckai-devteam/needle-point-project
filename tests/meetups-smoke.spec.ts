@@ -20,6 +20,8 @@ test.describe("Stitching meetups smoke", () => {
     }
     await expect(page.getByRole("button", { name: /^Going$/ })).toHaveCount(0);
     await expect(page.getByRole("button", { name: /^Interested$/ })).toHaveCount(0);
+    // Confirmation receipt exists in DOM only when registered; assert helper copy on open detail.
+    await expect(page.getByRole("button", { name: /All meetups/i })).toBeVisible();
   });
 
   test("city filter narrows list", async ({ page }) => {

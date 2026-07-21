@@ -4372,3 +4372,43 @@ label textarea::placeholder {
   color: var(--ink, #2f3a2e);
   font-weight: 600;
 }
+
+.meetup-confirmation-card {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--moss, #4a5d43) 22%, transparent);
+  background: linear-gradient(180deg, #f4f6ee 0%, #eef1e6 100%);
+}
+.meetup-confirmation-card .meetup-registered-banner {
+  background: transparent;
+  padding: 0;
+}
+.meetup-confirmation-meta {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+}
+.meetup-confirmation-meta > div {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 0.4rem;
+  align-items: baseline;
+}
+.meetup-confirmation-meta dt {
+  margin: 0;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--ink, #2f3a2e) 62%, transparent);
+}
+.meetup-confirmation-meta dd {
+  margin: 0;
+  font-weight: 600;
+  color: var(--ink, #2f3a2e);
+}
+.meetup-confirmation-meta code {
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+}
