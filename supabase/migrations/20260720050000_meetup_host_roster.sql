@@ -1,0 +1,2 @@
+-- M1.C host roster RPC (applied live as meetup_host_roster_rpc / fix_name)
+-- list_meetup_registrations(uuid) — host-only registered + waitlisted guests
