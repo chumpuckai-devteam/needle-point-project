@@ -43,7 +43,7 @@ test.describe("Stitching meetups smoke", () => {
     await expect(page.getByTestId("meetups-mine")).toBeVisible();
   });
 
-  test("free-cancel window helper locks registered seats inside 24h", async () => {
+  test("free-cancel window helper locks registered seats inside 48h", async () => {
     // Pure contract (avoid importing app modules that pull Vite JSON assets under Playwright).
     const { readFileSync } = await import("node:fs");
     const { resolve, dirname } = await import("node:path");
@@ -51,20 +51,25 @@ test.describe("Stitching meetups smoke", () => {
     const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
     const src = readFileSync(resolve(root, "src/lib/meetups.ts"), "utf8");
     expect(src).toContain("export function canFreeCancelMeetupRegistration");
-    expect(src).toContain("24 * 60 * 60 * 1000");
+    expect(src).toContain("MEETUP_FREE_CANCEL_WINDOW_MS");
+    expect(src).toContain("48 * 60 * 60 * 1000");
     expect(src).toContain("MEETUP_CANCEL_LOCKED");
 
     // Mirror the shipped rule for a regression signal.
+    const WINDOW = 48 * 60 * 60 * 1000;
     function canFreeCancel(startsAt: string, myStatus: string, nowMs: number) {
       const status = myStatus.toLowerCase();
       if (status === "waitlisted") return true;
       if (!status || status === "cancelled") return false;
       const start = new Date(startsAt).getTime();
-      return start >= nowMs + 24 * 60 * 60 * 1000;
+      return start >= nowMs + WINDOW;
     }
     const now = Date.parse("2026-07-21T12:00:00.000Z");
+    // 3 days out → free cancel
     expect(canFreeCancel("2026-07-25T18:00:00.000Z", "registered", now)).toBe(true);
-    expect(canFreeCancel("2026-07-21T20:00:00.000Z", "registered", now)).toBe(false);
-    expect(canFreeCancel("2026-07-21T20:00:00.000Z", "waitlisted", now)).toBe(true);
+    // 36h out → locked (inside 48h window)
+    expect(canFreeCancel("2026-07-23T00:00:00.000Z", "registered", now)).toBe(false);
+    // waitlist always free
+    expect(canFreeCancel("2026-07-23T00:00:00.000Z", "waitlisted", now)).toBe(true);
   });
 });

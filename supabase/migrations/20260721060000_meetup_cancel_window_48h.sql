@@ -1,0 +1,2 @@
+-- Free cancel until 48 hours before start for registered seats
+-- Applied live: meetup_cancel_window_48h

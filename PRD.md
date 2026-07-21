@@ -365,7 +365,7 @@ Capacity-aware seat hold (replaces soft Going/Interested).
 - createdAt / updatedAt
 - registeredCount derived; spotsLeft = capacity − registered when capacity set
 
-**Cancellation policy (product copy):** Guests may cancel free up to 24 hours before start; cancel frees the seat for others. Within 24 hours, contact the host. Future: enforced deadline + waitlist auto-fill.
+**Cancellation policy (product copy):** Guests may cancel free up to **48 hours** before start; cancel frees the seat for others / waitlist. Within 48 hours, contact the host. Enforced server-side + UI lock.
 
 ## Recommended Tech Stack
 
@@ -523,7 +523,7 @@ Build only after free registration is trusted:
 - Paid or free **tickets** with confirmation email / in-app ticket state.
 - Host check-in (QR or name list).
 - Waitlist notify + expire hold (auto-promote already ships for free seats).
-- **Cancel deadline server-side (shipped)** — free cancel until 24h before start; UI locks cancel; waitlist leave anytime.
+- **Cancel deadline server-side (shipped)** — free cancel until **48h** before start (more time for last-minute seat fills); UI locks cancel; waitlist leave anytime.
 - Stripe adapters optional.
 
 ### Phase C — Deeper community & creator value

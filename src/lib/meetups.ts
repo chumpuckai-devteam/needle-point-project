@@ -198,14 +198,17 @@ export function formatMeetupCapacity(meetup: StitchingMeetup): string {
   return wl > 0 ? `${base} · ${wl} waitlisted` : base;
 }
 
-/** Guest cancel copy — free cancel until 24h before start; frees seat for others / waitlist. */
+/** Guest cancel copy — free cancel until 48h before start; frees seat for others / waitlist. */
 export const MEETUP_CANCEL_POLICY =
-  "You can cancel free up to 24 hours before start. Your seat opens for the next person on the waitlist (or anyone who registers). Within 24 hours, contact the host if you cannot attend.";
+  "You can cancel free up to 48 hours before start. Your seat opens for the next person on the waitlist (or anyone who registers). Within 48 hours, contact the host if you cannot attend.";
 
 export const MEETUP_CANCEL_LOCKED =
-  "Cancellations closed within 24 hours of start. Contact the host if you cannot attend.";
+  "Cancellations closed within 48 hours of start. Contact the host if you cannot attend.";
 
-/** True when a registered seat can still free-cancel (not within 24h of start). Waitlist always can leave. */
+/** Free-cancel window for registered seats (ms before start). Waitlist can always leave. */
+export const MEETUP_FREE_CANCEL_WINDOW_MS = 48 * 60 * 60 * 1000;
+
+/** True when a registered seat can still free-cancel (not within 48h of start). Waitlist always can leave. */
 export function canFreeCancelMeetupRegistration(
   meetup: Pick<StitchingMeetup, "startsAt">,
   myStatus?: string | null,
@@ -217,7 +220,7 @@ export function canFreeCancelMeetupRegistration(
   if (!meetup.startsAt) return true;
   const start = new Date(meetup.startsAt).getTime();
   if (!Number.isFinite(start)) return true;
-  return start >= nowMs + 24 * 60 * 60 * 1000;
+  return start >= nowMs + MEETUP_FREE_CANCEL_WINDOW_MS;
 }
 
 export const MEETUP_REGISTER_HELP =
