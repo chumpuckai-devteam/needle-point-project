@@ -15,6 +15,11 @@ test.describe("local discovery shops UI", () => {
     await expect(page.locator(".store-card").filter({ hasText: /Canopy Canvas|Thread|Bookshop/i }).first()).toBeVisible({
       timeout: 15_000,
     });
+
+    // After a ZIP search, map should mount real OSM tiles (Leaflet)
+    await page.getByRole("textbox", { name: /ZIP or city/i }).fill("97205");
+    await page.getByRole("button", { name: /Find shops/i }).click();
+    await expect(page.locator(".store-pin-map-leaflet, .leaflet-container").first()).toBeVisible({ timeout: 15_000 });
   });
 
   test("ZIP search keeps page usable", async ({ page }) => {

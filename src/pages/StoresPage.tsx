@@ -27,6 +27,7 @@ import {
 } from "../lib/storeDiscovery";
 import type { StoresBrowseLocationState } from "../lib/storeLinks";
 import { EmptyState, SectionHeader, SectionTitle, Skeleton } from "../components/ui";
+import { StorePinMap } from "../components/StorePinMap";
 import { uiCopy } from "../lib/uiCopy";
 
 type LocationUiStatus = "idle" | "loading" | "ready" | "denied" | "error" | "unsupported";
@@ -989,100 +990,6 @@ function StoreCardGrid({
         );
       })}
     </div>
-  );
-}
-
-function StorePinMap({
-  pins,
-  selectedId,
-  onSelect,
-  center,
-  label,
-}: {
-  pins: StoreDiscoveryMapPin[];
-  selectedId: string | null;
-  onSelect: (pin: StoreDiscoveryMapPin) => void;
-  center?: GeoPoint;
-  label: string;
-}) {
-  const bounds = useMemo(() => {
-    const lats = pins.map((p) => p.lat);
-    const lngs = pins.map((p) => p.lng);
-    if (center) {
-      lats.push(center.lat);
-      lngs.push(center.lng);
-    }
-    let minLat = Math.min(...lats);
-    let maxLat = Math.max(...lats);
-    let minLng = Math.min(...lngs);
-    let maxLng = Math.max(...lngs);
-    // pad single-point / tight clusters
-    if (maxLat - minLat < 0.08) {
-      const mid = (maxLat + minLat) / 2;
-      minLat = mid - 0.04;
-      maxLat = mid + 0.04;
-    }
-    if (maxLng - minLng < 0.08) {
-      const mid = (maxLng + minLng) / 2;
-      minLng = mid - 0.04;
-      maxLng = mid + 0.04;
-    }
-    const latPad = (maxLat - minLat) * 0.12;
-    const lngPad = (maxLng - minLng) * 0.12;
-    return {
-      minLat: minLat - latPad,
-      maxLat: maxLat + latPad,
-      minLng: minLng - lngPad,
-      maxLng: maxLng + lngPad,
-    };
-  }, [pins, center]);
-
-  function project(lat: number, lng: number) {
-    const x = ((lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * 100;
-    const y = (1 - (lat - bounds.minLat) / (bounds.maxLat - bounds.minLat)) * 100;
-    return { x: Math.min(96, Math.max(4, x)), y: Math.min(92, Math.max(8, y)) };
-  }
-
-  return (
-    <section className="store-pin-map panel" aria-label={`Map of shops near ${label}`}>
-      <div className="store-pin-map-header">
-        <strong>Map preview</strong>
-        <span>
-          {pins.length} pin{pins.length === 1 ? "" : "s"}
-        </span>
-      </div>
-      <div className="store-pin-map-canvas" role="list">
-        <div className="store-pin-map-grid" aria-hidden />
-        {center ? (
-          <span
-            className="store-pin-map-center"
-            style={{ left: `${project(center.lat, center.lng).x}%`, top: `${project(center.lat, center.lng).y}%` }}
-            title="Search center"
-          />
-        ) : null}
-        {pins.map((pin) => {
-          const { x, y } = project(pin.lat, pin.lng);
-          const selected = selectedId === pin.storeId;
-          return (
-            <button
-              key={pin.storeId}
-              type="button"
-              role="listitem"
-              className={`store-pin-map-pin${selected ? " is-selected" : ""}`}
-              style={{ left: `${x}%`, top: `${y}%` }}
-              title={`${pin.name}${pin.distanceMiles != null ? ` · ${formatDistanceMiles(pin.distanceMiles)}` : ""}`}
-              aria-label={`${pin.name}${pin.distanceMiles != null ? `, ${formatDistanceMiles(pin.distanceMiles)}` : ""}. Highlight in list.`}
-              aria-pressed={selected}
-              onClick={() => onSelect(pin)}
-            >
-              <span className="store-pin-map-dot" />
-              <span className="store-pin-map-label">{pin.name}</span>
-            </button>
-          );
-        })}
-      </div>
-      <p className="store-pin-map-hint">Select a pin to highlight the matching shop card. List stays fully usable without the map.</p>
-    </section>
   );
 }
 

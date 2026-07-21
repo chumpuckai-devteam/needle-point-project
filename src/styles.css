@@ -3749,11 +3749,9 @@ label textarea::placeholder {
 
 .store-pin-map-canvas {
   position: relative;
-  height: 240px;
-  border-radius: 16px;
-  border: 1px solid #e0d7cb;
+  min-height: 220px;
+  border-radius: 14px;
   background:
-    linear-gradient(180deg, rgba(247, 244, 238, 0.2), rgba(63, 111, 91, 0.06)),
     repeating-linear-gradient(
       0deg,
       transparent,
@@ -3768,6 +3766,64 @@ label textarea::placeholder {
     ),
     #f3eee4;
   overflow: hidden;
+}
+
+.store-pin-map-leaflet-wrap {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ink, #2f3a2e) 10%, transparent);
+  background: #e8e4db;
+}
+
+.store-pin-map-leaflet {
+  width: 100%;
+  height: min(42vh, 280px);
+  min-height: 220px;
+  z-index: 0;
+}
+
+.store-pin-map-leaflet .leaflet-control-attribution {
+  font-size: 0.65rem;
+  background: rgba(255, 253, 249, 0.9);
+  color: #5f6b63;
+}
+
+.np-leaflet-pin {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+.np-leaflet-pin-dot {
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin: 4px auto 0;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: #3f6f5b;
+  border: 2px solid #fffdf9;
+  box-shadow: 0 4px 10px rgba(31, 42, 36, 0.25);
+}
+
+.np-leaflet-pin.is-selected .np-leaflet-pin-dot {
+  background: #c9a66b;
+  box-shadow: 0 0 0 4px rgba(201, 166, 107, 0.35), 0 4px 10px rgba(31, 42, 36, 0.2);
+}
+
+.np-leaflet-center {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+.np-leaflet-center-dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(201, 166, 107, 0.95);
+  border: 2px solid #fffdf9;
+  box-shadow: 0 0 0 4px rgba(201, 166, 107, 0.28);
 }
 
 .store-pin-map-grid {

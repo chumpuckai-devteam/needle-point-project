@@ -19,6 +19,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.110.6",
     "@vitejs/plugin-react": "^4.3.4",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -30,6 +31,7 @@
     "@eslint/js": "^9.17.0",
     "@openai/codex": "^0.144.4",
     "@playwright/test": "^1.61.1",
+    "@types/leaflet": "^1.9.21",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "@types/react-router-dom": "^5.3.3",
