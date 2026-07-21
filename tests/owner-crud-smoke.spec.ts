@@ -24,9 +24,23 @@ async function openOwnedShop(page: Page) {
 }
 
 async function spaBackToOwnedShop(page: Page) {
-  await page.getByRole("button", { name: /All stores/i }).click();
+  await page.getByRole("button", { name: /All stores|Back to shops/i }).click();
   await expect(page).toHaveURL(/\/stores/);
-  await page.locator(".store-card").filter({ hasText: /Canopy Canvas/i }).first().click();
+  // Keep SPA session (demo catalog is React state). City-first browse may hide Canopy until city/ZIP.
+  const canopy = page.locator(".store-card").filter({ hasText: /Canopy Canvas/i }).first();
+  if ((await canopy.count()) === 0) {
+    const portland = page.locator("button.store-city-card").filter({ hasText: /Portland/i }).first();
+    if ((await portland.count()) > 0) {
+      await portland.click();
+    } else {
+      await page.getByRole("textbox", { name: /ZIP or city/i }).fill("97205");
+      await page.getByRole("button", { name: /Find shops/i }).click();
+    }
+  }
+  await expect(page.locator(".store-card").filter({ hasText: /Canopy Canvas/i }).first()).toBeVisible({
+    timeout: 15_000,
+  });
+  await page.locator(".store-card").filter({ hasText: /Canopy Canvas/i }).first().locator("a.store-card-main").click();
   await expect(page).toHaveURL(/\/stores\/canopycanvas/);
   await expect(page.getByRole("heading", { name: /Canopy Canvas/i })).toBeVisible({ timeout: 15_000 });
 }

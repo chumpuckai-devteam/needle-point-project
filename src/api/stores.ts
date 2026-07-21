@@ -700,7 +700,9 @@ export async function searchStores(query: StoreSearchQuery = {}, limit = 50): Pr
 }
 
 /** Load shops; with zip/city/region delegates to search_stores RPC (docs/supabase-setup.md §9). */
-export async function fetchStores(query?: StoreSearchQuery & { limit?: number }): Promise<Store[]> {
+export async function fetchStores(
+  query?: StoreSearchQuery & { limit?: number; includeProducts?: boolean },
+): Promise<Store[]> {
   if (query) {
     const normalized = normalizeStoreSearchQuery(query);
     if (normalized.zip || normalized.city || normalized.region) {
@@ -714,12 +716,19 @@ export async function fetchStores(query?: StoreSearchQuery & { limit?: number })
   if (!rows?.length) return [];
 
   const ids = rows.map((r) => r.id as string);
-  const [{ data: products }, { data: links }, { data: followCounts, error: followCountError }] = await Promise.all([
-    client.from("store_products").select("*").in("store_id", ids).order("sort_order"),
+  const includeProducts = query?.includeProducts === true;
+
+  const [productsResult, linksResult, followCountsResult] = await Promise.all([
+    includeProducts
+      ? client.from("store_products").select("*").in("store_id", ids).order("sort_order")
+      : Promise.resolve({ data: [] as DbProduct[] | null, error: null }),
     client.from("project_stores").select("store_id"),
     client.rpc("store_follow_counts"),
   ]);
-  if (followCountError) {
+  const products = productsResult.data;
+  const links = linksResult.data;
+  const followCounts = followCountsResult.data;
+  if (followCountsResult.error) {
     // Older DBs without the RPC still work without follower counts
   }
 

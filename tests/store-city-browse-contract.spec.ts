@@ -101,6 +101,10 @@ test.describe("store city browse backend contract", () => {
     expect(storesPage).toContain("data-store-handle");
     expect(storesPage).toContain("store-card-maps");
     expect(storesPage).toContain("storeMapLinks");
+    expect(storesPage).toContain("BROWSE_CITY_CARD_CAP");
+    expect(storesPage).toContain("STORE_LIST_PAGE_SIZE");
+    expect(storesPage).toContain("Show more shops");
+    expect(storesApi).toContain("includeProducts");
     expect(storeRoute).toContain("fetchStoreByIdentifier");
     expect(storeRoute).toContain("findStoreByIdentifier");
     expect(storeRoute).toContain("browseReturnTo");
@@ -142,5 +146,36 @@ test.describe("store Open in Maps links", () => {
     };
     expect(storeHasMappablePlace(online)).toBe(false);
     expect(storeMapLinks(online)).toBeNull();
+  });
+});
+
+test.describe("national catalog browse performance", () => {
+  test("browse mode is city-first and caps online fallback", async () => {
+    const { searchStoreDiscovery, DISCOVERY_ONLINE_FALLBACK_CAP, BROWSE_CITY_CARD_CAP, STORE_LIST_PAGE_SIZE } =
+      await import("../src/lib/storeDiscovery");
+    expect(DISCOVERY_ONLINE_FALLBACK_CAP).toBe(12);
+    expect(BROWSE_CITY_CARD_CAP).toBe(36);
+    expect(STORE_LIST_PAGE_SIZE).toBe(24);
+
+    const many = Array.from({ length: 80 }, (_, i) => ({
+      id: `s-${i}`,
+      handle: `shop-${i}`,
+      name: `Shop ${i}`,
+      storeType: i % 5 === 0 ? "online" : "local",
+      city: i % 5 === 0 ? "" : `City${i % 40}`,
+      region: "OR",
+      country: "US",
+      shipsNationwide: i % 5 === 0,
+      projectCount: i % 3,
+      products: [],
+      latitude: i % 5 === 0 ? null : 45 + i * 0.01,
+      longitude: i % 5 === 0 ? null : -122 - i * 0.01,
+    })) as Store[];
+
+    const browse = searchStoreDiscovery(many, { mode: "browse" });
+    expect(browse.list).toEqual([]);
+    expect(browse.mapPins).toEqual([]);
+    expect(browse.onlineFallback.length).toBeLessThanOrEqual(DISCOVERY_ONLINE_FALLBACK_CAP);
+    expect(browse.counts.localWithinRadius).toBeGreaterThan(0);
   });
 });

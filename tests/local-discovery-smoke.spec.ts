@@ -12,9 +12,13 @@ test.describe("local discovery shops UI", () => {
     await expect(page.getByRole("button", { name: /Find shops/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /Use my location|Refresh location|Locating/i }).first()).toBeVisible();
 
-    await expect(page.locator(".store-card").filter({ hasText: /Canopy Canvas|Thread|Bookshop/i }).first()).toBeVisible({
+    // City-first browse: local shops via city cards; online rail still present
+    await expect(page.getByRole("heading", { name: /Browse by city/i }).or(page.getByText(/Online shops/i)).first()).toBeVisible({
       timeout: 15_000,
     });
+    await expect(
+      page.locator(".store-city-card, .store-card").filter({ hasText: /Portland|Canopy|Thread|Austin|Bookshop/i }).first(),
+    ).toBeVisible({ timeout: 15_000 });
 
     // After a ZIP search, map should mount real OSM tiles (Leaflet)
     await page.getByRole("textbox", { name: /ZIP or city/i }).fill("97205");

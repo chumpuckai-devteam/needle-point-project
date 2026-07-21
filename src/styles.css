@@ -4864,3 +4864,15 @@ label textarea::placeholder {
   font-size: 0.86rem;
   line-height: 1.35;
 }
+
+.store-city-browse-note {
+  margin: 0 0 10px;
+  color: var(--np-muted, #5f6b63);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+.store-list-more {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0 16px;
+}

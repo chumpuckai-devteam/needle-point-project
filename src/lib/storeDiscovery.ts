@@ -13,6 +13,13 @@ import {
 export const DISCOVERY_RADIUS_OPTIONS = [60, 100, 150] as const;
 export type DiscoveryRadiusMiles = (typeof DISCOVERY_RADIUS_OPTIONS)[number];
 
+/** Max online shops shown in fallback rails (browse + zero-local). */
+export const DISCOVERY_ONLINE_FALLBACK_CAP = 12;
+/** Max city cards on the default /stores browse grid. */
+export const BROWSE_CITY_CARD_CAP = 36;
+/** Page size for shop result grids (show more). */
+export const STORE_LIST_PAGE_SIZE = 24;
+
 export type StoreDiscoveryMode = "zip" | "city" | "point" | "browse";
 
 export type StoreDiscoveryInput =
@@ -231,8 +238,13 @@ function rankAroundPoint(
     .sort((a, b) => (a.distanceMiles ?? Number.POSITIVE_INFINITY) - (b.distanceMiles ?? Number.POSITIVE_INFINITY));
 
   const farLocal = withDistance.filter((store) => store.proximityRank === "far" && isLocalCapable(store));
-  const onlineFallback = sortOnline(stores).filter((store) => !nearby.some((near) => near.id === store.id));
-  const mapPins = pinsFromList([...nearby, ...farLocal.filter((s) => s.distanceMiles != null && s.distanceMiles <= radiusMiles * 1.5)]);
+  const onlineFallback = sortOnline(stores)
+    .filter((store) => !nearby.some((near) => near.id === store.id))
+    .slice(0, DISCOVERY_ONLINE_FALLBACK_CAP);
+  const mapPins = pinsFromList([
+    ...nearby,
+    ...farLocal.filter((s) => s.distanceMiles != null && s.distanceMiles <= radiusMiles * 1.5),
+  ]).slice(0, 40);
 
   if (nearby.length === 0) {
     return {
@@ -455,19 +467,10 @@ function cityCandidatesFromStores(city: string, region: string | undefined, coun
 }
 
 function browseDefault(stores: Store[]): StoreDiscoveryResponse {
-  const locals = stores
-    .filter(isLocalCapable)
-    .slice()
-    .sort((a, b) => {
-      const cityCmp = (a.city || "").localeCompare(b.city || "");
-      if (cityCmp !== 0) return cityCmp;
-      return a.name.localeCompare(b.name);
-    })
-    .map((store) => toListItem({ ...store, distanceMiles: null, proximityRank: "nearby" }, "nearby"));
-
-  const onlineFallback = sortOnline(stores).filter((store) => !locals.some((local) => local.id === store.id));
-  const list = locals;
-  const mapPins = pinsFromList(locals);
+  // City-first browse: do not dump every national shop as a card/pin.
+  // Guests pick a city, ZIP, or Use my location for a focused list.
+  const localCount = stores.filter(isLocalCapable).length;
+  const onlineFallback = sortOnline(stores).slice(0, DISCOVERY_ONLINE_FALLBACK_CAP);
 
   return {
     query: {
@@ -475,17 +478,22 @@ function browseDefault(stores: Store[]): StoreDiscoveryResponse {
       displayLabel: "All shops",
       radiusMiles: LOCAL_DRIVING_RADIUS_MILES,
     },
-    status: list.length || onlineFallback.length ? "ok" : "zero-local",
-    message: list.length || onlineFallback.length ? undefined : "No shops yet",
-    list,
-    mapPins,
+    status: localCount || onlineFallback.length ? "ok" : "zero-local",
+    message:
+      localCount > 0
+        ? `Browse ${localCount} local shops by city, or search a ZIP near you.`
+        : onlineFallback.length
+          ? "Browse online shops, or search a city when local listings land."
+          : "No shops yet",
+    list: [],
+    mapPins: [],
     onlineFallback,
     counts: {
-      totalList: list.length,
-      localWithinRadius: list.length,
+      totalList: 0,
+      localWithinRadius: localCount,
       localOutsideRadius: 0,
       onlineFallback: onlineFallback.length,
-      mapPins: mapPins.length,
+      mapPins: 0,
     },
   };
 }

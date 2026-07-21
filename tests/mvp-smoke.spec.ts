@@ -23,16 +23,15 @@ test("core MVP flows are usable through router paths", async ({ page }) => {
   await expect(page).toHaveURL(/\/stores/);
   await expect(page.getByRole("heading", { name: /Local shops near you|Shops|Browse/i }).first()).toBeVisible();
 
-  // Click the store card (not city directory examples that also mention the name)
-  await page.locator(".store-card").filter({ hasText: /Canopy Canvas/i }).first().click();
+  // City-first browse: open known shops by handle (not dump of every local card)
+  await page.goto("/stores/canopycanvas");
   await expect(page).toHaveURL(/\/stores\/canopycanvas/);
   await expect(page.getByRole("heading", { name: /Canopy Canvas/i })).toBeVisible();
   await expect(page.getByText(/Your shop/i).first()).toBeVisible();
   await expect(page.getByRole("button", { name: /Add product/i })).toBeVisible();
   await expect(page.getByRole("button", { name: /Follow store|Following/i })).toHaveCount(0);
 
-  await navigateByLabel(page, /^Shops$/);
-  await page.locator(".store-card").filter({ hasText: /Thread & Tonic|Thread and Tonic/i }).first().click();
+  await page.goto("/stores/threadandtonic");
   await expect(page).toHaveURL(/\/stores\/threadandtonic/);
   await expect(page.getByRole("button", { name: /Follow store|Following/i })).toBeVisible();
 

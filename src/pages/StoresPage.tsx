@@ -13,11 +13,13 @@ import {
 } from "../lib/geo";
 import {
   buildCityBrowseCards,
+  BROWSE_CITY_CARD_CAP,
   clampDiscoveryRadius,
   formatDistanceMiles,
   nextExpandRadius,
   parseDiscoverySearchText,
   searchStoreDiscovery,
+  STORE_LIST_PAGE_SIZE,
   storeTypeLabel,
   type CityCandidate,
   type DiscoveryRadiusMiles,
@@ -191,8 +193,16 @@ export function StoresView({
   const [permissionDeniedPersistent, setPermissionDeniedPersistent] = useState(false);
   const [locationErrorKind, setLocationErrorKind] = useState<LocationRequestErrorKind | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [listVisibleCount, setListVisibleCount] = useState(STORE_LIST_PAGE_SIZE);
 
-  const cityCards = useMemo(() => buildCityBrowseCards(stores), [stores]);
+  const allCityCards = useMemo(() => buildCityBrowseCards(stores), [stores]);
+  const cityCards = useMemo(() => allCityCards.slice(0, BROWSE_CITY_CARD_CAP), [allCityCards]);
+  const cityCardsTotal = allCityCards.length;
+  const visibleList = useMemo(
+    () => discovery.list.slice(0, listVisibleCount),
+    [discovery.list, listVisibleCount],
+  );
+  const hasMoreList = discovery.list.length > listVisibleCount;
 
   // Permissions probe only — never auto-call getCurrentPosition on mount.
   useEffect(() => {
@@ -240,6 +250,7 @@ export function StoresView({
     setSearchError("");
     setDiscovery(response);
     setSelectedPinId(null);
+    setListVisibleCount(STORE_LIST_PAGE_SIZE);
   }, []);
 
   const syncUrl = useCallback(
@@ -744,6 +755,11 @@ export function StoresView({
       {isBrowse && cityCards.length > 0 ? (
         <section className="store-city-browse" aria-label="Browse by city">
           <SectionTitle title="Browse by city" />
+          {cityCardsTotal > cityCards.length ? (
+            <p className="store-city-browse-note">
+              Showing top {cityCards.length} of {cityCardsTotal} cities by shop count. Search a ZIP or city name for the rest.
+            </p>
+          ) : null}
           <div className="store-city-grid">
             {cityCards.map((card) => (
               <button key={card.key} type="button" className="store-city-card panel" onClick={() => onSelectCityCard(card)}>
@@ -848,13 +864,24 @@ export function StoresView({
                 }
               />
               <StoreCardGrid
-                stores={discovery.list}
+                stores={visibleList}
                 browseReturnTo={browseReturnTo}
                 showDistance={showDistance}
                 selectedId={selectedPinId}
                 listRefs={listRefs}
                 onHighlight={setSelectedPinId}
               />
+              {hasMoreList ? (
+                <div className="store-list-more">
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => setListVisibleCount((n) => n + STORE_LIST_PAGE_SIZE)}
+                  >
+                    Show more shops ({discovery.list.length - listVisibleCount} left)
+                  </button>
+                </div>
+              ) : null}
             </>
           ) : hasActiveSearch && discovery.status !== "ambiguous-city" ? (
             <div className="store-local-empty panel" data-empty-slot="local-zero">
