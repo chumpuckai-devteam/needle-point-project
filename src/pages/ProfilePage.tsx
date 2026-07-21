@@ -13,6 +13,7 @@ export function ProfileView({
   toggleFollow,
   onExternalLinkClick,
   onReport,
+  onMessage,
   setView,
 }: {
   creator: Creator;
@@ -22,6 +23,7 @@ export function ProfileView({
   toggleFollow: (id: string) => void;
   onExternalLinkClick?: (creatorId: string, link: { id?: string; label: string; url: string }) => void;
   onReport?: (input: ReportInput) => void | Promise<void>;
+  onMessage?: () => void;
   setView: (view: View) => void;
 }) {
   const publicCount = projects.filter((project) => project.visibility === "public").length;
@@ -48,6 +50,11 @@ export function ProfileView({
             <button className={`secondary ${isFollowed ? "selected" : ""}`} type="button" onClick={() => toggleFollow(creator.id)}>
               <UserRound size={17} /> {isFollowed ? "Following" : "Follow"}
             </button>
+            {onMessage ? (
+              <button className="secondary" type="button" onClick={onMessage}>
+                Message
+              </button>
+            ) : null}
             {onReport ? (
               <ReportControl targetType="profile" targetId={creator.id} targetLabel={`@${creator.handle}`} onSubmit={onReport} />
             ) : null}

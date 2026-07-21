@@ -1,0 +1,6 @@
+-- M3.A Private DMs (applied live as private_dms_m3a)
+-- Tables: dm_threads, dm_messages
+-- RPCs: open_dm_thread_with_user, open_dm_thread_with_store,
+--        list_my_dm_threads, list_dm_messages, send_dm_message
+-- Helper: is_dm_thread_participant
+-- RLS: participants select only; writes via security definer RPCs

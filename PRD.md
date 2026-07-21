@@ -531,7 +531,7 @@ Build only after free registration is trusted:
 - Richer stitch-along hosting tools.
 - Creator analytics (link clicks, meetup draw).
 - Guilds / groups (lighter than full forums).
-- **Private DMs** — 1:1 messaging between users, and user↔store threads (coordinate carpools, class questions, order follow-ups). Not built yet; roadmap item for a future program after meetup/store trust loops are stable. No group chats / broadcast spam in v1.
+- **Private DMs (M3.A first slice live)** — 1:1 messaging between users, and user↔store threads. Inbox at `/messages`, Message CTAs on profiles and claimed shops. No group chats / broadcast / media / realtime yet.
 
 ### Phase D — Commerce (only after engagement)
 

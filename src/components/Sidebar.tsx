@@ -1,4 +1,4 @@
-import { Bookmark, CalendarDays, Home, Plus, Search, Sparkles, Store as StoreIcon, UsersRound, UserRound } from "lucide-react";
+import { Bookmark, CalendarDays, Home, MessageCircle, Plus, Search, Sparkles, Store as StoreIcon, UsersRound, UserRound } from "lucide-react";
 import type { View } from "../appModel";
 
 export function Sidebar({
@@ -27,7 +27,7 @@ export function Sidebar({
       : []),
     { id: "stitchAlong", label: "Stitch-along", icon: CalendarDays, action: () => setView({ name: "stitchAlong" }) },
     { id: "meetups", label: "Meetups", icon: UsersRound, action: () => setView({ name: "meetups" }) },
-    // active for meetups + meetup detail + mine
+    { id: "messages", label: "Messages", icon: MessageCircle, action: () => setView({ name: "messages" }) },
     ...(canPost
       ? [{ id: "onboarding", label: "Onboarding", icon: Sparkles, action: () => setView({ name: "onboarding" }) }]
       : []),
@@ -47,7 +47,8 @@ export function Sidebar({
           const Icon = item.icon;
           const active =
             view === item.id ||
-            (item.id === "meetups" && (view === "meetup" || view === "meetups"));
+            (item.id === "meetups" && (view === "meetup" || view === "meetups")) ||
+            (item.id === "messages" && view === "messages");
           return (
             <button key={item.id} className={active ? "active" : ""} onClick={item.action}>
               <Icon size={18} />

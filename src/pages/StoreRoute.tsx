@@ -35,6 +35,7 @@ export function StoreRoute({
   setView,
   onReport,
   onRespondVenueRequest,
+  onMessageStore,
 }: {
   stores: Store[];
   storesLoading?: boolean;
@@ -64,6 +65,7 @@ export function StoreRoute({
   setView: (view: View) => void;
   onReport?: (input: import("../api/reports").ReportInput) => void | Promise<void>;
   onRespondVenueRequest?: (meetupId: string, approve: boolean) => void | Promise<void>;
+  onMessageStore?: (storeId: string) => void | Promise<void>;
 }) {
   const { handle = "" } = useParams();
   const location = useLocation();
@@ -205,6 +207,9 @@ export function StoreRoute({
       browseReturnTo={browseReturnTo}
       onReport={onReport}
       onRespondVenueRequest={onRespondVenueRequest}
+      onMessageStore={
+        store.ownerUserId && onMessageStore && !isOwner ? () => void onMessageStore(store.id) : undefined
+      }
     />
   );
 }

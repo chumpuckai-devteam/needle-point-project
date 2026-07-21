@@ -10,6 +10,7 @@ export type View =
   | { name: "stitchAlong"; id?: string }
   | { name: "meetups"; tab?: "browse" | "mine" }
   | { name: "meetup"; id: string }
+  | { name: "messages"; threadId?: string }
   | { name: "stores" }
   | { name: "store"; handle: string }
   | { name: "auth" }

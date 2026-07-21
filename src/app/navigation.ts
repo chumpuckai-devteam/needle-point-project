@@ -17,6 +17,8 @@ export function pathForView(view: View) {
       return view.tab === "mine" ? "/meetups/mine" : "/meetups";
     case "meetup":
       return `/meetups/${view.id}`;
+    case "messages":
+      return view.threadId ? `/messages/${view.threadId}` : "/messages";
     case "stores":
       return "/stores";
     case "store":
@@ -42,6 +44,7 @@ export function viewNameForPath(pathname: string) {
   if (pathname === "/meetups/mine" || pathname.startsWith("/meetups/mine/")) return "meetups";
   if (pathname.startsWith("/meetups/")) return "meetup";
   if (pathname.startsWith("/meetups")) return "meetups";
+  if (pathname.startsWith("/messages")) return "messages";
   if (pathname.startsWith("/stores/")) return "store";
   if (pathname.startsWith("/stores")) return "stores";
   if (pathname.startsWith("/projects")) return "project";

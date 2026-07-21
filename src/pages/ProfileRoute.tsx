@@ -14,6 +14,7 @@ export function ProfileRoute({
   toggleFollow,
   setView,
   onReport,
+  onMessageUser,
 }: {
   creatorByHandle: (handle: string) => Creator | undefined;
   projects: Project[];
@@ -22,6 +23,7 @@ export function ProfileRoute({
   toggleFollow: (id: string) => void;
   setView: (view: View) => void;
   onReport?: (input: ReportInput) => void | Promise<void>;
+  onMessageUser?: (userId: string) => void | Promise<void>;
 }) {
   const { handle = "" } = useParams();
   const creator = creatorByHandle(handle);
@@ -60,6 +62,7 @@ export function ProfileRoute({
           ? (input) => onReport({ ...input, targetType: "profile", targetId: creator.id, targetLabel: `@${creator.handle}` })
           : undefined
       }
+      onMessage={!isSelf && onMessageUser ? () => void onMessageUser(creator.id) : undefined}
       setView={setView}
     />
   );

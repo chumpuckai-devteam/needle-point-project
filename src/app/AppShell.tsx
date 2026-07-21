@@ -28,6 +28,15 @@ import {
   type MyMeetupRsvpRow,
   type StitchingMeetupInput,
 } from "../api/meetups";
+import {
+  listDmMessagesOnline,
+  listMyDmThreadsOnline,
+  openDmWithStoreOnline,
+  openDmWithUserOnline,
+  sendDmMessageOnline,
+  type DmMessage,
+  type DmThread,
+} from "../api/dms";
 import { uploadProjectImage, validateImageFile } from "../api/images";
 import {
   claimStoreOnline,
@@ -89,6 +98,12 @@ export function AppShell() {
   const [meetupCreateBusy, setMeetupCreateBusy] = useState(false);
   const [meetupCreateError, setMeetupCreateError] = useState("");
   const [meetupRsvpBusy, setMeetupRsvpBusy] = useState(false);
+  const [dmThreads, setDmThreads] = useState<DmThread[]>([]);
+  const [dmMessagesByThread, setDmMessagesByThread] = useState<Record<string, DmMessage[]>>({});
+  const [dmLoading, setDmLoading] = useState(false);
+  const [dmError, setDmError] = useState("");
+  const [dmSendBusy, setDmSendBusy] = useState(false);
+  const [dmSendError, setDmSendError] = useState("");
   const [followedCreators, setFollowedCreators] = useState<string[]>(() => loadFromStorage(STORAGE_KEYS.follows, ["c1"]));
   const [followedStores, setFollowedStores] = useState<string[]>(() => loadFromStorage(STORAGE_KEYS.storeFollows, ["store-local-1"]));
   const [dismissedDiscover, setDismissedDiscover] = useState<string[]>(() => loadFromStorage(STORAGE_KEYS.dismissDiscover, [] as string[]));
@@ -1377,6 +1392,151 @@ export function AppShell() {
     }
   }
 
+  const refreshDmThreads = useCallback(async () => {
+    if (!isSupabaseConfigured || !user || isDemoMode) return;
+    setDmLoading(true);
+    setDmError("");
+    try {
+      const rows = await listMyDmThreadsOnline();
+      setDmThreads(rows);
+    } catch (error) {
+      setDmError(error instanceof Error ? error.message : "Could not load messages");
+    } finally {
+      setDmLoading(false);
+    }
+  }, [user, isDemoMode]);
+
+  useEffect(() => {
+    void refreshDmThreads();
+  }, [refreshDmThreads, remoteBootKey]);
+
+  const refreshDmThread = useCallback(
+    (threadId: string) => {
+      if (!threadId) return;
+      if (!isSupabaseConfigured || !user || isDemoMode) {
+        return;
+      }
+      void listDmMessagesOnline(threadId)
+        .then((messages) => {
+          setDmMessagesByThread((prev) => ({ ...prev, [threadId]: messages }));
+        })
+        .catch((error) => {
+          setDmError(error instanceof Error ? error.message : "Could not load conversation");
+        });
+    },
+    [user, isDemoMode],
+  );
+
+  async function messageUser(otherUserId: string) {
+    if (!requireAuth("send a message")) return;
+    try {
+      if (isSupabaseConfigured && user && !isDemoMode) {
+        const thread = await openDmWithUserOnline(otherUserId);
+        setDmThreads((prev) => [thread, ...prev.filter((t) => t.id !== thread.id)]);
+        navigate(`/messages/${thread.id}`);
+        await refreshDmThreads();
+        return;
+      }
+      const id = `dm-demo-${[viewerId, otherUserId].sort().join("-")}`;
+      const other = creators.find((c) => c.id === otherUserId);
+      const thread: DmThread = {
+        id,
+        kind: "direct",
+        createdBy: viewerId || DEMO_CREATOR_ID,
+        lastMessagePreview: "",
+        createdAt: new Date().toISOString(),
+        otherUserId,
+        otherDisplayName: other?.name || "Stitcher",
+        otherHandle: other?.handle || "",
+        otherAvatarUrl: other?.avatar || "",
+      };
+      setDmThreads((prev) => [thread, ...prev.filter((t) => t.id !== id)]);
+      navigate(`/messages/${id}`);
+    } catch (error) {
+      setRemoteError(error instanceof Error ? error.message : "Could not open conversation");
+    }
+  }
+
+  async function messageStore(storeId: string) {
+    if (!requireAuth("message a shop")) return;
+    try {
+      if (isSupabaseConfigured && user && !isDemoMode) {
+        const thread = await openDmWithStoreOnline(storeId);
+        setDmThreads((prev) => [thread, ...prev.filter((t) => t.id !== thread.id)]);
+        navigate(`/messages/${thread.id}`);
+        await refreshDmThreads();
+        return;
+      }
+      const store = stores.find((s) => s.id === storeId);
+      const id = `dm-store-demo-${storeId}-${viewerId || "me"}`;
+      const thread: DmThread = {
+        id,
+        kind: "store",
+        storeId,
+        memberUserId: viewerId || DEMO_CREATOR_ID,
+        createdBy: viewerId || DEMO_CREATOR_ID,
+        lastMessagePreview: "",
+        createdAt: new Date().toISOString(),
+        otherDisplayName: store?.name || "Shop",
+        otherHandle: store?.handle || "",
+        otherAvatarUrl: store?.avatar || "",
+        storeName: store?.name,
+        storeHandle: store?.handle,
+      };
+      setDmThreads((prev) => [thread, ...prev.filter((t) => t.id !== id)]);
+      navigate(`/messages/${id}`);
+    } catch (error) {
+      setRemoteError(error instanceof Error ? error.message : "Could not message shop");
+    }
+  }
+
+  async function sendDm(threadId: string, body: string) {
+    if (!requireAuth("send a message")) return;
+    setDmSendBusy(true);
+    setDmSendError("");
+    try {
+      if (isSupabaseConfigured && user && !isDemoMode) {
+        const message = await sendDmMessageOnline(threadId, body);
+        setDmMessagesByThread((prev) => ({
+          ...prev,
+          [threadId]: [...(prev[threadId] ?? []), { ...message, senderId: user.id, senderName: "You" }],
+        }));
+        setDmThreads((prev) =>
+          prev
+            .map((t) =>
+              t.id === threadId
+                ? { ...t, lastMessageAt: message.createdAt, lastMessagePreview: body.slice(0, 140) }
+                : t,
+            )
+            .sort((a, b) => String(b.lastMessageAt || b.createdAt).localeCompare(String(a.lastMessageAt || a.createdAt))),
+        );
+        return;
+      }
+      const message: DmMessage = {
+        id: `dmm-${Date.now()}`,
+        threadId,
+        senderId: viewerId || DEMO_CREATOR_ID,
+        body,
+        createdAt: new Date().toISOString(),
+        senderName: "You",
+        senderHandle: "",
+      };
+      setDmMessagesByThread((prev) => ({
+        ...prev,
+        [threadId]: [...(prev[threadId] ?? []), message],
+      }));
+      setDmThreads((prev) =>
+        prev.map((t) =>
+          t.id === threadId ? { ...t, lastMessageAt: message.createdAt, lastMessagePreview: body.slice(0, 140) } : t,
+        ),
+      );
+    } catch (error) {
+      setDmSendError(error instanceof Error ? error.message : "Could not send");
+    } finally {
+      setDmSendBusy(false);
+    }
+  }
+
   function applyMeetupCounts(
     meetup: StitchingMeetup,
     patch: {
@@ -1700,6 +1860,16 @@ export function AppShell() {
         productError={productError}
         onClaimStore={(storeId) => void claimStore(storeId)}
         onRespondVenueRequest={(meetupId, approve) => void respondMeetupStoreLink(meetupId, approve)}
+        dmThreads={dmThreads}
+        dmMessagesByThread={dmMessagesByThread}
+        dmLoading={dmLoading}
+        dmError={dmError}
+        dmSendBusy={dmSendBusy}
+        dmSendError={dmSendError}
+        onRefreshDmThread={refreshDmThread}
+        onSendDm={(threadId, body) => void sendDm(threadId, body)}
+        onMessageUser={(userId) => void messageUser(userId)}
+        onMessageStore={(storeId) => void messageStore(storeId)}
         onCreateProduct={(storeId, input, imageFile) => createStoreProduct(storeId, input, imageFile)}
         onUpdateProduct={(storeId, productId, input, imageFile) => updateStoreProduct(storeId, productId, input, imageFile)}
         onDeleteProduct={(storeId, productId) => deleteStoreProduct(storeId, productId)}

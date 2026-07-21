@@ -91,6 +91,7 @@ export function StoreDetailView({
   browseReturnTo = "/stores",
   onReport,
   onRespondVenueRequest,
+  onMessageStore,
 }: {
   store: Store;
   projects: Project[];
@@ -119,6 +120,7 @@ export function StoreDetailView({
   browseReturnTo?: string;
   onReport?: (input: ReportInput) => void | Promise<void>;
   onRespondVenueRequest?: (meetupId: string, approve: boolean) => void | Promise<void>;
+  onMessageStore?: () => void;
 }) {
   const navigate = useNavigate();
   const shopsBackPath = isStoresBrowseReturnPath(browseReturnTo) ? browseReturnTo : "/stores";
@@ -330,6 +332,11 @@ export function StoreDetailView({
           {!isOwner ? (
             <button type="button" className={isFollowed ? "selected" : ""} onClick={() => toggleStoreFollow(store.id)}>
               {isFollowed ? "Following" : "Follow store"}
+            </button>
+          ) : null}
+          {!isOwner && onMessageStore && store.ownerUserId ? (
+            <button type="button" className="secondary" onClick={onMessageStore}>
+              Message shop
             </button>
           ) : null}
           {canClaim && onClaimStore ? (

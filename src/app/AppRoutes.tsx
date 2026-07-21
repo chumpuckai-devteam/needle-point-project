@@ -2,6 +2,7 @@ import type { Dispatch, FormEvent, SetStateAction } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import type { StoreProductInput, StoreProfileInput } from "../api/stores";
 import type { StitchingMeetupInput } from "../api/meetups";
+import type { DmMessage, DmThread } from "../api/dms";
 import type { DraftProject, View } from "../appModel";
 import type { Collection, Creator, Project, StitchAlong, StitchingMeetup, Store } from "../types";
 import {
@@ -11,6 +12,7 @@ import {
   HomeView,
   JournalView,
   MeetupsRoute,
+  MessagesRoute,
   OnboardingPage,
   ProfileRoute,
   ProjectRoute,
@@ -105,6 +107,17 @@ export type AppRoutesProps = {
   productError: string;
   onClaimStore: (storeId: string) => void;
   onRespondVenueRequest?: (meetupId: string, approve: boolean) => void | Promise<void>;
+  /** Private DMs */
+  dmThreads: DmThread[];
+  dmMessagesByThread: Record<string, DmMessage[]>;
+  dmLoading?: boolean;
+  dmError?: string;
+  dmSendBusy?: boolean;
+  dmSendError?: string;
+  onRefreshDmThread: (threadId: string) => void;
+  onSendDm: (threadId: string, body: string) => void | Promise<void>;
+  onMessageUser?: (userId: string) => void | Promise<void>;
+  onMessageStore?: (storeId: string) => void | Promise<void>;
   onCreateProduct: (storeId: string, input: StoreProductInput, imageFile?: File | null) => Promise<void>;
   onUpdateProduct: (
     storeId: string,
@@ -293,6 +306,43 @@ export function AppRoutes(props: AppRoutesProps) {
             onUpdateProfile={props.onUpdateProfile}
             setView={props.setView}
             onReport={props.onReport}
+            onMessageStore={props.onMessageStore}
+          />
+        }
+      />
+      <Route
+        path="/messages"
+        element={
+          <MessagesRoute
+            threads={props.dmThreads}
+            messagesByThread={props.dmMessagesByThread}
+            viewerId={props.viewerId}
+            canUse={Boolean(props.viewerId) || props.isDemoMode}
+            loading={props.dmLoading}
+            error={props.dmError}
+            sendBusy={props.dmSendBusy}
+            sendError={props.dmSendError}
+            setView={props.setView}
+            onRefreshThread={props.onRefreshDmThread}
+            onSend={props.onSendDm}
+          />
+        }
+      />
+      <Route
+        path="/messages/:threadId"
+        element={
+          <MessagesRoute
+            threads={props.dmThreads}
+            messagesByThread={props.dmMessagesByThread}
+            viewerId={props.viewerId}
+            canUse={Boolean(props.viewerId) || props.isDemoMode}
+            loading={props.dmLoading}
+            error={props.dmError}
+            sendBusy={props.dmSendBusy}
+            sendError={props.dmSendError}
+            setView={props.setView}
+            onRefreshThread={props.onRefreshDmThread}
+            onSend={props.onSendDm}
           />
         }
       />
@@ -449,6 +499,7 @@ export function AppRoutes(props: AppRoutesProps) {
             toggleFollow={props.toggleFollow}
             setView={props.setView}
             onReport={props.onReport}
+            onMessageUser={props.onMessageUser}
           />
         }
       />

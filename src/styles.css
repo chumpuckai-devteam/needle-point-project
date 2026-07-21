@@ -4505,3 +4505,147 @@ label textarea::placeholder {
   .meetup-tabs { width: 100%; }
   .meetup-tab { flex: 1 1 auto; text-align: center; min-height: 44px; }
 }
+
+/* —— Private DMs (M3.A) —— */
+.dm-thread-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+.dm-thread-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--ink, #2f3a2e) 12%, transparent);
+  background: var(--panel, #fffdf9);
+  color: var(--ink, #2f3a2e);
+}
+.dm-thread-row:hover {
+  border-color: color-mix(in srgb, var(--moss, #5b7a5a) 45%, transparent);
+}
+.dm-thread-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--moss, #5b7a5a) 18%, #fff);
+  color: var(--moss, #5b7a5a);
+  flex-shrink: 0;
+}
+.dm-thread-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.dm-thread-main {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.dm-thread-main strong {
+  color: var(--ink, #2f3a2e);
+}
+.dm-thread-main small {
+  color: color-mix(in srgb, var(--ink, #2f3a2e) 62%, transparent);
+}
+.dm-thread-preview {
+  font-size: 0.92rem;
+  color: color-mix(in srgb, var(--ink, #2f3a2e) 72%, transparent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dm-thread-when {
+  font-size: 0.78rem;
+  color: color-mix(in srgb, var(--ink, #2f3a2e) 55%, transparent);
+  white-space: nowrap;
+}
+.dm-thread-page {
+  display: grid;
+  gap: 0.75rem;
+}
+.dm-thread-panel {
+  display: grid;
+  gap: 0.85rem;
+  min-height: min(70vh, 640px);
+  grid-template-rows: auto auto 1fr auto;
+}
+.dm-thread-header h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  color: var(--ink, #2f3a2e);
+}
+.dm-message-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  overflow-y: auto;
+  max-height: min(52vh, 480px);
+  padding: 0.25rem 0.15rem;
+}
+.dm-bubble {
+  max-width: min(92%, 28rem);
+  padding: 0.65rem 0.85rem;
+  border-radius: 14px;
+  display: grid;
+  gap: 0.25rem;
+}
+.dm-bubble p {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.dm-bubble small {
+  opacity: 0.75;
+  font-size: 0.75rem;
+}
+.dm-bubble.mine {
+  align-self: flex-end;
+  background: color-mix(in srgb, var(--moss, #5b7a5a) 22%, #fff);
+  color: var(--ink, #2f3a2e);
+  border-bottom-right-radius: 4px;
+}
+.dm-bubble.theirs {
+  align-self: flex-start;
+  background: color-mix(in srgb, var(--cream, #f4efe6) 90%, #fff);
+  border: 1px solid color-mix(in srgb, var(--ink, #2f3a2e) 10%, transparent);
+  color: var(--ink, #2f3a2e);
+  border-bottom-left-radius: 4px;
+}
+.dm-compose {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+}
+.dm-compose-field {
+  margin: 0;
+}
+.dm-compose textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 2.75rem;
+}
+.dm-compose .primary {
+  min-height: 44px;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .dm-compose {
+    grid-template-columns: 1fr;
+  }
+  .dm-compose .primary {
+    width: 100%;
+  }
+  .dm-message-list {
+    max-height: min(48vh, 420px);
+  }
+}

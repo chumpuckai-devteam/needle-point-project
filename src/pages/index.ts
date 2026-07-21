@@ -10,6 +10,7 @@ export { StitchAlongView, StitchAlongPage, StitchAlongListView } from "./StitchA
 export { StitchAlongRoute } from "./StitchAlongRoute";
 export { MeetupsRoute } from "./MeetupsRoute";
 export { MeetupsListView, MeetupDetailView, MeetupsPage } from "./MeetupsPage";
+export { MessagesRoute } from "./MessagesPage";
 export { AuthPage } from "./AuthPage";
 export { OnboardingPage } from "./OnboardingPage";
 export { ProjectRoute } from "./ProjectRoute";
