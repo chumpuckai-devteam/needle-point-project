@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import { Sidebar } from "../components/Sidebar";
+import { NotificationsPanel } from "../components/NotificationsPanel";
+import type { AppNotification } from "../api/notifications";
 import type { View } from "../appModel";
 import { viewNameForPath } from "./navigation";
 
@@ -14,6 +16,9 @@ type AppLayoutProps = {
   banner?: string;
   /** Info-styled banner (share notices) vs error. */
   bannerInfo?: boolean;
+  notifications?: AppNotification[];
+  onOpenNotification?: (item: AppNotification) => void;
+  onDismissAllNotifications?: () => void;
   children: ReactNode;
 };
 
@@ -28,9 +33,13 @@ export function AppLayout({
   canPost = true,
   banner = "",
   bannerInfo = false,
+  notifications = [],
+  onOpenNotification,
+  onDismissAllNotifications,
   children,
 }: AppLayoutProps) {
   const location = useLocation();
+  const unread = notifications.filter((n) => !n.readAt);
 
   return (
     <div className="app-shell">
@@ -47,6 +56,15 @@ export function AppLayout({
             <p className={`app-banner ${bannerInfo ? "app-banner-info" : "app-banner-error"}`} role="status">
               {banner}
             </p>
+          </div>
+        ) : null}
+        {unread.length > 0 && onOpenNotification ? (
+          <div className="page" style={{ paddingBottom: 0 }} data-testid="notifications-rail">
+            <NotificationsPanel
+              items={notifications}
+              onOpen={onOpenNotification}
+              onDismissAll={onDismissAllNotifications}
+            />
           </div>
         ) : null}
         {children}

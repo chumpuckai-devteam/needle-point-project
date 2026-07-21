@@ -72,4 +72,21 @@ test.describe("Stitching meetups smoke", () => {
     // waitlist always free
     expect(canFreeCancel("2026-07-23T00:00:00.000Z", "waitlisted", now)).toBe(true);
   });
+
+  test("waitlist promote notifications are wired in schema and UI", async () => {
+    const { readFileSync, readdirSync } = await import("node:fs");
+    const { resolve, dirname } = await import("node:path");
+    const { fileURLToPath } = await import("node:url");
+    const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+    const migrations = readdirSync(resolve(root, "supabase/migrations"))
+      .filter((n) => n.endsWith(".sql"))
+      .map((n) => readFileSync(resolve(root, "supabase/migrations", n), "utf8"))
+      .join("\n");
+    expect(migrations).toContain("user_notifications");
+    expect(migrations).toContain("meetup_waitlist_promoted");
+    expect(migrations).toContain("list_my_notifications");
+    const layout = readFileSync(resolve(root, "src/app/AppLayout.tsx"), "utf8");
+    expect(layout).toContain("NotificationsPanel");
+    expect(layout).toContain("notifications-rail");
+  });
 });

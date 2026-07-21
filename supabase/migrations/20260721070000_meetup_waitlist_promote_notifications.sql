@@ -1,0 +1,5 @@
+-- B.1 waitlist promote → user_notifications
+-- Applied live as meetup_waitlist_promote_notifications
+-- Tables: user_notifications (kind includes meetup_waitlist_promoted)
+-- RPCs: list_my_notifications, mark_notification_read, mark_all_notifications_read
+-- cancel_meetup_registration inserts notification on FIFO promote

@@ -38,6 +38,12 @@ import {
   type DmMessage,
   type DmThread,
 } from "../api/dms";
+import {
+  listMyNotificationsOnline,
+  markAllNotificationsReadOnline,
+  markNotificationReadOnline,
+  type AppNotification,
+} from "../api/notifications";
 import { uploadProjectImage, validateImageFile } from "../api/images";
 import {
   claimStoreOnline,
@@ -105,6 +111,7 @@ export function AppShell() {
   const [dmError, setDmError] = useState("");
   const [dmSendBusy, setDmSendBusy] = useState(false);
   const [dmSendError, setDmSendError] = useState("");
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [followedCreators, setFollowedCreators] = useState<string[]>(() => loadFromStorage(STORAGE_KEYS.follows, ["c1"]));
   const [followedStores, setFollowedStores] = useState<string[]>(() => loadFromStorage(STORAGE_KEYS.storeFollows, ["store-local-1"]));
   const [dismissedDiscover, setDismissedDiscover] = useState<string[]>(() => loadFromStorage(STORAGE_KEYS.dismissDiscover, [] as string[]));
@@ -1411,6 +1418,60 @@ export function AppShell() {
     void refreshDmThreads();
   }, [refreshDmThreads, remoteBootKey]);
 
+  const refreshNotifications = useCallback(async () => {
+    if (!isSupabaseConfigured || !user || isDemoMode) {
+      setNotifications([]);
+      return;
+    }
+    try {
+      const rows = await listMyNotificationsOnline(40);
+      setNotifications(rows);
+    } catch {
+      /* non-blocking */
+    }
+  }, [user, isDemoMode]);
+
+  useEffect(() => {
+    void refreshNotifications();
+  }, [refreshNotifications, remoteBootKey]);
+
+  // Light poll for waitlist promotions while signed in
+  useEffect(() => {
+    if (!isSupabaseConfigured || !user || isDemoMode) return;
+    const id = window.setInterval(() => void refreshNotifications(), 45_000);
+    return () => window.clearInterval(id);
+  }, [user, isDemoMode, refreshNotifications]);
+
+  async function openNotification(item: AppNotification) {
+    try {
+      if (isSupabaseConfigured && user && !isDemoMode && !item.readAt) {
+        await markNotificationReadOnline(item.id);
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === item.id ? { ...n, readAt: new Date().toISOString() } : n)),
+        );
+      }
+    } catch {
+      /* still navigate */
+    }
+    const href = item.href?.trim();
+    if (href?.startsWith("/")) {
+      navigate(href);
+    } else if (item.meetupId) {
+      navigate(`/meetups/${item.meetupId}`);
+    }
+  }
+
+  async function dismissAllNotifications() {
+    try {
+      if (isSupabaseConfigured && user && !isDemoMode) {
+        await markAllNotificationsReadOnline();
+      }
+      setNotifications((prev) => prev.map((n) => ({ ...n, readAt: n.readAt || new Date().toISOString() })));
+    } catch (error) {
+      setRemoteError(error instanceof Error ? error.message : "Could not mark notifications read");
+    }
+  }
+
   const refreshDmThread = useCallback(
     (threadId: string) => {
       if (!threadId) return;
@@ -1752,6 +1813,8 @@ export function AppShell() {
                 : meetup,
             ),
           );
+          // Promoted waitlist guests get an in-app notification; refresh for both parties.
+          void refreshNotifications();
         })
         .catch((error) => {
           setRemoteError(error instanceof Error ? error.message : "Could not cancel registration");
@@ -1814,6 +1877,9 @@ export function AppShell() {
       canPost={Boolean(user) || isDemoMode || !isSupabaseConfigured}
       banner={bannerMessage}
       bannerInfo={noticeIsShareInfo}
+      notifications={notifications}
+      onOpenNotification={(item) => void openNotification(item)}
+      onDismissAllNotifications={() => void dismissAllNotifications()}
     >
       <AppRoutes
         studioFeedProjects={studioFeedProjects}
