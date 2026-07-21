@@ -1,0 +1,1 @@
+-- revoke anon execute on DM RPCs (applied live dm_revoke_anon_execute)
