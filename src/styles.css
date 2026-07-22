@@ -5423,30 +5423,43 @@ label textarea::placeholder {
 .help-coach-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(20, 28, 24, 0.28);
+  /* Lighter dim — card must stay readable and “in focus” */
+  background: rgba(20, 28, 24, 0.38);
   pointer-events: auto;
+  z-index: 100;
 }
+/* Ring only — NO full-screen box-shadow (that shaded the tip card) */
 .help-coach-spotlight {
   position: fixed;
   border-radius: 14px;
-  border: 2px solid var(--np-gold, #c9a66b);
+  border: 2.5px solid #e2c07a;
   box-shadow:
-    0 0 0 9999px rgba(20, 28, 24, 0.32),
-    0 0 0 4px rgba(201, 166, 107, 0.28);
+    0 0 0 3px rgba(226, 192, 122, 0.35),
+    0 0 18px rgba(226, 192, 122, 0.45);
+  background: transparent;
   pointer-events: none;
-  z-index: 101;
+  z-index: 110;
+}
+.help-coach-spotlight-nav {
+  border-radius: 16px;
 }
 .help-coach-card {
   pointer-events: auto;
-  z-index: 102;
+  z-index: 120 !important;
+  isolation: isolate;
   padding: 0.9rem 1rem 1rem;
   border-radius: 16px;
-  background: #fbf8f1 !important;
+  /* Fully opaque cream — never inherit dimmed chrome colors */
+  background: #fffef9 !important;
   color: #1f2a24 !important;
   border: 1px solid #c9c0a8 !important;
-  box-shadow: 0 14px 40px rgba(20, 28, 24, 0.28);
-  max-height: min(280px, 52vh);
+  box-shadow:
+    0 16px 44px rgba(20, 28, 24, 0.32),
+    0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+  max-height: min(280px, 48vh);
   overflow: auto;
+  opacity: 1 !important;
+  filter: none !important;
 }
 .help-coach-card-head {
   display: flex;
@@ -5464,7 +5477,7 @@ label textarea::placeholder {
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: #3f6f5b;
+  color: #2f5d50;
 }
 .help-coach-close {
   border: 0;
@@ -5486,11 +5499,11 @@ label textarea::placeholder {
   margin: 0.1rem 0 0.35rem;
   font-size: 1.08rem;
   font-weight: 700;
-  color: #1f2a24;
+  color: #1f2a24 !important;
 }
 .help-coach-body {
   margin: 0 0 0.85rem;
-  color: #2c3831;
+  color: #2c3831 !important;
   line-height: 1.45;
   font-size: 0.95rem;
 }
@@ -5515,12 +5528,12 @@ label textarea::placeholder {
 .help-coach-card .secondary {
   color: #1f2a24 !important;
   border-color: #b7b09a;
-  background: #fff;
+  background: #fff !important;
 }
 .help-coach-card .primary {
-  background: #2f5d50;
-  color: #fbf8f1;
-  border-color: #2f5d50;
+  background: #2f5d50 !important;
+  color: #fbf8f1 !important;
+  border-color: #2f5d50 !important;
 }
 .help-tips-recall {
   margin: 0 0 1rem;
@@ -5528,6 +5541,15 @@ label textarea::placeholder {
 .help-tips-recall .field-help {
   margin-top: 0.25rem;
   color: #4d5a53;
+}
+.help-anchor-fallback {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  bottom: 120px;
+  right: 16px;
 }
 @media (max-width: 760px) {
   .help-coach-card {

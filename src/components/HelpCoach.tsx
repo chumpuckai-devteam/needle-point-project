@@ -9,61 +9,99 @@ type AnchorRect = {
   height: number;
 };
 
+const BOTTOM_NAV_ANCHORS = new Set(["nav-studio", "nav-discover", "nav-shops", "nav-more", "nav-saved", "nav-meetups", "nav-messages", "nav-help"]);
+
 function readAnchorRect(anchor: string): AnchorRect | null {
-  const el = document.querySelector<HTMLElement>(`[data-help-anchor="${anchor}"]`);
-  if (!el) return null;
-  // Prefer visible anchors (mobile more sheet may hide desktop twins).
   const candidates = Array.from(document.querySelectorAll<HTMLElement>(`[data-help-anchor="${anchor}"]`));
+  if (!candidates.length) return null;
   const visible =
     candidates.find((node) => {
       const style = window.getComputedStyle(node);
-      if (style.display === "none" || style.visibility === "hidden") return false;
+      if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") return false;
       const r = node.getBoundingClientRect();
       return r.width > 0 && r.height > 0;
     }) ?? null;
-  const target = visible ?? el;
+  const target = visible ?? candidates[0];
   const r = target.getBoundingClientRect();
   if (r.width <= 0 || r.height <= 0) return null;
   return { top: r.top, left: r.left, width: r.width, height: r.height };
 }
 
-function placeCard(rect: AnchorRect | null): CSSProperties {
-  const margin = 12;
-  const cardW = Math.min(340, window.innerWidth - margin * 2);
-  const cardMaxH = 220;
+function isBottomChromeAnchor(anchor: string, rect: AnchorRect | null): boolean {
+  if (BOTTOM_NAV_ANCHORS.has(anchor)) return true;
+  if (!rect) return false;
+  // Treat anything in the lower ~18% of the viewport as bottom chrome.
+  return rect.top + rect.height / 2 > window.innerHeight * 0.82;
+}
 
-  if (!rect) {
+/**
+ * Keep the tip card fully above bottom nav / sheet chrome so it never covers
+ * the highlighted control. Card always sits above dimming (caller sets z-index).
+ */
+function placeCard(anchor: string, rect: AnchorRect | null): CSSProperties {
+  const margin = 14;
+  const cardW = Math.min(360, window.innerWidth - margin * 2);
+  const base: CSSProperties = {
+    position: "fixed",
+    width: cardW,
+    zIndex: 120,
+  };
+
+  // Bottom nav / More sheet targets → float card in the safe mid-upper band.
+  if (isBottomChromeAnchor(anchor, rect)) {
     return {
-      position: "fixed",
+      ...base,
       left: "50%",
-      bottom: "max(96px, calc(72px + env(safe-area-inset-bottom) + 16px))",
       transform: "translateX(-50%)",
-      width: cardW,
-      zIndex: 90,
+      // Clear 4-tab bar (~72px) + home indicator + a little air.
+      bottom: "max(108px, calc(76px + env(safe-area-inset-bottom, 0px) + 28px))",
+      top: "auto",
     };
   }
 
+  if (!rect) {
+    return {
+      ...base,
+      left: "50%",
+      transform: "translateX(-50%)",
+      bottom: "max(108px, calc(76px + env(safe-area-inset-bottom, 0px) + 28px))",
+    };
+  }
+
+  const cardMaxH = 240;
+  const gap = 14;
+  const spaceAbove = rect.top;
   const spaceBelow = window.innerHeight - (rect.top + rect.height);
-  const placeBelow = spaceBelow >= cardMaxH + margin || rect.top < cardMaxH + margin;
-  const top = placeBelow
-    ? Math.min(rect.top + rect.height + margin, window.innerHeight - cardMaxH - margin)
-    : Math.max(margin, rect.top - cardMaxH - margin);
+  // Prefer above the target when near the bottom; below when target is high.
+  const preferAbove = spaceBelow < cardMaxH + gap || rect.top > window.innerHeight * 0.45;
+
+  let top: number;
+  if (preferAbove && spaceAbove >= 120) {
+    top = Math.max(margin, rect.top - cardMaxH - gap);
+  } else {
+    top = Math.min(rect.top + rect.height + gap, window.innerHeight - cardMaxH - margin);
+  }
+
+  // Never invade the bottom nav band.
+  const navBandTop = window.innerHeight - 100;
+  if (top + 160 > navBandTop) {
+    top = Math.max(margin, navBandTop - 180);
+  }
 
   let left = rect.left + rect.width / 2 - cardW / 2;
   left = Math.max(margin, Math.min(left, window.innerWidth - cardW - margin));
 
   return {
-    position: "fixed",
+    ...base,
     top,
     left,
-    width: cardW,
-    zIndex: 90,
+    transform: "none",
   };
 }
 
 /**
- * Lightweight coach-mark overlay. Non-blocking: users can still tap Skip
- * or finish; backdrop does not trap the whole app permanently.
+ * Lightweight coach-mark overlay.
+ * Spotlight rings the control; card stays fully opaque and never covers bottom tabs.
  */
 export function HelpCoach() {
   const { active, tip, tips, stepIndex, next, back, skipAll } = useHelpTips();
@@ -82,7 +120,6 @@ export function HelpCoach() {
     };
 
     measure();
-    // Anchors may appear after More sheet opens or route paints.
     const t1 = window.setTimeout(measure, 80);
     const t2 = window.setTimeout(measure, 280);
     window.addEventListener("resize", measure);
@@ -112,25 +149,26 @@ export function HelpCoach() {
   if (!active || !tip) return null;
 
   const isLast = stepIndex >= tips.length - 1;
-  const cardStyle = placeCard(rect);
+  const cardStyle = placeCard(tip.anchor, rect);
   const stepLabel = `${stepIndex + 1} of ${tips.length}`;
+  const bottomChrome = isBottomChromeAnchor(tip.anchor, rect);
 
   return (
     <div className="help-coach" data-testid="help-coach" role="dialog" aria-modal="false" aria-labelledby="help-coach-title">
+      {/* Full dim lives only on the backdrop — not via spotlight box-shadow — so the card stays crisp */}
+      <div className="help-coach-backdrop" aria-hidden onClick={skipAll} />
       {rect ? (
         <div
-          className="help-coach-spotlight"
+          className={`help-coach-spotlight${bottomChrome ? " help-coach-spotlight-nav" : ""}`}
           style={{
-            top: rect.top - 6,
-            left: rect.left - 6,
-            width: rect.width + 12,
-            height: rect.height + 12,
+            top: rect.top - 4,
+            left: rect.left - 4,
+            width: rect.width + 8,
+            height: rect.height + 8,
           }}
           aria-hidden
         />
-      ) : (
-        <div className="help-coach-backdrop" aria-hidden onClick={skipAll} />
-      )}
+      ) : null}
       <div className="help-coach-card panel" style={cardStyle}>
         <div className="help-coach-card-head">
           <p className="help-coach-step" aria-live="polite">
