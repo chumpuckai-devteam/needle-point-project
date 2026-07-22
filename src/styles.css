@@ -2700,14 +2700,16 @@ main {
 
 .feed-timeline {
   display: grid;
+  overflow: visible;
 }
 
 .feed-post {
   display: grid;
   gap: 10px;
-  padding: 16px 18px 12px;
+  padding: 16px 18px 14px;
   border-bottom: 1px solid var(--np-line);
   background: transparent;
+  overflow: visible;
 }
 
 .feed-post:hover {
@@ -2867,6 +2869,7 @@ main {
   display: grid;
   gap: 8px;
   padding-left: 60px;
+  overflow: visible;
 }
 
 .feed-post-title {
@@ -2928,33 +2931,48 @@ main {
 }
 
 .feed-actions {
-  margin-top: 4px;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 6px;
+  margin-inline: -6px; /* absorb icon pad so edges aren't clipped by post padding */
+  padding: 2px 6px 4px;
+  display: flex;
+  flex-wrap: nowrap;
   align-items: center;
+  justify-content: space-between;
+  gap: 2px;
   color: var(--np-muted);
-  max-width: 420px;
+  max-width: 100%;
+  overflow: visible;
 }
 
 .feed-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 6px;
+  flex: 1 1 0;
   min-height: var(--touch-min);
   min-width: var(--touch-min);
-  width: 100%;
+  max-width: 7rem;
+  padding: 0;
   color: var(--np-muted);
   border-radius: 999px;
   font-weight: 650;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
 }
 
 .feed-action svg {
   box-sizing: content-box;
-  padding: 10px;
-  width: 24px;
-  height: 24px;
+  flex-shrink: 0;
+  padding: 8px;
+  width: 22px;
+  height: 22px;
   border-radius: 999px;
+  overflow: visible;
+  /* keep strokes fully inside the soft hover disc */
+  stroke-width: 2;
 }
 
 .feed-action:hover {
@@ -3446,20 +3464,26 @@ label textarea::placeholder {
 
   .feed-actions {
     max-width: none;
+    margin-inline: -4px;
+    padding: 4px 4px 6px;
     gap: 0;
   }
 
   .feed-action {
     min-height: var(--touch-min);
     min-width: var(--touch-min);
-    width: 100%;
+    max-width: none;
+    width: auto;
+    flex: 1 1 25%;
     justify-content: center;
+    overflow: visible;
   }
 
   .feed-action svg {
-    width: 24px;
-    height: 24px;
-    padding: 10px;
+    width: 22px;
+    height: 22px;
+    padding: 9px;
+    overflow: visible;
   }
 
   .feed-store-strip {
