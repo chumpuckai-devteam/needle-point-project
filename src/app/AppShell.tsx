@@ -30,6 +30,7 @@ import {
   type StitchingMeetupInput,
 } from "../api/meetups";
 import {
+  friendlyDmError,
   listDmMessagesOnline,
   listMyDmThreadsOnline,
   openDmWithStoreOnline,
@@ -1489,7 +1490,7 @@ export function AppShell() {
           setDmThreads((prev) => prev.map((t) => (t.id === threadId ? { ...t, unreadCount: 0 } : t)));
         })
         .catch((error) => {
-          setDmError(error instanceof Error ? error.message : "Could not load conversation");
+          setDmError(friendlyDmError(error, "Could not load conversation"));
         });
     },
     [user, isDemoMode],
@@ -1612,7 +1613,7 @@ export function AppShell() {
         ),
       );
     } catch (error) {
-      setDmSendError(error instanceof Error ? error.message : "Could not send");
+      setDmSendError(friendlyDmError(error, "Could not send message"));
     } finally {
       setDmSendBusy(false);
     }

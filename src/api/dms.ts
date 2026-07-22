@@ -30,6 +30,26 @@ export type DmMessage = {
   senderHandle: string;
 };
 
+/** Map PostgREST/Postgres internals to guest-safe copy (never show SQL column errors). */
+export function friendlyDmError(error: unknown, fallback: string): string {
+  const raw =
+    error && typeof error === "object" && "message" in error
+      ? String((error as { message?: string }).message || "")
+      : error instanceof Error
+        ? error.message
+        : typeof error === "string"
+          ? error
+          : "";
+  const msg = raw.trim();
+  if (!msg) return fallback;
+  if (/ambiguous|column reference|relation |syntax error|permission denied|PGRST|JWT|function .* does not exist/i.test(msg)) {
+    return fallback;
+  }
+  // Keep short product-facing RPC exceptions (e.g. "Message cannot be empty")
+  if (msg.length <= 120 && !/[\"'].*_id|SELECT |INSERT /i.test(msg)) return msg;
+  return fallback;
+}
+
 function mapThread(row: Record<string, unknown>): DmThread {
   return {
     id: String(row.id),
@@ -68,7 +88,7 @@ export async function listMyDmThreadsOnline(limit = 50): Promise<DmThread[]> {
   if (!isSupabaseConfigured) return [];
   const client = requireSupabase();
   const { data, error } = await client.rpc("list_my_dm_threads", { p_limit: limit });
-  if (error) throw new Error(error.message || "Could not load messages");
+  if (error) throw new Error(friendlyDmError(error, "Could not load messages"));
   return ((data as Record<string, unknown>[] | null) ?? []).map(mapThread);
 }
 
@@ -76,7 +96,7 @@ export async function listDmMessagesOnline(threadId: string, limit = 100): Promi
   if (!isSupabaseConfigured || !threadId) return [];
   const client = requireSupabase();
   const { data, error } = await client.rpc("list_dm_messages", { p_thread_id: threadId, p_limit: limit });
-  if (error) throw new Error(error.message || "Could not load conversation");
+  if (error) throw new Error(friendlyDmError(error, "Could not load conversation"));
   return ((data as Record<string, unknown>[] | null) ?? []).map(mapMessage);
 }
 
@@ -84,13 +104,13 @@ export async function markDmThreadReadOnline(threadId: string): Promise<void> {
   if (!isSupabaseConfigured || !threadId) return;
   const client = requireSupabase();
   const { error } = await client.rpc("mark_dm_thread_read", { p_thread_id: threadId });
-  if (error) throw new Error(error.message || "Could not mark read");
+  if (error) throw new Error(friendlyDmError(error, "Could not update read status"));
 }
 
 export async function openDmWithUserOnline(otherUserId: string): Promise<DmThread> {
   const client = requireSupabase();
   const { data, error } = await client.rpc("open_dm_thread_with_user", { p_other_user_id: otherUserId });
-  if (error) throw new Error(error.message || "Could not open conversation");
+  if (error) throw new Error(friendlyDmError(error, "Could not open conversation"));
   const row = data as Record<string, unknown>;
   // Prefer full list row for names; fallback until list refresh
   return mapThread({
@@ -106,7 +126,7 @@ export async function openDmWithUserOnline(otherUserId: string): Promise<DmThrea
 export async function openDmWithStoreOnline(storeId: string): Promise<DmThread> {
   const client = requireSupabase();
   const { data, error } = await client.rpc("open_dm_thread_with_store", { p_store_id: storeId });
-  if (error) throw new Error(error.message || "Could not message this shop");
+  if (error) throw new Error(friendlyDmError(error, "Could not message this shop"));
   const row = data as Record<string, unknown>;
   return mapThread({
     ...row,
@@ -120,7 +140,7 @@ export async function openDmWithStoreOnline(storeId: string): Promise<DmThread> 
 export async function sendDmMessageOnline(threadId: string, body: string): Promise<DmMessage> {
   const client = requireSupabase();
   const { data, error } = await client.rpc("send_dm_message", { p_thread_id: threadId, p_body: body });
-  if (error) throw new Error(error.message || "Could not send message");
+  if (error) throw new Error(friendlyDmError(error, "Could not send message"));
   const row = data as Record<string, unknown>;
   return mapMessage({
     ...row,

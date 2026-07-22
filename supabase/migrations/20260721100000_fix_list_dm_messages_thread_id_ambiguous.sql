@@ -1,0 +1,3 @@
+-- Fix list_dm_messages ambiguous thread_id (RETURNS TABLE OUT vs column)
+-- Applied live: fix_list_dm_messages_thread_id_ambiguous
+-- #variable_conflict use_column
