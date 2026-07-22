@@ -481,6 +481,7 @@ Ordered themes after private-beta density (Studio, shops, stitch-alongs, collect
 - Shop connection (catalog, follow, claim, owner tools).
 - Local discovery (ZIP/city, near-you coaching).
 - Quality, smoke coverage, moderation basics.
+- **First-time guide & help tips (roadmap)** — on-page tooltips / lightweight coach marks for first-time users (Studio, Saved boards, Shops, Meetups, More menu, report). Users must be able to **reopen / recall tips** later (e.g. Account → “Show help tips” or a Help entry), not only see them once. Prefer short, skippable steps; no blocking modal wall.
 
 ### Phase B — Stitching meetups (local community)
 
@@ -551,4 +552,4 @@ Build only after free registration is trusted:
 - Build one stitch-along feature.
 - Add basic reporting and admin moderation.
 - Add analytics for activation, engagement, and retention.
-- **Roadmap:** on-site meetup registration + store venue approval (Phase B); tickets (B.1); **DMs user↔user and user↔store (Phase C)**; commerce parked (D).
+- **Roadmap:** on-site meetup registration + store venue approval (Phase B); tickets (B.1); **DMs user↔user and user↔store (Phase C)**; **first-time guide / tooltips + recall help (Phase A)**; commerce parked (D).
