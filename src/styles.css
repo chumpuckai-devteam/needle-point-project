@@ -1559,7 +1559,8 @@ ul {
 .followed-stores-rail {
   padding: 12px 16px 14px;
   border-bottom: 1px solid var(--np-line);
-  background: rgba(255, 255, 255, 0.42);
+  background: var(--np-rail-bg, rgba(255, 255, 255, 0.42));
+  color: var(--np-ink);
 }
 
 .followed-stores-rail-header {
@@ -1586,7 +1587,8 @@ ul {
   padding: 14px 16px;
   border: 1px dashed rgba(63, 111, 91, 0.35);
   border-radius: 14px;
-  background: #fffdf9;
+  background: var(--np-panel-soft, #fffdf9);
+  color: var(--np-ink);
 }
 
 .followed-stores-empty strong {
@@ -1623,7 +1625,7 @@ ul {
   text-align: left;
   border: 1px solid var(--np-line, #e5ddd3);
   border-radius: 14px;
-  background: #fff;
+  background: var(--np-rail-card, #fff);
   padding: 12px;
   display: grid;
   gap: 6px;
@@ -1674,18 +1676,28 @@ ul {
   padding: 10px 12px 12px;
   border: 1px solid var(--np-line, #e5ddd3);
   border-radius: 16px;
-  background: rgba(255, 253, 249, 0.72);
+  background: var(--np-rail-bg, rgba(255, 253, 249, 0.72));
+  color: var(--np-ink);
 }
 
 .studio-sal-rail .followed-stores-rail-header {
   margin-bottom: 10px;
 }
 
+.studio-sal-rail .followed-stores-rail-title,
+.followed-stores-rail-title {
+  color: var(--np-ink);
+}
+
+.studio-sal-rail .text-button {
+  color: var(--np-teal);
+}
+
 .sal-rail-card {
   text-align: left;
   border: 1px solid var(--np-line, #e5ddd3);
   border-radius: 14px;
-  background: #fff;
+  background: var(--np-rail-card, var(--np-panel, #fff));
   padding: 0;
   display: grid;
   grid-template-rows: auto auto auto;
@@ -2445,30 +2457,39 @@ a.store-card:focus-visible {
   --np-shadow: 0 14px 36px rgba(54, 46, 39, 0.08);
   --np-feed-hover: rgba(63, 111, 91, 0.04);
   --np-chip-bg: rgba(255, 255, 255, 0.72);
+  --np-feed-column: rgba(255, 255, 255, 0.78);
+  --np-topbar: rgba(247, 244, 238, 0.94);
+  --np-rail-bg: rgba(255, 253, 249, 0.88);
+  --np-rail-card: #ffffff;
   --touch-min: 44px;
   color-scheme: light;
   color: var(--np-ink);
   background: var(--np-bg);
 }
 
+/* High-contrast dark: solid surfaces, light ink, readable muted */
 html[data-theme="dark"] {
-  --np-ink: #eef3ef;
-  --np-muted: #a7b4ac;
-  --np-bg: #121916;
-  --np-panel: #1b2420;
-  --np-panel-soft: #1f2a25;
-  --np-line: #2c3a33;
-  --np-line-strong: #35443c;
-  --np-teal: #7fb59a;
-  --np-teal-soft: rgba(127, 181, 154, 0.16);
-  --np-coral: #e09a78;
-  --np-coral-soft: rgba(224, 154, 120, 0.16);
-  --np-gold: #d4b57d;
-  --np-gold-soft: rgba(212, 181, 125, 0.18);
-  --np-input-bg: #151d19;
-  --np-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
-  --np-feed-hover: rgba(127, 181, 154, 0.07);
-  --np-chip-bg: rgba(27, 36, 32, 0.92);
+  --np-ink: #f3f6f4;
+  --np-muted: #b7c2bb;
+  --np-bg: #0e1411;
+  --np-panel: #1a2320;
+  --np-panel-soft: #1e2924;
+  --np-line: #33403a;
+  --np-line-strong: #3d4c45;
+  --np-teal: #8fceb0;
+  --np-teal-soft: rgba(143, 206, 176, 0.16);
+  --np-coral: #e8a888;
+  --np-coral-soft: rgba(232, 168, 136, 0.18);
+  --np-gold: #dfc08a;
+  --np-gold-soft: rgba(223, 192, 138, 0.18);
+  --np-input-bg: #121a17;
+  --np-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  --np-feed-hover: rgba(143, 206, 176, 0.08);
+  --np-chip-bg: #1a2320;
+  --np-feed-column: #131b18;
+  --np-topbar: rgba(14, 20, 17, 0.94);
+  --np-rail-bg: #1a2320;
+  --np-rail-card: #222e29;
   color-scheme: dark;
   color: var(--np-ink);
   background: var(--np-bg);
@@ -2536,7 +2557,8 @@ main {
   padding: 0 0 72px;
   border-left: 1px solid var(--np-line);
   border-right: 1px solid var(--np-line);
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--np-feed-column, rgba(255, 255, 255, 0.72));
+  color: var(--np-ink);
 }
 
 .feed-topbar {
@@ -2549,9 +2571,10 @@ main {
   justify-content: space-between;
   gap: 12px;
   align-items: center;
-  background: rgba(247, 244, 238, 0.9);
+  background: var(--np-topbar, rgba(247, 244, 238, 0.92));
   backdrop-filter: blur(18px);
   border-bottom: 1px solid var(--np-line);
+  color: var(--np-ink);
 }
 
 .feed-title {
@@ -2591,13 +2614,14 @@ main {
   -webkit-overflow-scrolling: touch;
   border-bottom: 1px solid var(--np-line);
   scrollbar-width: thin;
-  background: rgba(255, 255, 255, 0.55);
+  background: var(--np-rail-bg, rgba(255, 255, 255, 0.55));
 }
 
 .feed-store-strip-block {
   border-bottom: 1px solid var(--np-line);
-  background: rgba(255, 255, 255, 0.42);
+  background: var(--np-rail-bg, rgba(255, 255, 255, 0.42));
   padding: 12px 0 0;
+  color: var(--np-ink);
 }
 .feed-store-strip-block .followed-stores-rail-header {
   padding: 0 16px;
@@ -6054,29 +6078,90 @@ label textarea::placeholder {
   margin-bottom: 0.25rem;
 }
 
-/* Dark-mode surface fixes for hardcoded light chips */
+/* Dark-mode surface fixes — solid dark bg + light text, no ghost labels */
+html[data-theme="dark"] main {
+  background: var(--np-bg);
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .page,
+html[data-theme="dark"] .page.feed-page {
+  background: var(--np-feed-column);
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .feed-topbar {
+  background: var(--np-topbar);
+  color: var(--np-ink);
+  border-bottom-color: var(--np-line);
+}
+html[data-theme="dark"] .feed-title,
+html[data-theme="dark"] .palace-feed-title,
+html[data-theme="dark"] .followed-stores-rail-title,
+html[data-theme="dark"] .store-rail-card-name,
+html[data-theme="dark"] .feed-name,
+html[data-theme="dark"] .feed-post-title,
+html[data-theme="dark"] h1,
+html[data-theme="dark"] h2,
+html[data-theme="dark"] h3,
+html[data-theme="dark"] strong {
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .feed-subtitle,
+html[data-theme="dark"] .feed-handle,
+html[data-theme="dark"] .feed-time,
+html[data-theme="dark"] .feed-dot,
+html[data-theme="dark"] .field-help,
+html[data-theme="dark"] .palace-feed-lede,
+html[data-theme="dark"] .palace-feed-kicker,
+html[data-theme="dark"] .sal-rail-card small,
+html[data-theme="dark"] .store-rail-card small {
+  color: var(--np-muted);
+}
+html[data-theme="dark"] .feed-post {
+  color: var(--np-ink);
+  border-bottom-color: var(--np-line);
+}
 html[data-theme="dark"] .feed-post:hover {
   background: var(--np-feed-hover);
 }
 html[data-theme="dark"] .feed-post-text {
   color: var(--np-ink);
 }
+html[data-theme="dark"] .feed-action {
+  color: var(--np-muted);
+}
 html[data-theme="dark"] .feed-media {
   background: #1a221e;
-  border-color: rgba(212, 181, 125, 0.22);
+  border-color: rgba(223, 192, 138, 0.22);
 }
+html[data-theme="dark"] .studio-sal-rail,
 html[data-theme="dark"] .followed-stores-rail,
 html[data-theme="dark"] .feed-store-strip-block,
 html[data-theme="dark"] .feed-store-strip {
-  background: rgba(27, 36, 32, 0.55);
+  background: var(--np-rail-bg);
+  border-color: var(--np-line);
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .sal-rail-card,
+html[data-theme="dark"] .store-rail-card {
+  background: var(--np-rail-card);
+  border-color: var(--np-line);
+  color: var(--np-ink);
 }
 html[data-theme="dark"] .followed-stores-empty {
   background: var(--np-panel-soft);
-  border-color: rgba(127, 181, 154, 0.28);
+  border-color: rgba(143, 206, 176, 0.35);
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .followed-stores-empty p {
+  color: var(--np-muted);
 }
 html[data-theme="dark"] .palace-feed-section {
-  border-top-color: rgba(127, 181, 154, 0.22);
-  background: linear-gradient(180deg, rgba(127, 181, 154, 0.06) 0%, transparent 72px), transparent;
+  border-top-color: rgba(143, 206, 176, 0.28);
+  background: linear-gradient(180deg, rgba(143, 206, 176, 0.07) 0%, transparent 72px), transparent;
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .text-button {
+  color: var(--np-teal);
 }
 html[data-theme="dark"] .secondary {
   background: var(--np-panel-soft);
@@ -6090,19 +6175,6 @@ html[data-theme="dark"] select {
   color: var(--np-ink);
   border-color: var(--np-line);
 }
-html[data-theme="dark"] .field-help,
-html[data-theme="dark"] .feed-subtitle,
-html[data-theme="dark"] .palace-feed-lede,
-html[data-theme="dark"] .palace-feed-kicker {
-  color: var(--np-muted);
-}
-html[data-theme="dark"] .feed-title,
-html[data-theme="dark"] .palace-feed-title,
-html[data-theme="dark"] h1,
-html[data-theme="dark"] h2,
-html[data-theme="dark"] h3 {
-  color: var(--np-ink);
-}
 html[data-theme="dark"] .comment-composer-sheet {
   background: var(--np-panel-soft);
   color: var(--np-ink);
@@ -6113,12 +6185,15 @@ html[data-theme="dark"] .comment-composer-form textarea {
   border-color: var(--np-line);
 }
 html[data-theme="dark"] .project-comment {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.05);
   border-color: var(--np-line);
+  color: var(--np-ink);
 }
-html[data-theme="dark"] .auth-card {
+html[data-theme="dark"] .auth-card,
+html[data-theme="dark"] .theme-toggle.panel {
   background: var(--np-panel-soft);
   color: var(--np-ink);
+  border-color: var(--np-line);
 }
 html[data-theme="dark"] .feed-store-chip {
   background: var(--np-chip-bg);
@@ -6127,15 +6202,46 @@ html[data-theme="dark"] .feed-store-chip {
 }
 html[data-theme="dark"] .timeline {
   border-top-color: var(--np-line);
-}
-html[data-theme="dark"] .mobile-more-sheet {
-  background: var(--np-panel-soft);
   color: var(--np-ink);
 }
-html[data-theme="dark"] .mobile-more-sheet,
-html[data-theme="dark"] .mobile-more-sheet button,
-html[data-theme="dark"] .mobile-more-sheet .nav-label {
+html[data-theme="dark"] .mobile-more-sheet {
+  background: var(--np-panel-soft) !important;
   color: var(--np-ink) !important;
+}
+html[data-theme="dark"] .mobile-more-sheet button,
+html[data-theme="dark"] .mobile-more-sheet .nav-label,
+html[data-theme="dark"] .mobile-more-item,
+html[data-theme="dark"] .mobile-more-item-label {
+  color: var(--np-ink) !important;
+}
+html[data-theme="dark"] .mobile-more-item {
+  background: var(--np-panel);
+  border-color: var(--np-line);
+}
+html[data-theme="dark"] .mobile-more-item svg {
+  color: var(--np-teal) !important;
+}
+html[data-theme="dark"] .mobile-more-item.active {
+  background: var(--np-teal-soft) !important;
+  border-color: var(--np-teal) !important;
+  color: var(--np-ink) !important;
+}
+html[data-theme="dark"] .feed-status,
+html[data-theme="dark"] .status-finished,
+html[data-theme="dark"] .status-in-progress {
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .empty-state,
+html[data-theme="dark"] .error-state,
+html[data-theme="dark"] .panel {
+  background: var(--np-panel-soft);
+  border-color: var(--np-line-strong);
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .page.discover-page,
+html[data-theme="dark"] .page.auth-page {
+  background: var(--np-bg);
+  color: var(--np-ink);
 }
 
 @media (max-width: 560px) {
