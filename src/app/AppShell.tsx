@@ -2095,7 +2095,7 @@ export function AppShell() {
     remoteError.startsWith("Sign in to ");
   const studioRefreshFailed = remoteError === "studio-refresh";
   const bannerMessage = studioRefreshFailed
-    ? "Studio couldn't refresh. You're seeing the last stitches we have."
+    ? "Needlepoint Palace couldn't refresh. You're seeing the last stitches we have."
     : remoteError;
 
   return (

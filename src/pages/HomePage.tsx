@@ -13,6 +13,7 @@ import { filterUpcomingMeetups, formatMeetupPlace, formatMeetupWhen } from "../l
 import { FeedPost, FollowedStoresRail, type FollowedStoreRailItem } from "../components/feed";
 import { EmptyState, ErrorState, FeedListSkeleton } from "../components/ui";
 import { uiCopy } from "../lib/uiCopy";
+import { HOME_BRAND, HOME_FEED_ARIA } from "../lib/brand";
 
 export function HomeView(props: {
   projects: Project[];
@@ -99,7 +100,7 @@ export function HomeView(props: {
     <section className="page feed-page">
       <header className="feed-topbar">
         <div>
-          <h1 className="feed-title">Studio</h1>
+          <h1 className="feed-title">{HOME_BRAND}</h1>
           <p className="feed-subtitle">
             {followedFeedCount
               ? "Canvases from people you follow, then picks matched to your interests"
@@ -237,7 +238,7 @@ export function HomeView(props: {
       {feedLoading ? (
         <FeedListSkeleton count={4} withMedia label={uiCopy.studio.feed.loading} />
       ) : feedRefreshError && feed.length === 0 ? (
-        <div className="feed-timeline" aria-label="Studio feed">
+        <div className="feed-timeline" aria-label={HOME_FEED_ARIA}>
           <ErrorState
             variant="panel"
             minHeight={280}
@@ -248,7 +249,7 @@ export function HomeView(props: {
           />
         </div>
       ) : feed.length ? (
-        <div className="feed-timeline" aria-label="Studio feed">
+        <div className="feed-timeline" aria-label={HOME_FEED_ARIA}>
           {feed.map((project) => (
             <FeedPost
               key={project.id}
@@ -266,7 +267,7 @@ export function HomeView(props: {
           ))}
         </div>
       ) : (
-        <div className="feed-timeline" aria-label="Studio feed">
+        <div className="feed-timeline" aria-label={HOME_FEED_ARIA}>
           <EmptyState
             variant="panel"
             minHeight={280}

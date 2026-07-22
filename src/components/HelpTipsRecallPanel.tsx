@@ -9,7 +9,7 @@ export function HelpTipsRecallPanel() {
     <div className="panel help-tips-recall" data-testid="help-tips-recall" data-help-anchor="help-report">
       <h2>Help tips</h2>
       <p className="field-help">
-        Short guides for Studio, Discover, Shops, Saved boards, Meetups, Messages, and Report. Replay anytime — tips stay
+        Short guides for Needlepoint Palace, Discover, Shops, Saved boards, Meetups, Messages, and Report. Replay anytime — tips stay
         off after you skip or finish until you ask again.
       </p>
       <button

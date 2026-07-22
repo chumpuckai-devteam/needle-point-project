@@ -17,7 +17,7 @@ import {
  * project’s offline session path (prefilled threadandtonic@example.com / demo-password).
  */
 test.describe("auth happy path (demo session)", () => {
-  test("lands on Studio with authenticated primary chrome", async ({ page }) => {
+  test("lands on Needlepoint Palace with authenticated primary chrome", async ({ page }) => {
     await goHomeExpectStudio(page);
   });
 
@@ -47,7 +47,7 @@ test.describe("auth happy path (demo session)", () => {
     await goHomeExpectStudio(page);
 
     await page.reload();
-    await expect(page.getByRole("heading", { name: /Studio/i })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: /Needlepoint Palace/i })).toBeVisible({ timeout: 15_000 });
     await expectPrimaryNav(page);
 
     await page.goto("/auth");
@@ -58,7 +58,7 @@ test.describe("auth happy path (demo session)", () => {
 
   test("Account nav reaches session surface", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Studio/i })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: /Needlepoint Palace/i })).toBeVisible({ timeout: 15_000 });
 
     await page
       .getByRole("navigation", { name: /Primary navigation/i })

@@ -51,7 +51,7 @@ export async function readStoreFollows(page: Page): Promise<string[]> {
  */
 export async function seedStoreFollows(page: Page, ids: string[]) {
   await page.goto("/", nav);
-  await expect(page.getByRole("heading", { name: /Studio/i })).toBeVisible({ timeout: 25_000 });
+  await expect(page.getByRole("heading", { name: /Needlepoint Palace/i })).toBeVisible({ timeout: 25_000 });
   await page.evaluate(
     ({ key, next }) => {
       localStorage.setItem(key, JSON.stringify(next));
@@ -59,7 +59,7 @@ export async function seedStoreFollows(page: Page, ids: string[]) {
     { key: STORE_FOLLOWS_KEY, next: ids },
   );
   await page.reload(nav);
-  await expect(page.getByRole("heading", { name: /Studio/i })).toBeVisible({ timeout: 25_000 });
+  await expect(page.getByRole("heading", { name: /Needlepoint Palace/i })).toBeVisible({ timeout: 25_000 });
   await expect.poll(async () => readStoreFollows(page), { timeout: 5_000 }).toEqual(ids);
 }
 

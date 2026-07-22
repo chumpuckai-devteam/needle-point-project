@@ -14,14 +14,14 @@ export async function waitForAuthReady(page: Page) {
 export async function expectPrimaryNav(page: Page) {
   const nav = page.getByRole("navigation", { name: /Primary navigation/i });
   await expect(nav).toBeVisible();
-  await expect(nav.getByRole("button", { name: /^Studio$/i })).toBeVisible();
+  await expect(nav.getByRole("button", { name: /^Palace$/i })).toBeVisible();
   await expect(nav.getByRole("button", { name: /^Account$/i })).toBeVisible();
 }
 
-/** Authenticated chrome: Studio home + primary nav Account entry. */
+/** Authenticated chrome: Needlepoint Palace home + primary nav Account entry. */
 export async function goHomeExpectStudio(page: Page) {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Studio/i })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("heading", { name: /Needlepoint Palace/i })).toBeVisible({ timeout: 15_000 });
   await expectPrimaryNav(page);
 }
 

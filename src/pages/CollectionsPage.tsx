@@ -193,7 +193,7 @@ export function CollectionsView({
                     </div>
                   ))}
                 {collection.projectIds.length === 0 ? (
-                  <EmptyState title="Nothing saved here yet" body="Save projects from Studio or Discover to fill this board." />
+                  <EmptyState title="Nothing saved here yet" body="Save projects from Needlepoint Palace or Discover to fill this board." />
                 ) : null}
               </div>
             </article>

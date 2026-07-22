@@ -47,8 +47,8 @@ const DEFAULT_PREFS: HelpTipsPrefs = {
 export const HELP_TIPS: HelpTip[] = [
   {
     id: "studio",
-    title: "Studio",
-    body: "Your home feed — canvases from people you follow, plus fresh public stitches.",
+    title: "Needlepoint Palace",
+    body: "Your home feed in the Palace — canvases from people you follow, plus fresh public stitches.",
     anchor: "nav-studio",
     path: "/",
     guestOk: true,

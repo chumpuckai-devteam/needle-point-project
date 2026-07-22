@@ -473,7 +473,7 @@ Recommended first launch path:
 
 ## Post-MVP Roadmap
 
-Ordered themes after private-beta density (Studio, shops, stitch-alongs, collections, reporting). Dates are intentional placeholders — sequence matters more than calendar.
+Ordered themes after private-beta density (Needlepoint Palace (home feed), shops, stitch-alongs, collections, reporting). Dates are intentional placeholders — sequence matters more than calendar.
 
 ### Phase A — Harden private beta (current / near-term)
 
@@ -481,7 +481,7 @@ Ordered themes after private-beta density (Studio, shops, stitch-alongs, collect
 - Shop connection (catalog, follow, claim, owner tools).
 - Local discovery (ZIP/city, near-you coaching). **Map depth (shipped):** pin filters (All/Nearby/Local/Online) + zoom clusters.
 - Quality, smoke coverage, moderation basics. **Shop claim queue (shipped):** moderator/owner approve-deny for directory claims.
-- **First-time guide & help tips (shipped)** — on-page tooltips / lightweight coach marks for first-time users (Studio, Saved boards, Shops, Meetups, More menu, report). Users must be able to **reopen / recall tips** later (e.g. Account → “Show help tips” or a Help entry), not only see them once. Prefer short, skippable steps; no blocking modal wall.
+- **First-time guide & help tips (shipped)** — on-page tooltips / lightweight coach marks for first-time users (Needlepoint Palace, Saved boards, Shops, Meetups, More menu, report). Users must be able to **reopen / recall tips** later (e.g. Account → “Show help tips” or a Help entry), not only see them once. Prefer short, skippable steps; no blocking modal wall.
 
 ### Phase B — Stitching meetups (local community)
 

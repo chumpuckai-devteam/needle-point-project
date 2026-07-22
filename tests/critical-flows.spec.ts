@@ -12,7 +12,7 @@ const nav = { waitUntil: "domcontentloaded" as const, timeout: 30_000 };
 
 async function goStudio(page: Page) {
   await page.goto("/", nav);
-  await expect(page.getByRole("heading", { name: /Studio/i })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("heading", { name: /Needlepoint Palace/i })).toBeVisible({ timeout: 20_000 });
 }
 
 async function openNav(page: Page, label: RegExp) {
@@ -33,11 +33,11 @@ async function openSeededDiscoverProject(page: Page, query: string, title: RegEx
   await expect(page.getByRole("heading", { name: title })).toBeVisible({ timeout: 15_000 });
 }
 
-test.describe("Studio feed critical path", () => {
+test.describe("Needlepoint Palace feed critical path", () => {
   test("loads feed posts and opens a project from the timeline", async ({ page }) => {
     await goStudio(page);
 
-    const feed = page.getByRole("region", { name: /Studio feed/i }).or(page.locator(".feed-timeline[aria-label='Studio feed']"));
+    const feed = page.getByRole("region", { name: /Needlepoint Palace feed/i }).or(page.locator(".feed-timeline[aria-label='Needlepoint Palace feed']"));
     await expect(feed.first()).toBeVisible({ timeout: 15_000 });
 
     // Seeded public projects appear (private Midnight Sampler must not).
@@ -304,9 +304,9 @@ test.describe("Routing empty / unknown paths", () => {
     await expect(page).toHaveURL(/\/discover/);
   });
 
-  test("unknown path redirects to Studio home", async ({ page }) => {
+  test("unknown path redirects to Needlepoint Palace home", async ({ page }) => {
     await page.goto("/this-route-is-not-real", nav);
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole("heading", { name: /Studio/i })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole("heading", { name: /Needlepoint Palace/i })).toBeVisible({ timeout: 20_000 });
   });
 });

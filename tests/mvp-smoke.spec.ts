@@ -7,7 +7,7 @@ async function navigateByLabel(page: import("@playwright/test").Page, label: Reg
 test("core MVP flows are usable through router paths", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: /Studio/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Needlepoint Palace|Palace/i })).toBeVisible();
 
   await navigateByLabel(page, /^Discover$/);
   await expect(page).toHaveURL(/\/discover$/);

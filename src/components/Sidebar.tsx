@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import type { View } from "../appModel";
 import { useHelpTipsOptional } from "../context/HelpTipsContext";
+import { HOME_BRAND, HOME_TAB } from "../lib/brand";
 
 type NavItem = {
   id: string;
@@ -73,9 +74,9 @@ export function Sidebar({
   const messagesLabel =
     messagesUnread > 0 ? `Messages (${messagesUnread > 99 ? "99+" : messagesUnread})` : "Messages";
 
-  /** Mobile bottom bar: exactly 4 slots — Studio, Discover, Shops, More. */
+  /** Mobile bottom bar: exactly 4 slots — Palace, Discover, Shops, More. */
   const primary: NavItem[] = [
-    { id: "home", label: "Studio", icon: Home, action: () => go({ name: "home" }) },
+    { id: "home", label: HOME_TAB, icon: Home, action: () => go({ name: "home" }) },
     { id: "discover", label: "Discover", icon: Search, action: () => go({ name: "discover" }) },
     { id: "stores", label: "Shops", icon: StoreIcon, action: () => go({ name: "stores" }) },
   ];
@@ -185,11 +186,11 @@ export function Sidebar({
 
   return (
     <aside className={`sidebar${moreOpen ? " more-open" : ""}`}>
-      <button className="brand" type="button" onClick={() => go({ name: "home" })} aria-label="Go to studio">
+      <button className="brand" type="button" onClick={() => go({ name: "home" })} aria-label={`Go to ${HOME_BRAND}`}>
         <span className="brand-mark">NP</span>
         <span>
           <strong>Needlepoint</strong>
-          <small>visual studio</small>
+          <small>Palace</small>
         </span>
       </button>
 

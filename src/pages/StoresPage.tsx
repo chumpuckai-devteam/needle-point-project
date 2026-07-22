@@ -831,7 +831,7 @@ export function StoresView({
                 </button>
               )}
               <button className="secondary" type="button" onClick={() => setView({ name: "home" })}>
-                Back to Studio
+                Back to Palace
               </button>
             </div>
           }

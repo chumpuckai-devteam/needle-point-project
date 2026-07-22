@@ -207,7 +207,7 @@ export const initialProjects: Project[] = [
     colors: ["indigo", "silver", "cream"],
     patternSource: "Personal stash",
     patternUrl: "https://example.com/private-draft",
-    notes: "Private journal draft — should never appear in Studio, Discover, or other profiles.",
+    notes: "Private journal draft — should never appear in Needlepoint Palace, Discover, or other profiles.",
     likes: 0,
     isLiked: false,
     isSaved: false,

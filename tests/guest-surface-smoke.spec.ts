@@ -7,10 +7,10 @@ import { expect, test } from "@playwright/test";
 test.describe("guest / auth surface smoke", () => {
   test("studio shows feed chrome with primary nav", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: "Studio" })).toBeVisible();
-    const feed = page.locator('[aria-label="Studio feed"]');
+    await expect(page.getByRole("heading", { name: /Needlepoint Palace/i })).toBeVisible();
+    const feed = page.locator('[aria-label="Needlepoint Palace feed"]');
     await expect(feed).toBeVisible();
-    await expect(page.getByRole("button", { name: /Studio/i }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: /Palace|Needlepoint Palace/i }).first()).toBeVisible();
     // Demo is signed-in path: New post present.
     await expect(
       page.getByRole("navigation", { name: /Primary navigation/i }).getByRole("button", { name: /New post/i }),

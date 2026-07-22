@@ -6,7 +6,7 @@ test("help coach auto-starts, advances, and can be skipped", async ({ page }) =>
   await page.reload();
   const coach = page.getByTestId("help-coach");
   await expect(coach).toBeVisible({ timeout: 5000 });
-  await expect(coach.getByRole("heading", { name: /Studio/i })).toBeVisible();
+  await expect(coach.getByRole("heading", { name: /Needlepoint Palace|Studio/i })).toBeVisible();
   await page.getByTestId("help-coach-next").click();
   await expect(coach.getByRole("heading", { name: /Discover/i })).toBeVisible();
   await coach.getByRole("button", { name: /Skip tips/i }).click();

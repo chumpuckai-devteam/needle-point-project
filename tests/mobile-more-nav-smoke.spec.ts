@@ -10,7 +10,7 @@ test("mobile bar shows 4 labeled slots with no scroll; More opens sheet", async 
   const buttons = nav.getByRole("button");
   await expect(buttons).toHaveCount(4);
 
-  for (const name of [/Studio/i, /Discover/i, /Shops/i, /More/i]) {
+  for (const name of [/Palace/i, /Discover/i, /Shops/i, /More/i]) {
     const btn = nav.getByRole("button", { name });
     await expect(btn).toBeVisible();
     const box = await btn.boundingBox();

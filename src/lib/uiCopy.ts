@@ -9,7 +9,7 @@ export const uiCopy = {
     feed: {
       loading: "Loading fresh stitches…",
       empty: {
-        title: "Your Studio is ready for its first stitch",
+        title: "Your Needlepoint Palace is ready for its first stitch",
         body: "Post a canvas photo, progress note, or short clip to start your project thread.",
         cta: "Create post",
         guestBody: "Sign in to post a canvas photo, progress note, or short clip and start your project thread.",
@@ -19,7 +19,7 @@ export const uiCopy = {
         "No followed makers have new stitches yet — here are fresh public projects while you find more people to follow.",
       followedEmptyCta: "Browse Discover",
       refreshError: {
-        title: "Studio couldn't refresh",
+        title: "Needlepoint Palace couldn't refresh",
         body: "You're seeing the last stitches we have. Try again when your connection settles.",
         cta: "Try again",
       },
@@ -27,7 +27,7 @@ export const uiCopy = {
     followedShops: {
       empty: {
         title: "No favorite shops pinned yet",
-        body: "Follow local or online shops and their new canvases will sit here on Studio.",
+        body: "Follow local or online shops and their new canvases will sit here in Needlepoint Palace.",
         cta: "Browse shops",
       },
     },
