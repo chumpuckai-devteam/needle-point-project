@@ -12,7 +12,7 @@ test("feed comment bubble opens X-style text composer", () => {
   assert.match(feed, /feed-comment-btn/);
   assert.match(feed, /CommentComposerDialog/);
   assert.match(feed, /setCommentOpen\(true\)/);
-  assert.doesNotMatch(feed, /onClick=\{\(\) => setView\(\{ name: "project".*aria-label="Comment"/s);
+  assert.match(feed, /onAddComment/);
 
   const dialog = src("src/components/CommentComposerDialog.tsx");
   assert.match(dialog, /Post your reply/);
