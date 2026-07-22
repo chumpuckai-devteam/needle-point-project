@@ -74,6 +74,7 @@ export function ProjectRoute(props: {
       updateMilestone={props.updateMilestone}
       commentText={props.commentText}
       canComment={props.canComment !== false}
+      viewerId={props.viewerId}
       updateBusy={props.updateBusy}
       updateError={props.updateError}
       updateImagePreview={props.updateImagePreview}
