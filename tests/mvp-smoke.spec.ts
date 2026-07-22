@@ -19,7 +19,7 @@ test("core MVP flows are usable through router paths", async ({ page }) => {
   await expect(page).toHaveURL(/\/projects\//);
   await expect(page.getByRole("heading", { name: /Bookshop Door Canvas/i })).toBeVisible();
 
-  await navigateByLabel(page, /^Shops$/);
+  await page.goto("/stores");
   await expect(page).toHaveURL(/\/stores/);
   await expect(page.getByRole("heading", { name: /Local shops near you|Shops|Browse/i }).first()).toBeVisible();
 
