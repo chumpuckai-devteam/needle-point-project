@@ -302,12 +302,25 @@ function AccountSettings({
       {isModerator ? (
         <div className="panel" data-testid="moderation-entry">
           <h2>Moderator tools</h2>
-          <p className="field-help">Review open abuse reports from the community.</p>
-          <button type="button" className="primary" onClick={() => navigate("/moderation")}>
-            Open report queue
+          <p className="field-help">Review open abuse reports and shop ownership claims.</p>
+          <div className="card-actions wrap">
+            <button type="button" className="primary" onClick={() => navigate("/moderation")}>
+              Open report queue
+            </button>
+            <button type="button" className="secondary" onClick={() => navigate("/claims")} data-testid="claims-queue-entry">
+              Shop claim queue
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="panel" data-testid="claims-queue-entry-owner">
+          <h2>Shop claims</h2>
+          <p className="field-help">If you own a shop, pending transfer/claim requests appear in the claim queue.</p>
+          <button type="button" className="secondary" onClick={() => navigate("/claims")}>
+            Open claim queue
           </button>
         </div>
-      ) : null}
+      )}
       <div className="editor-layout">
         <form className="panel form-grid" onSubmit={(event) => void save(event)} aria-busy={busy || undefined}>
           <div className="full-field account-identity">

@@ -6,6 +6,7 @@ import type { DmMessage, DmThread } from "../api/dms";
 import type { DraftProject, View } from "../appModel";
 import type { Collection, Creator, Project, StitchAlong, StitchingMeetup, Store } from "../types";
 import { ModerationPage } from "../pages/ModerationPage";
+import { ClaimsQueuePage } from "../pages/ClaimsQueuePage";
 import {
   AuthPage,
   CollectionsView,
@@ -103,6 +104,7 @@ export type AppRoutesProps = {
   viewerId: string | null;
   isDemoMode: boolean;
   isModerator?: boolean;
+  canModerateClaims?: boolean;
   claimBusy: boolean;
   claimPendingStoreIds: string[];
   claimNotice: string;
@@ -530,7 +532,17 @@ export function AppRoutes(props: AppRoutesProps) {
           />
         }
       />
-            <Route
+      <Route
+        path="/claims"
+        element={
+          <ClaimsQueuePage
+            enabled={Boolean(props.isModerator || props.canModerateClaims)}
+            onBack={() => props.setView({ name: "auth" })}
+            onOpenStore={(handle) => props.setView({ name: "store", handle })}
+          />
+        }
+      />
+      <Route
         path="/moderation"
         element={
           <ModerationPage
@@ -539,7 +551,7 @@ export function AppRoutes(props: AppRoutesProps) {
           />
         }
       />
-<Route path="/auth" element={<AuthPage />} />
+      <Route path="/auth" element={<AuthPage />} />
       <Route path="/auth/signup" element={<AuthPage />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />

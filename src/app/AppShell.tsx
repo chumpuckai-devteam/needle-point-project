@@ -2141,6 +2141,7 @@ export function AppShell() {
         viewerId={viewerId}
         isDemoMode={isDemoMode}
         isModerator={userIsModerator(user)}
+        canModerateClaims={userIsModerator(user) || stores.some((store) => store.ownerUserId === viewerId)}
         claimBusy={claimBusy}
         claimPendingStoreIds={pendingClaimStoreIds}
         claimNotice={claimNotice}

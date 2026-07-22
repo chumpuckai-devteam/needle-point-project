@@ -5613,3 +5613,22 @@ label textarea::placeholder {
     min-height: 44px;
   }
 }
+
+
+/* Shop claim queue */
+.claim-queue-list {
+  display: grid;
+  gap: 0.75rem;
+}
+.claim-queue-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+.claim-queue-message {
+  margin: 0.35rem 0 0.65rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  background: rgba(47, 93, 80, 0.08);
+}

@@ -1169,6 +1169,47 @@ export async function fetchMyStoreClaimRequestsOnline(): Promise<StoreClaimReque
   return ((data as DbStoreClaimRequest[] | null) ?? []).map(mapClaimRequest);
 }
 
+export type StoreClaimQueueItem = StoreClaimRequest & {
+  storeName: string;
+  storeHandle: string;
+  storeCity: string;
+  storeRegion: string;
+  requesterHandle: string;
+  requesterName: string;
+};
+
+type DbStoreClaimQueueRow = DbStoreClaimRequest & {
+  store_name: string | null;
+  store_handle: string | null;
+  store_city: string | null;
+  store_region: string | null;
+  requester_handle: string | null;
+  requester_name: string | null;
+};
+
+function mapClaimQueueItem(row: DbStoreClaimQueueRow): StoreClaimQueueItem {
+  return {
+    ...mapClaimRequest(row),
+    storeName: row.store_name ?? "Shop",
+    storeHandle: row.store_handle ?? "",
+    storeCity: row.store_city ?? "",
+    storeRegion: row.store_region ?? "",
+    requesterHandle: row.requester_handle ?? "",
+    requesterName: row.requester_name ?? "",
+  };
+}
+
+/** Moderator / owner claim queue with shop + claimant context. */
+export async function fetchStoreClaimQueueOnline(
+  status: StoreClaimRequest["status"] | "all" = "pending",
+): Promise<StoreClaimQueueItem[]> {
+  if (!isSupabaseConfigured) return [];
+  const client = requireSupabase();
+  const { data, error } = await client.rpc("list_store_claim_queue", { p_status: status });
+  if (error) throw error;
+  return ((data as DbStoreClaimQueueRow[] | null) ?? []).map(mapClaimQueueItem);
+}
+
 export async function approveStoreClaimRequestOnline(
   requestId: string,
   ownerUserId?: string,

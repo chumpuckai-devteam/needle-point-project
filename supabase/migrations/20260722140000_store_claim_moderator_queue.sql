@@ -1,0 +1,2 @@
+-- Live via MCP: store_claim_moderator_queue + fix_list_store_claim_queue_profile_name
+-- can_moderate_store_claim, list_store_claim_queue, mod approve/deny for unowned shops

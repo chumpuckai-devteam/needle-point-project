@@ -29,6 +29,8 @@ export function pathForView(view: View) {
       return "/onboarding";
     case "moderation":
       return "/moderation";
+    case "claims":
+      return "/claims";
     case "project":
       return `/projects/${view.id}`;
     case "profile":
@@ -54,5 +56,6 @@ export function viewNameForPath(pathname: string) {
   if (pathname.startsWith("/auth")) return "auth";
   if (pathname.startsWith("/onboarding")) return "onboarding";
   if (pathname.startsWith("/moderation")) return "moderation";
+  if (pathname.startsWith("/claims")) return "claims";
   return "home";
 }
