@@ -4059,6 +4059,17 @@ a.primary,
   align-items: center;
 }
 
+@media (max-width: 720px) {
+  .store-discovery-search-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .store-discovery-search-actions .primary,
+  .store-discovery-search-actions .secondary {
+    width: 100%;
+  }
+}
+
 .store-discovery-search-actions .primary,
 .store-discovery-search-actions .secondary {
   min-height: 44px;

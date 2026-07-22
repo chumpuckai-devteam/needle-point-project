@@ -649,7 +649,7 @@ export function StoresView({
   const mapPins = discovery.mapPins;
   const listMissingPins = discovery.list.length > 0 && mapPins.length < discovery.list.length;
 
-  /** Consent card + error/result coaches — never silent GPS. */
+  /** Consent / deny / error coaches only — not the “N shops within X mi” results card. */
   const showLocationCoachPanel =
     placeSearchCoaching ||
     coachState === "permission_not_asked" ||
@@ -657,9 +657,7 @@ export function StoresView({
     coachState === "location_denied_first_time" ||
     coachState === "location_denied_persistent" ||
     coachState === "location_unavailable_timeout" ||
-    coachState === "location_unavailable_unsupported" ||
-    coachState === "location_ready_nearby" ||
-    coachState === "location_ready_empty_nearby";
+    coachState === "location_unavailable_unsupported";
 
   return (
     <section className="page stores-discovery-page">
@@ -719,8 +717,23 @@ export function StoresView({
                 Clear
               </button>
             ) : null}
+            {hasOnline ? (
+              <button className="secondary" type="button" onClick={scrollToOnline} disabled={searchBusy}>
+                Browse online shops
+              </button>
+            ) : null}
           </div>
         </div>
+
+        {isGeoPoint && locationStatus === "ready" ? (
+          <p className="store-location-inline-status" aria-live="polite" id={resultsHeadingId}>
+            {discovery.list.length === 1
+              ? `1 shop within ${radiusForCopy} mi · sorted by distance`
+              : discovery.list.length > 0
+                ? `${discovery.list.length} shops within ${radiusForCopy} mi · sorted by distance`
+                : `No local shops within ${radiusForCopy} mi — try online shops below or expand your search`}
+          </p>
+        ) : null}
 
         {searchError ? (
           <p id={`${searchFieldId}-error`} className="store-location-search-error" role="alert">
@@ -816,7 +829,7 @@ export function StoresView({
           </div>
         )}
       </div>
-      ) : (
+      ) : isGeoPoint && locationStatus === "ready" ? null : (
         <h2 id={resultsHeadingId} className="visually-hidden">
           Shop results
         </h2>
