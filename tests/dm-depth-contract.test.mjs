@@ -31,10 +31,12 @@ test("DM API exposes realtime subscriptions, group creation, and attachment uplo
   assert.match(dmsApi, /DmAttachment/);
 });
 
-test("Messages UI renders group composer and attachment controls", () => {
+test("Messages UI keeps DM-depth group/attach controls gated until live migration", () => {
   const page = src("src/pages/MessagesPage.tsx");
+  assert.match(page, /DM_DEPTH_UI/);
   assert.match(page, /New group/);
   assert.match(page, /Attach file/);
   assert.match(page, /dm-attachment-list/);
   assert.match(page, /onCreateGroup/);
+  assert.match(page, /const DM_DEPTH_UI = false/);
 });
