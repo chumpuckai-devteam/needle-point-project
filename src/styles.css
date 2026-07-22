@@ -2931,14 +2931,12 @@ main {
 }
 
 .feed-actions {
-  margin-top: 6px;
-  margin-inline: -6px; /* absorb icon pad so edges aren't clipped by post padding */
-  padding: 2px 6px 4px;
+  margin-top: 8px;
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
-  gap: 2px;
+  gap: 4px;
   color: var(--np-muted);
   max-width: 100%;
   overflow: visible;
@@ -2953,7 +2951,8 @@ main {
   min-height: var(--touch-min);
   min-width: var(--touch-min);
   max-width: 7rem;
-  padding: 0;
+  /* hit target lives on the button — never clip SVG shapes */
+  padding: 10px 8px;
   color: var(--np-muted);
   border-radius: 999px;
   font-weight: 650;
@@ -2961,26 +2960,29 @@ main {
   background: transparent;
   border: 0;
   cursor: pointer;
+  line-height: 1;
 }
 
 .feed-action svg {
   box-sizing: content-box;
   flex-shrink: 0;
-  padding: 8px;
+  display: block;
   width: 22px;
   height: 22px;
-  border-radius: 999px;
+  padding: 0;
+  margin: 0;
+  border-radius: 0; /* critical: round mask was cutting MessageCircle tail */
   overflow: visible;
-  /* keep strokes fully inside the soft hover disc */
-  stroke-width: 2;
+  background: transparent !important;
 }
 
 .feed-action:hover {
   color: var(--np-teal);
+  background: var(--np-teal-soft);
 }
 
 .feed-action:hover svg {
-  background: var(--np-teal-soft);
+  background: transparent;
 }
 
 .feed-action.like.selected,
@@ -2988,8 +2990,12 @@ main {
   color: var(--np-coral);
 }
 
-.feed-action.like:hover svg {
+.feed-action.like:hover {
   background: var(--np-coral-soft);
+}
+
+.feed-action.like:hover svg {
+  background: transparent;
 }
 
 .feed-action.bookmark.selected {
@@ -2998,10 +3004,11 @@ main {
 
 .feed-action.bookmark:hover {
   color: #9a7540;
+  background: var(--np-gold-soft);
 }
 
 .feed-action.bookmark:hover svg {
-  background: var(--np-gold-soft);
+  background: transparent;
 }
 
 .discover-feed {
@@ -3464,9 +3471,9 @@ label textarea::placeholder {
 
   .feed-actions {
     max-width: none;
-    margin-inline: -4px;
-    padding: 4px 4px 6px;
-    gap: 0;
+    margin-inline: 0;
+    padding: 2px 0 4px;
+    gap: 2px;
   }
 
   .feed-action {
@@ -3476,14 +3483,17 @@ label textarea::placeholder {
     width: auto;
     flex: 1 1 25%;
     justify-content: center;
+    padding: 10px 6px;
     overflow: visible;
   }
 
   .feed-action svg {
     width: 22px;
     height: 22px;
-    padding: 9px;
+    padding: 0;
+    border-radius: 0;
     overflow: visible;
+    background: transparent !important;
   }
 
   .feed-store-strip {
