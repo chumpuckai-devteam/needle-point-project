@@ -56,7 +56,7 @@ export function downloadMeetupIcs(meetup: StitchingMeetup, opts?: { pageUrl?: st
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${(meetup.title || "meetup").replace(/[^\w\-]+/g, "-").slice(0, 40)}.ics`;
+  a.download = `${(meetup.title || "meetup").replace(/[^\w-]+/g, "-").slice(0, 40)}.ics`;
   document.body.appendChild(a);
   a.click();
   a.remove();

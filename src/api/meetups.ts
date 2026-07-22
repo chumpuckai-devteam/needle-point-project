@@ -499,3 +499,42 @@ export async function setMeetupRsvpOnline(
   }
   await registerForMeetupOnline(meetupId);
 }
+
+/** Host-only aggregate meetup draw (registrations + door check-ins). No guest PII. */
+export type HostMeetupDrawStats = {
+  meetupsHosted: number;
+  registrations: number;
+  checkedIn: number;
+  waitlisted: number;
+};
+
+export type HostMeetupDrawStatsInput = {
+  startAt?: string | null;
+  endAt?: string | null;
+};
+
+export async function fetchHostMeetupDrawStats(
+  input: HostMeetupDrawStatsInput = {},
+): Promise<HostMeetupDrawStats> {
+  if (!isSupabaseConfigured) {
+    return { meetupsHosted: 0, registrations: 0, checkedIn: 0, waitlisted: 0 };
+  }
+  const client = requireSupabase();
+  const { data, error } = await client.rpc("host_meetup_draw_stats", {
+    p_start_at: input.startAt ?? null,
+    p_end_at: input.endAt ?? null,
+  });
+  if (error) throw new Error(error.message || "Could not load host meetup stats");
+  const row = (Array.isArray(data) ? data[0] : data) as {
+    meetups_hosted?: number | string | null;
+    registrations?: number | string | null;
+    checked_in?: number | string | null;
+    waitlisted?: number | string | null;
+  } | null;
+  return {
+    meetupsHosted: num(row?.meetups_hosted),
+    registrations: num(row?.registrations),
+    checkedIn: num(row?.checked_in),
+    waitlisted: num(row?.waitlisted),
+  };
+}

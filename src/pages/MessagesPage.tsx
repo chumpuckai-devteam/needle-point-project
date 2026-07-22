@@ -1,15 +1,26 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { MessageCircle, Send } from "lucide-react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { MessageCircle, Paperclip, Send, Users } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { DmMessage, DmThread } from "../api/dms";
 import { EmptyState, SectionHeader } from "../components/ui";
 import type { View } from "../appModel";
+import type { Creator } from "../types";
 
 function formatWhen(iso?: string | null) {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
   return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+function threadKindLabel(thread: DmThread) {
+  if (thread.kind === "store") return "Shop chat";
+  if (thread.kind === "group") return `${thread.memberCount || 0} members`;
+  return "Direct";
+}
+
+function isImageAttachment(attachment: { mimeType: string }) {
+  return attachment.mimeType.startsWith("image/");
 }
 
 export function MessagesInboxView({
@@ -19,6 +30,9 @@ export function MessagesInboxView({
   canUse,
   setView,
   onOpenThread,
+  creators,
+  viewerId,
+  onCreateGroup,
 }: {
   threads: DmThread[];
   loading?: boolean;
@@ -26,7 +40,24 @@ export function MessagesInboxView({
   canUse: boolean;
   setView: (view: View) => void;
   onOpenThread: (threadId: string) => void;
+  creators: Creator[];
+  viewerId: string | null;
+  onCreateGroup: (memberUserIds: string[], title: string) => void | Promise<void>;
 }) {
+  const [showGroup, setShowGroup] = useState(false);
+  const [groupTitle, setGroupTitle] = useState("");
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
+  const groupCandidates = creators.filter((creator) => creator.id !== viewerId).slice(0, 12);
+
+  async function handleCreateGroup(event: FormEvent) {
+    event.preventDefault();
+    if (!selectedMemberIds.length) return;
+    await onCreateGroup(selectedMemberIds, groupTitle.trim());
+    setGroupTitle("");
+    setSelectedMemberIds([]);
+    setShowGroup(false);
+  }
+
   if (!canUse) {
     return (
       <section className="page">
@@ -46,7 +77,43 @@ export function MessagesInboxView({
   return (
     <section className="page">
       <SectionHeader eyebrow="Community" title="Messages" />
-      <p className="feed-rank-note">Private 1:1 chats with people and shops. No group blasts.</p>
+      <p className="feed-rank-note">Private chats with people, shops, and small groups — updates arrive live.</p>
+      <div className="panel dm-group-composer">
+        <button className="secondary" type="button" onClick={() => setShowGroup((current) => !current)}>
+          <Users size={16} /> New group
+        </button>
+        {showGroup ? (
+          <form onSubmit={(event) => void handleCreateGroup(event)}>
+            <label className="field">
+              <span>Group name</span>
+              <input value={groupTitle} onChange={(event) => setGroupTitle(event.target.value)} maxLength={80} placeholder="Stitch night planning" />
+            </label>
+            <fieldset className="store-picker group-member-picker">
+              <legend>Members</legend>
+              {groupCandidates.map((creator) => (
+                <label className="checkbox-field" key={creator.id}>
+                  <input
+                    type="checkbox"
+                    checked={selectedMemberIds.includes(creator.id)}
+                    onChange={(event) => {
+                      setSelectedMemberIds((current) =>
+                        event.target.checked ? [...current, creator.id] : current.filter((id) => id !== creator.id),
+                      );
+                    }}
+                  />
+                  <span>
+                    {creator.name} <small>@{creator.handle}</small>
+                  </span>
+                </label>
+              ))}
+              {!groupCandidates.length ? <p className="field-help">No stitchers loaded yet.</p> : null}
+            </fieldset>
+            <button className="primary" type="submit" disabled={!selectedMemberIds.length}>
+              Create group
+            </button>
+          </form>
+        ) : null}
+      </div>
       {error ? <p className="form-error">{error}</p> : null}
       {loading ? <p className="field-help">Loading conversations…</p> : null}
       {!loading && !threads.length ? (
@@ -70,7 +137,7 @@ export function MessagesInboxView({
                   onClick={() => onOpenThread(thread.id)}
                 >
                   <span className="dm-thread-avatar" aria-hidden>
-                    {thread.otherAvatarUrl ? <img src={thread.otherAvatarUrl} alt="" /> : <MessageCircle size={18} />}
+                    {thread.otherAvatarUrl ? <img src={thread.otherAvatarUrl} alt="" /> : thread.kind === "group" ? <Users size={18} /> : <MessageCircle size={18} />}
                   </span>
                   <span className="dm-thread-main">
                     <strong>
@@ -82,7 +149,7 @@ export function MessagesInboxView({
                       ) : null}
                     </strong>
                     <small>
-                      {thread.kind === "store" ? "Shop chat" : "Direct"}
+                      {threadKindLabel(thread)}
                       {thread.otherHandle ? ` · @${thread.otherHandle}` : ""}
                     </small>
                     <span className="dm-thread-preview">{thread.lastMessagePreview || "No messages yet"}</span>
@@ -116,18 +183,24 @@ export function MessagesThreadView({
   error?: string;
   sendBusy?: boolean;
   sendError?: string;
-  onSend: (body: string) => void | Promise<void>;
+  onSend: (body: string, files: File[]) => void | Promise<void>;
   onBack: () => void;
 }) {
   const [draft, setDraft] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
   const title = thread?.otherDisplayName || "Conversation";
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const body = draft.trim();
-    if (!body) return;
-    await onSend(body);
+    if (!body && !files.length) return;
+    await onSend(body, files);
     setDraft("");
+    setFiles([]);
+  }
+
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    setFiles(Array.from(event.target.files ?? []).slice(0, 6));
   }
 
   return (
@@ -139,7 +212,7 @@ export function MessagesThreadView({
         <header className="dm-thread-header">
           <h1>{title}</h1>
           <p className="field-help">
-            {thread?.kind === "store" ? "Shop conversation" : "Direct message"}
+            {thread ? threadKindLabel(thread) : "Direct message"}
             {thread?.otherHandle ? ` · @${thread.otherHandle}` : ""}
           </p>
         </header>
@@ -150,7 +223,19 @@ export function MessagesThreadView({
             const mine = Boolean(viewerId && message.senderId === viewerId);
             return (
               <div key={message.id} className={mine ? "dm-bubble mine" : "dm-bubble theirs"}>
-                <p>{message.body}</p>
+                {message.body ? <p>{message.body}</p> : null}
+                {message.attachments.length ? (
+                  <ul className="dm-attachment-list">
+                    {message.attachments.map((attachment) => (
+                      <li key={attachment.id || attachment.storagePath}>
+                        {isImageAttachment(attachment) && attachment.url ? <img src={attachment.url} alt={attachment.fileName} /> : null}
+                        <a href={attachment.url || undefined} target="_blank" rel="noreferrer">
+                          <Paperclip size={14} /> {attachment.fileName}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
                 <small>
                   {mine ? "You" : message.senderName} · {formatWhen(message.createdAt)}
                 </small>
@@ -159,20 +244,24 @@ export function MessagesThreadView({
           })}
           {!loading && !messages.length ? <p className="field-help">Say hello — keep it kind and on-topic.</p> : null}
         </div>
-        <form className="dm-compose" onSubmit={(e) => void handleSubmit(e)}>
+        <form className="dm-compose" onSubmit={(event) => void handleSubmit(event)}>
           {sendError ? <p className="form-error">{sendError}</p> : null}
           <label className="field dm-compose-field">
             <span className="sr-only">Message</span>
             <textarea
               value={draft}
-              onChange={(e) => setDraft(e.target.value)}
+              onChange={(event) => setDraft(event.target.value)}
               rows={2}
               maxLength={4000}
               placeholder="Write a private message…"
-              required
             />
           </label>
-          <button className="primary" type="submit" disabled={sendBusy || !draft.trim()}>
+          <label className="secondary dm-attach-button">
+            <Paperclip size={16} /> Attach file
+            <input className="sr-only" type="file" multiple onChange={handleFileChange} />
+          </label>
+          {files.length ? <p className="field-help">{files.map((file) => file.name).join(", ")}</p> : null}
+          <button className="primary" type="submit" disabled={sendBusy || (!draft.trim() && !files.length)}>
             <Send size={16} /> {sendBusy ? "Sending…" : "Send"}
           </button>
         </form>
@@ -193,6 +282,8 @@ export function MessagesRoute({
   setView,
   onRefreshThread,
   onSend,
+  creators,
+  onCreateGroup,
 }: {
   threads: DmThread[];
   messagesByThread: Record<string, DmMessage[]>;
@@ -204,7 +295,9 @@ export function MessagesRoute({
   sendError?: string;
   setView: (view: View) => void;
   onRefreshThread: (threadId: string) => void;
-  onSend: (threadId: string, body: string) => void | Promise<void>;
+  onSend: (threadId: string, body: string, files: File[]) => void | Promise<void>;
+  creators: Creator[];
+  onCreateGroup: (memberUserIds: string[], title: string) => void | Promise<void>;
 }) {
   const { threadId } = useParams();
   const navigate = useNavigate();
@@ -223,6 +316,9 @@ export function MessagesRoute({
         canUse={canUse}
         setView={setView}
         onOpenThread={(id) => navigate(`/messages/${id}`)}
+        creators={creators}
+        viewerId={viewerId}
+        onCreateGroup={onCreateGroup}
       />
     );
   }
@@ -234,6 +330,9 @@ export function MessagesRoute({
         canUse={false}
         setView={setView}
         onOpenThread={() => undefined}
+        creators={[]}
+        viewerId={viewerId}
+        onCreateGroup={() => undefined}
       />
     );
   }
@@ -247,7 +346,7 @@ export function MessagesRoute({
       error={error}
       sendBusy={sendBusy}
       sendError={sendError}
-      onSend={(body) => onSend(threadId, body)}
+      onSend={(body, files) => onSend(threadId, body, files)}
       onBack={() => navigate("/messages")}
     />
   );

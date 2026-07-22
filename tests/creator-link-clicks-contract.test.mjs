@@ -55,6 +55,7 @@ test("creator link click client API inserts clicks and exposes counts RPC", () =
 
   assert.match(api, /export type CreatorLinkClickInput/);
   assert.match(api, /export async function recordCreatorLinkClick/);
+  assert.match(api, /export async function fetchCreatorLinkClickCounts/);
   assert.match(api, /new URL\(trimmed\)/);
   assert.match(api, /\.from\("creator_link_clicks"\)/);
   assert.match(api, /profile_id: input\.profileId/);
@@ -62,4 +63,30 @@ test("creator link click client API inserts clicks and exposes counts RPC", () =
   assert.match(api, /link_url: linkUrl/);
   assert.match(api, /client\.rpc\("creator_link_click_counts"/);
   assert.doesNotMatch(api, /console\.(log|warn|error)|userAgent|sessionId|ipAddress/i);
+});
+
+test("own profile surfaces creator link analytics only for the owner", () => {
+  const panelPath = join(root, "src", "components", "CreatorLinkAnalytics.tsx");
+  const profilePath = join(root, "src", "pages", "ProfilePage.tsx");
+  const routePath = join(root, "src", "pages", "ProfileRoute.tsx");
+  const cssPath = join(root, "src", "styles.css");
+
+  assert.ok(existsSync(panelPath), "CreatorLinkAnalytics panel should exist");
+  const panel = readFileSync(panelPath, "utf8");
+  const profile = readFileSync(profilePath, "utf8");
+  const route = readFileSync(routePath, "utf8");
+  const css = readFileSync(cssPath, "utf8");
+
+  assert.match(panel, /fetchCreatorLinkClickCounts/);
+  assert.match(panel, /data-testid="creator-link-analytics"/);
+  assert.match(panel, /Link clicks · last 30 days/);
+  assert.match(panel, /No link clicks yet/);
+  assert.match(panel, /Loading analytics/);
+  assert.match(panel, /Could not load analytics/);
+  assert.match(profile, /import \{ CreatorLinkAnalytics \}/);
+  assert.match(profile, /isSelf \? <CreatorLinkAnalytics profileId=\{creator\.id\} \/> : null/);
+  assert.match(route, /const isSelf = Boolean\(viewerId && creator\.id === viewerId\)/);
+  assert.match(route, /isSelf=\{isSelf\}/);
+  assert.match(css, /\.creator-link-analytics\s*\{/);
+  assert.match(css, /\.creator-link-analytics-grid\s*\{/);
 });

@@ -30,13 +30,16 @@ import {
   type StitchingMeetupInput,
 } from "../api/meetups";
 import {
+  createGroupDmThreadOnline,
   friendlyDmError,
   listDmMessagesOnline,
   listMyDmThreadsOnline,
   openDmWithStoreOnline,
   openDmWithUserOnline,
   sendDmMessageOnline,
+  subscribeToDmEventsOnline,
   totalDmUnread,
+  uploadDmAttachmentOnline,
   type DmMessage,
   type DmThread,
 } from "../api/dms";
@@ -69,6 +72,7 @@ import { isSupabaseConfigured, requireSupabase } from "../lib/supabase";
 import { loadFromStorage, saveToStorage } from "../lib/storage";
 import { initialMeetups } from "../lib/meetups";
 import { mapJournalError, mapProjectUpdateError, uiCopy } from "../lib/uiCopy";
+import { friendlyUserError } from "../lib/userFacingError";
 import { composeStudioFeed, rankProjectsByInterest } from "../lib/interestRank";
 import {
   blankDraft,
@@ -509,7 +513,7 @@ export function AppShell() {
     );
     if (isSupabaseConfigured && user && project) {
       void toggleProjectLikeOnline(id, user.id, project.isLiked).catch((error) => {
-        setRemoteError(error instanceof Error ? error.message : "Like failed");
+        setRemoteError(friendlyUserError(error, "Like failed"));
       });
     }
   }
@@ -533,7 +537,7 @@ export function AppShell() {
     });
     if (isSupabaseConfigured && user && project) {
       void toggleSaveOnline(user.id, id, project.isSaved).catch((error) => {
-        setRemoteError(error instanceof Error ? error.message : "Save failed");
+        setRemoteError(friendlyUserError(error, "Save failed"));
       });
     }
   }
@@ -610,7 +614,7 @@ export function AppShell() {
     setFollowedCreators((current) => (currently ? current.filter((creatorId) => creatorId !== id) : [...current, id]));
     if (isSupabaseConfigured && user) {
       void toggleFollowOnline(user.id, id, currently).catch((error) => {
-        setRemoteError(error instanceof Error ? error.message : "Follow failed");
+        setRemoteError(friendlyUserError(error, "Follow failed"));
       });
     }
   }
@@ -636,7 +640,7 @@ export function AppShell() {
     // Online only — never required for demo/offline path.
     if (isSupabaseConfigured && user) {
       void toggleStoreFollowOnline(user.id, storeId, currently).catch((error) => {
-        setRemoteError(error instanceof Error ? error.message : "Store follow failed");
+        setRemoteError(friendlyUserError(error, "Store follow failed"));
         // Roll back local toggle if remote fails.
         setFollowedStores((current) => {
           const isFollowing = current.includes(storeId);
@@ -1186,7 +1190,7 @@ export function AppShell() {
     setCommentText("");
     if (isSupabaseConfigured && user && latestUpdateId && !latestUpdateId.startsWith("u") && !latestUpdateId.startsWith("local-")) {
       void addCommentOnline(latestUpdateId, user.id, body).catch((error) => {
-        setRemoteError(error instanceof Error ? error.message : "Comment failed");
+        setRemoteError(friendlyUserError(error, "Comment failed"));
       });
     }
   }
@@ -1206,7 +1210,7 @@ export function AppShell() {
     const current = stitchAlongs.find((event) => event.id === stitchAlongId) ?? stitchAlong;
     if (isSupabaseConfigured && user) {
       void (current.joined ? leaveStitchAlongOnline(current.id, user.id) : joinStitchAlongOnline(current.id, user.id)).catch((error) => {
-        setRemoteError(error instanceof Error ? error.message : "Stitch-along join failed");
+        setRemoteError(friendlyUserError(error, "Stitch-along join failed"));
       });
     }
   }
@@ -1237,7 +1241,7 @@ export function AppShell() {
     });
     if (isSupabaseConfigured && user) {
       void submitToStitchAlongOnline(current.id, projectId, user.id).catch((error) => {
-        setRemoteError(error instanceof Error ? error.message : "Stitch-along submission failed");
+        setRemoteError(friendlyUserError(error, "Stitch-along submission failed"));
       });
     }
   }
@@ -1291,7 +1295,7 @@ export function AppShell() {
         setStitchAlongs((current) => [created, ...current.filter((event) => event.id !== created.id)]);
         navigate(`/stitch-along/${created.id}`);
       } catch (error) {
-        setSalCreateError(error instanceof Error ? error.message : "Could not create stitch-along");
+        setSalCreateError(friendlyUserError(error, "Could not create stitch-along"));
       } finally {
         setSalCreateBusy(false);
       }
@@ -1306,7 +1310,7 @@ export function AppShell() {
     setMeetupCreateError("");
     const topics = (input.topics ?? []).map((t) => t.trim()).filter(Boolean);
     const ownedId = stores.find((store) => store.ownerUserId === meCreatorId)?.id ?? null;
-    let hostStoreId = input.hostStoreId ?? null;
+    const hostStoreId = input.hostStoreId ?? null;
     let storeLinkStatus: StitchingMeetup["storeLinkStatus"] = "none";
     let requestStoreVenue = Boolean(input.requestStoreVenue);
 
@@ -1375,7 +1379,7 @@ export function AppShell() {
         setMeetups((current) => [created, ...current.filter((m) => m.id !== created.id)]);
         navigate(`/meetups/${created.id}`);
       } catch (error) {
-        setMeetupCreateError(error instanceof Error ? error.message : "Could not create meetup");
+        setMeetupCreateError(friendlyUserError(error, "Could not create meetup"));
       } finally {
         setMeetupCreateBusy(false);
       }
@@ -1401,7 +1405,7 @@ export function AppShell() {
         }),
       );
     } catch (error) {
-      setRemoteError(error instanceof Error ? error.message : "Could not update venue request");
+      setRemoteError(friendlyUserError(error, "Could not update venue request"));
     }
   }
 
@@ -1413,7 +1417,7 @@ export function AppShell() {
       const rows = await listMyDmThreadsOnline();
       setDmThreads(rows);
     } catch (error) {
-      setDmError(error instanceof Error ? error.message : "Could not load messages");
+      setDmError(friendlyUserError(error, "Could not load messages"));
     } finally {
       setDmLoading(false);
     }
@@ -1473,7 +1477,7 @@ export function AppShell() {
       }
       setNotifications((prev) => prev.map((n) => ({ ...n, readAt: n.readAt || new Date().toISOString() })));
     } catch (error) {
-      setRemoteError(error instanceof Error ? error.message : "Could not mark notifications read");
+      setRemoteError(friendlyUserError(error, "Could not mark notifications read"));
     }
   }
 
@@ -1496,7 +1500,22 @@ export function AppShell() {
     [user, isDemoMode],
   );
 
-  // Light poll while signed-in on Messages routes
+  useEffect(() => {
+    if (!isSupabaseConfigured || !user || isDemoMode) return;
+    const channel = subscribeToDmEventsOnline((event) => {
+      void refreshDmThreads();
+      if (event.threadId && location.pathname === `/messages/${event.threadId}`) {
+        refreshDmThread(event.threadId);
+      }
+    });
+    return () => {
+      if (channel) {
+        void requireSupabase().removeChannel(channel);
+      }
+    };
+  }, [user?.id, isDemoMode, location.pathname, refreshDmThreads, refreshDmThread]);
+
+  // Light poll while signed-in on Messages routes as a fallback if realtime is delayed
   useEffect(() => {
     if (!isSupabaseConfigured || !user || isDemoMode) return;
     if (!location.pathname.startsWith("/messages")) return;
@@ -1535,7 +1554,7 @@ export function AppShell() {
       setDmThreads((prev) => [thread, ...prev.filter((t) => t.id !== id)]);
       navigate(`/messages/${id}`);
     } catch (error) {
-      setRemoteError(error instanceof Error ? error.message : "Could not open conversation");
+      setRemoteError(friendlyUserError(error, "Could not open conversation"));
     }
   }
 
@@ -1568,32 +1587,66 @@ export function AppShell() {
       setDmThreads((prev) => [thread, ...prev.filter((t) => t.id !== id)]);
       navigate(`/messages/${id}`);
     } catch (error) {
-      setRemoteError(error instanceof Error ? error.message : "Could not message shop");
+      setRemoteError(friendlyUserError(error, "Could not message shop"));
     }
   }
 
-  async function sendDm(threadId: string, body: string) {
+  async function createDmGroup(memberUserIds: string[], title: string) {
+    if (!requireAuth("create a group message")) return;
+    try {
+      if (isSupabaseConfigured && user && !isDemoMode) {
+        const thread = await createGroupDmThreadOnline(memberUserIds, title);
+        setDmThreads((prev) => [thread, ...prev.filter((t) => t.id !== thread.id)]);
+        navigate(`/messages/${thread.id}`);
+        await refreshDmThreads();
+        return;
+      }
+      const memberNames = creators
+        .filter((creator) => memberUserIds.includes(creator.id))
+        .map((creator) => creator.name)
+        .join(", ");
+      const id = `dm-group-demo-${Date.now()}`;
+      const thread: DmThread = {
+        id,
+        kind: "group",
+        title,
+        createdBy: viewerId || DEMO_CREATOR_ID,
+        lastMessagePreview: "",
+        createdAt: new Date().toISOString(),
+        otherDisplayName: title.trim() || memberNames || "Group thread",
+        otherHandle: "",
+        otherAvatarUrl: "",
+        unreadCount: 0,
+        memberCount: memberUserIds.length + 1,
+      };
+      setDmThreads((prev) => [thread, ...prev]);
+      navigate(`/messages/${id}`);
+    } catch (error) {
+      setRemoteError(friendlyUserError(error, "Could not create group"));
+    }
+  }
+
+  async function sendDm(threadId: string, body: string, files: File[] = []) {
     if (!requireAuth("send a message")) return;
     setDmSendBusy(true);
     setDmSendError("");
     try {
       if (isSupabaseConfigured && user && !isDemoMode) {
-        const message = await sendDmMessageOnline(threadId, body);
+        const attachments = await Promise.all(files.map((file) => uploadDmAttachmentOnline(user.id, threadId, file)));
+        const message = await sendDmMessageOnline(threadId, body, attachments);
         setDmMessagesByThread((prev) => ({
           ...prev,
           [threadId]: [...(prev[threadId] ?? []), { ...message, senderId: user.id, senderName: "You" }],
         }));
+        const preview = body.trim().slice(0, 140) || (attachments.length === 1 ? "Sent an attachment" : "Sent attachments");
         setDmThreads((prev) =>
           prev
-            .map((t) =>
-              t.id === threadId
-                ? { ...t, lastMessageAt: message.createdAt, lastMessagePreview: body.slice(0, 140) }
-                : t,
-            )
+            .map((t) => (t.id === threadId ? { ...t, lastMessageAt: message.createdAt, lastMessagePreview: preview } : t))
             .sort((a, b) => String(b.lastMessageAt || b.createdAt).localeCompare(String(a.lastMessageAt || a.createdAt))),
         );
         return;
       }
+      const attachments = await Promise.all(files.map((file) => uploadDmAttachmentOnline(viewerId || DEMO_CREATOR_ID, threadId, file)));
       const message: DmMessage = {
         id: `dmm-${Date.now()}`,
         threadId,
@@ -1602,15 +1655,15 @@ export function AppShell() {
         createdAt: new Date().toISOString(),
         senderName: "You",
         senderHandle: "",
+        attachments,
       };
       setDmMessagesByThread((prev) => ({
         ...prev,
         [threadId]: [...(prev[threadId] ?? []), message],
       }));
+      const preview = body.trim().slice(0, 140) || (attachments.length === 1 ? "Sent an attachment" : "Sent attachments");
       setDmThreads((prev) =>
-        prev.map((t) =>
-          t.id === threadId ? { ...t, lastMessageAt: message.createdAt, lastMessagePreview: body.slice(0, 140) } : t,
-        ),
+        prev.map((t) => (t.id === threadId ? { ...t, lastMessageAt: message.createdAt, lastMessagePreview: preview } : t)),
       );
     } catch (error) {
       setDmSendError(friendlyDmError(error, "Could not send message"));
@@ -1703,7 +1756,7 @@ export function AppShell() {
           );
         })
         .catch((error) => {
-          setRemoteError(error instanceof Error ? error.message : "Registration failed");
+          setRemoteError(friendlyUserError(error, "Registration failed"));
           // Roll back optimistic UI by reloading meetups + rsvps
           setRemoteBootKey((k) => k + 1);
         })
@@ -1752,7 +1805,7 @@ export function AppShell() {
           );
         })
         .catch((error) => {
-          setRemoteError(error instanceof Error ? error.message : "Could not join waitlist");
+          setRemoteError(friendlyUserError(error, "Could not join waitlist"));
           setRemoteBootKey((k) => k + 1);
         })
         .finally(() => setMeetupRsvpBusy(false));
@@ -1836,7 +1889,7 @@ export function AppShell() {
           void refreshNotifications();
         })
         .catch((error) => {
-          setRemoteError(error instanceof Error ? error.message : "Could not cancel registration");
+          setRemoteError(friendlyUserError(error, "Could not cancel registration"));
           setRemoteBootKey((k) => k + 1);
         })
         .finally(() => setMeetupRsvpBusy(false));
@@ -1865,7 +1918,7 @@ export function AppShell() {
           );
         })
         .catch((error) => {
-          setRemoteError(error instanceof Error ? error.message : "Could not confirm seat");
+          setRemoteError(friendlyUserError(error, "Could not confirm seat"));
           setRemoteBootKey((k) => k + 1);
         })
         .finally(() => setMeetupRsvpBusy(false));
@@ -1893,7 +1946,7 @@ export function AppShell() {
     );
     if (isSupabaseConfigured && user) {
       void cancelMeetupOnline(meetupId).catch((error) => {
-        setRemoteError(error instanceof Error ? error.message : "Could not cancel meetup");
+        setRemoteError(friendlyUserError(error, "Could not cancel meetup"));
       });
     }
   }
@@ -1907,7 +1960,7 @@ export function AppShell() {
     }
     if (isSupabaseConfigured && user) {
       void dismissRecommendedProjectOnline(user.id, projectId, surface).catch((error) => {
-        setRemoteError(error instanceof Error ? error.message : "Could not save skip");
+        setRemoteError(friendlyUserError(error, "Could not save skip"));
       });
     }
   }
@@ -2006,12 +2059,14 @@ export function AppShell() {
         onRespondVenueRequest={(meetupId, approve) => void respondMeetupStoreLink(meetupId, approve)}
         dmThreads={dmThreads}
         dmMessagesByThread={dmMessagesByThread}
+        dmCreators={creators}
         dmLoading={dmLoading}
         dmError={dmError}
         dmSendBusy={dmSendBusy}
         dmSendError={dmSendError}
         onRefreshDmThread={refreshDmThread}
-        onSendDm={(threadId, body) => void sendDm(threadId, body)}
+        onSendDm={(threadId, body, files) => void sendDm(threadId, body, files)}
+        onCreateDmGroup={(memberUserIds, title) => void createDmGroup(memberUserIds, title)}
         onMessageUser={(userId) => void messageUser(userId)}
         onMessageStore={(storeId) => void messageStore(storeId)}
         onCreateProduct={(storeId, input, imageFile) => createStoreProduct(storeId, input, imageFile)}

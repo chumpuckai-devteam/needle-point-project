@@ -5,6 +5,7 @@ import type { View } from "../appModel";
 import type { MeetupRosterEntry, StitchingMeetupInput } from "../api/meetups";
 import { isRegisteredStatus, isWaitlistedStatus, listMeetupRegistrationsOnline, setMeetupCheckInByCodeOnline, setMeetupGuestCheckInOnline } from "../api/meetups";
 import { EmptyState, SectionHeader } from "../components/ui";
+import { HostMeetupAnalytics } from "../components/HostMeetupAnalytics";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { downloadMeetupIcs } from "../lib/meetupIcs";
 import {
@@ -236,6 +237,7 @@ export function MeetupsListView({
             />
           ) : (
             <>
+              <HostMeetupAnalytics enabled={Boolean(viewerId)} />
               <section className="meetup-mine-section" aria-label="Registered">
                 <h2 className="meetup-roster-title">Registered ({myRegistered.length})</h2>
                 {myRegistered.length ? (
@@ -784,6 +786,39 @@ export function MeetupDetailView({
               </>
             )}
           </div>
+        ) : null}
+
+        {isHost && !cancelled ? (
+          <section className="meetup-host-stats panel" aria-label="Host meetup stats" data-testid="meetup-host-stats">
+            <h2 className="meetup-roster-title">Meetup draw</h2>
+            <div className="meetup-host-stats-grid">
+              <div>
+                <strong>{meetup.registeredCount ?? meetup.goingCount ?? rosterRegistered.length}</strong>
+                <span>Registered</span>
+              </div>
+              <div>
+                <strong>{meetup.waitlistCount ?? 0}</strong>
+                <span>Waitlist</span>
+              </div>
+              <div>
+                <strong>
+                  {meetup.capacity != null
+                    ? `${meetup.spotsLeft ?? Math.max(meetup.capacity - (meetup.registeredCount ?? 0), 0)} left`
+                    : "Open"}
+                </strong>
+                <span>{meetup.capacity != null ? `of ${meetup.capacity} seats` : "capacity"}</span>
+              </div>
+              <div>
+                <strong>
+                  {rosterRegistered.length
+                    ? `${checkedInCount}/${rosterRegistered.length}`
+                    : checkedInCount}
+                </strong>
+                <span>Checked in</span>
+              </div>
+            </div>
+            <p className="field-help">Live counts for this night. Roster details stay private to you.</p>
+          </section>
         ) : null}
 
         {isHost && !cancelled ? (

@@ -110,12 +110,14 @@ export type AppRoutesProps = {
   /** Private DMs */
   dmThreads: DmThread[];
   dmMessagesByThread: Record<string, DmMessage[]>;
+  dmCreators: Creator[];
   dmLoading?: boolean;
   dmError?: string;
   dmSendBusy?: boolean;
   dmSendError?: string;
   onRefreshDmThread: (threadId: string) => void;
-  onSendDm: (threadId: string, body: string) => void | Promise<void>;
+  onSendDm: (threadId: string, body: string, files: File[]) => void | Promise<void>;
+  onCreateDmGroup: (memberUserIds: string[], title: string) => void | Promise<void>;
   onMessageUser?: (userId: string) => void | Promise<void>;
   onMessageStore?: (storeId: string) => void | Promise<void>;
   onCreateProduct: (storeId: string, input: StoreProductInput, imageFile?: File | null) => Promise<void>;
@@ -326,6 +328,8 @@ export function AppRoutes(props: AppRoutesProps) {
             setView={props.setView}
             onRefreshThread={props.onRefreshDmThread}
             onSend={props.onSendDm}
+            creators={props.dmCreators}
+            onCreateGroup={props.onCreateDmGroup}
           />
         }
       />
@@ -344,6 +348,8 @@ export function AppRoutes(props: AppRoutesProps) {
             setView={props.setView}
             onRefreshThread={props.onRefreshDmThread}
             onSend={props.onSendDm}
+            creators={props.dmCreators}
+            onCreateGroup={props.onCreateDmGroup}
           />
         }
       />

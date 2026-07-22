@@ -2,7 +2,7 @@
 
 Needlepoint Project is a Vite + React + TypeScript private-beta app for needlepoint makers: **Studio** feed, project journals, Discover, collections, stitch-alongs, **stitching meetups**, and **shop connections** (catalog link-outs, follow, owner tools).
 
-Start with [PRD.md](./PRD.md) for product scope and **Post-MVP Roadmap** (Phase B = stitching meetups). Business money path: [docs/monetization-strategies.md](./docs/monetization-strategies.md). **Out of scope for now:** marketplace checkout, carts, DMs, native mobile apps, Algolia; full event ticketing is out of the first meetup slice.
+Start with [PRD.md](./PRD.md) for product scope and **Post-MVP Roadmap** (Phase B = stitching meetups; Phase D / Epic X commerce is **PARKED**). Business money path: [docs/monetization-strategies.md](./docs/monetization-strategies.md). **Out of scope for now:** marketplace checkout, carts, Stripe Connect, in-app kit sales, DMs, native mobile apps, Algolia; full event ticketing is out of the first meetup slice.
 
 **Prod:** https://needle-point-project.vercel.app
 

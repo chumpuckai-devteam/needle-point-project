@@ -4,6 +4,7 @@ import type { View } from "../appModel";
 import type { ReportInput } from "../api/reports";
 import { EmptyState, SectionTitle } from "../components/ui";
 import { ReportControl } from "../components/ReportControl";
+import { CreatorLinkAnalytics } from "../components/CreatorLinkAnalytics";
 
 export function ProfileView({
   creator,
@@ -78,6 +79,7 @@ export function ProfileView({
           </a>
         ))}
       </div>
+      {isSelf ? <CreatorLinkAnalytics profileId={creator.id} /> : null}
       <SectionTitle title={isSelf ? "Your projects" : "Projects"} />
       {projects.length ? (
         <div className="ig-grid" aria-label="Profile project grid">

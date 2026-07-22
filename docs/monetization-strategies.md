@@ -28,7 +28,7 @@ Needlepoint people split work across Instagram, Pinterest, Etsy, notes, and Face
 | Outbound click analytics (intent, no checkout) | Designed / partial–present |
 | Meetups: on-site register/waitlist/host roster | Phase B shipping |
 | DMs: user↔user and user↔store | M3 live |
-| Checkout / cart / Stripe Connect | Explicitly **parked** |
+| Checkout / cart / Stripe Connect / in-app kit sales | **PARKED / non-goal** until engagement is proven |
 
 ### Business maturity
 
@@ -152,10 +152,10 @@ Phase B.1 in PRD: tickets after free RSVP is trusted.
 
 ### Tier 3 — Later / careful
 
-#### 3.7 Full marketplace (cart, Connect, multi-vendor)
+#### 3.7 Full marketplace (cart, checkout, Stripe Connect, kit sales)
 
-Parked for good reasons. Highest revenue ceiling; highest ops/support/legal surface.  
-**Only after** outbound clicks and shop follows prove purchase intent.
+**PARKED / non-goal.** Highest revenue ceiling; highest ops/support/legal surface. Do not queue carts, checkout, Stripe Connect, or in-app kit-sales implementation.
+**Unlock condition:** revisit only after outbound clicks, shop follows, repeat weekly use, and other engagement signals prove purchase intent.
 
 #### 3.8 Display ads
 

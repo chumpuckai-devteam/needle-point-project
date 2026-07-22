@@ -123,6 +123,62 @@ const FEATURED_PRODUCTS: Record<string, Store["products"]> = {
       category: "class",
     },
   ],
+  portlandcanvasandthread: [
+    {
+      id: "sp10",
+      storeId: "demo-portlandcanvasandthread",
+      name: "Painted canvas starter",
+      description: "18-mesh beginner-friendly painted canvas.",
+      image: "/assets/needlepoint-hero.png",
+      priceLabel: "from $54",
+      externalUrl: "https://example.com/shop/canvas-starter",
+      category: "canvas",
+    },
+    {
+      id: "sp11",
+      storeId: "demo-portlandcanvasandthread",
+      name: "Thread sampler pack",
+      description: "Mixed cotton and silk accents for small projects.",
+      image: "/assets/blue-hydrangea-belt.jpg",
+      priceLabel: "$32",
+      externalUrl: "https://example.com/shop/thread-sampler",
+      category: "thread",
+    },
+  ],
+  atlantacanvasloft: [
+    {
+      id: "sp12",
+      storeId: "demo-atlantacanvasloft",
+      name: "Painted canvas starter",
+      description: "18-mesh beginner-friendly painted canvas.",
+      image: "/assets/needlepoint-hero.png",
+      priceLabel: "from $54",
+      externalUrl: "https://example.com/shop/canvas-starter",
+      category: "canvas",
+    },
+    {
+      id: "sp13",
+      storeId: "demo-atlantacanvasloft",
+      name: "Finishing voucher",
+      description: "Local finishing credit for ornaments and belts.",
+      image: "/assets/tiny-ski-lodge-ornament.jpg",
+      priceLabel: "from $40",
+      externalUrl: "https://example.com/shop/finishing",
+      category: "finishing",
+    },
+  ],
+  chicagocanvasloft: [
+    {
+      id: "sp14",
+      storeId: "demo-chicagocanvasloft",
+      name: "Thread sampler pack",
+      description: "Mixed cotton and silk accents for small projects.",
+      image: "/assets/blue-hydrangea-belt.jpg",
+      priceLabel: "$32",
+      externalUrl: "https://example.com/shop/thread-sampler",
+      category: "thread",
+    },
+  ],
 };
 
 function mapCatalogStore(store: CatalogStore, index: number): Store {

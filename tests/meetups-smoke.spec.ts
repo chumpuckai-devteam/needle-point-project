@@ -118,5 +118,22 @@ test.describe("Stitching meetups smoke", () => {
     expect(analytics).toContain("fetchOutboundClickEventCounts");
     const storeDetail = readFileSync(resolve(root, "src/pages/StoreDetailPage.tsx"), "utf8");
     expect(storeDetail).toContain("StoreOwnerAnalytics");
+    const hostAnalytics = readFileSync(resolve(root, "src/components/HostMeetupAnalytics.tsx"), "utf8");
+    expect(hostAnalytics).toContain("fetchHostMeetupDrawStats");
+    expect(hostAnalytics).toContain("host-meetup-analytics");
+    expect(page).toContain("HostMeetupAnalytics");
+    expect(migrations).toContain("host_meetup_draw_stats");
   });
 });
+
+  test("host meetup draw + profile link analytics wired", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { resolve, dirname } = await import("node:path");
+    const { fileURLToPath } = await import("node:url");
+    const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+    expect(readFileSync(resolve(root, "src/pages/MeetupsPage.tsx"), "utf8")).toContain("meetup-host-stats");
+    expect(readFileSync(resolve(root, "src/pages/ProfilePage.tsx"), "utf8")).toContain("CreatorLinkAnalytics");
+    expect(readFileSync(resolve(root, "src/components/CreatorLinkAnalytics.tsx"), "utf8")).toContain("fetchCreatorLinkClickCounts");
+    expect(readFileSync(resolve(root, "src/lib/userFacingError.ts"), "utf8")).toContain("column reference");
+  });
+

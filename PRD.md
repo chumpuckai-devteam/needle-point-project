@@ -41,6 +41,7 @@ This fragmentation makes it hard to find relevant patterns, remember materials, 
 
 - Competing head-on with Instagram, X/Twitter, or Pinterest for broad social behavior.
 - Building a full marketplace in the first release.
+- **PARKED / non-goal: Phase D / Epic X commerce** — no carts, checkout, Stripe Connect, or in-app kit sales until engagement is proven.
 - Supporting every fiber art category at launch.
 - Creating complex creator monetization before engagement and retention are proven.
 - Building private messaging before public community behavior is validated.
@@ -529,13 +530,14 @@ Build only after free registration is trusted:
 ### Phase C — Deeper community & creator value
 
 - Richer stitch-along hosting tools.
-- Creator analytics (link clicks, meetup draw). **Store owner outbound click panel (shipped)** — 30-day product + website totals on own shop.
+- Creator analytics (link clicks, meetup draw). **Store owner outbound click panel (shipped)** — 30-day product + website totals on own shop. **Creator profile link clicks panel (shipped)**. **Host meetup draw strip (shipped)**.
 - Guilds / groups (lighter than full forums).
 - **Private DMs (M3.A + M3.B live)** — 1:1 user↔user and user↔store. Inbox `/messages`, Message CTAs, **unread badges**, mark-read on open, light poll while viewing. No groups / media / websockets yet.
 
-### Phase D — Commerce (only after engagement)
+### Phase D — Commerce (PARKED / non-goal until engagement)
 
-- Explicitly parked until utility + density prove weekly return: checkout, carts, Stripe Connect, in-app kit sales.
+- **Status: PARKED / non-goal.** Do not queue implementation work for carts, checkout, Stripe Connect, or in-app kit sales.
+- **Unlock condition:** only revisit after proven engagement — utility + density show weekly return and purchase intent through link-outs/shop follows/outbound clicks.
 
 ## First Release Checklist
 

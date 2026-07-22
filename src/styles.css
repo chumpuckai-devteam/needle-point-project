@@ -4749,7 +4749,7 @@ label textarea::placeholder {
 .dm-compose {
   display: grid;
   gap: 0.55rem;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
   align-items: end;
 }
 .dm-compose-field {
@@ -4763,6 +4763,53 @@ label textarea::placeholder {
 .dm-compose .primary {
   min-height: 44px;
   white-space: nowrap;
+}
+.dm-group-composer {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+.dm-group-composer form {
+  display: grid;
+  gap: 0.75rem;
+}
+.group-member-picker {
+  display: grid;
+  gap: 0.35rem;
+}
+.dm-attach-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.dm-attachment-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+.dm-attachment-list li {
+  display: grid;
+  gap: 0.25rem;
+}
+.dm-attachment-list img {
+  display: block;
+  max-width: min(100%, 18rem);
+  max-height: 14rem;
+  border-radius: 10px;
+  object-fit: cover;
+}
+.dm-attachment-list a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: inherit;
+  font-weight: 700;
 }
 @media (max-width: 640px) {
   .dm-compose {
@@ -4958,4 +5005,119 @@ label textarea::placeholder {
 .store-owner-analytics-grid span {
   font-size: 0.8rem;
   color: color-mix(in srgb, var(--ink, #2f3a2e) 58%, transparent);
+}
+
+/* C · host meetup draw analytics */
+.host-meetup-analytics {
+  margin: 0.75rem 0 1rem;
+  padding: 0.9rem 1rem;
+}
+.host-meetup-analytics-title {
+  margin: 0 0 0.55rem;
+  font-size: 1.05rem;
+}
+.host-meetup-analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 0.45rem;
+}
+.host-meetup-analytics-grid div {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 12px;
+  background: #f7f4ee;
+}
+.host-meetup-analytics-grid strong {
+  font-size: 1.25rem;
+}
+.host-meetup-analytics-grid span {
+  font-size: 0.8rem;
+  color: color-mix(in srgb, var(--ink, #2f3a2e) 58%, transparent);
+}
+@media (max-width: 640px) {
+  .host-meetup-analytics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* C.B creator profile link analytics (mirrors store-owner-analytics) */
+.creator-link-analytics {
+  margin: 0.75rem 0 1rem;
+  padding: 0.9rem 1rem;
+}
+.creator-link-analytics-title {
+  margin: 0 0 0.55rem;
+  font-size: 1.05rem;
+}
+.creator-link-analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 0.45rem;
+}
+.creator-link-analytics-grid div {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 12px;
+  background: #f7f4ee;
+}
+.creator-link-analytics-grid strong {
+  font-size: 1.25rem;
+}
+.creator-link-analytics-grid span {
+  font-size: 0.8rem;
+  color: color-mix(in srgb, var(--ink, #2f3a2e) 58%, transparent);
+}
+.creator-link-analytics-list {
+  list-style: none;
+  margin: 0 0 0.45rem;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+.creator-link-analytics-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.4rem 0.55rem;
+  border-radius: 10px;
+  background: #f7f4ee;
+}
+.creator-link-analytics-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* C host meetup draw */
+.meetup-host-stats {
+  margin: 0.75rem 0;
+}
+.meetup-host-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+.meetup-host-stats-grid div {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.5rem 0.55rem;
+  border-radius: 12px;
+  background: #f7f4ee;
+}
+.meetup-host-stats-grid strong {
+  font-size: 1.1rem;
+}
+.meetup-host-stats-grid span {
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--ink, #2f3a2e) 58%, transparent);
+}
+@media (max-width: 640px) {
+  .meetup-host-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
