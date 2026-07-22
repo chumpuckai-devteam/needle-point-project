@@ -12,6 +12,7 @@ export function CollectionsView({
   onCreateCollection,
   onRenameCollection,
   onDeleteCollection,
+  onRemoveProjectFromCollection,
 }: {
   collections: Collection[];
   projects: Project[];
@@ -21,6 +22,7 @@ export function CollectionsView({
   onCreateCollection?: (input: { name: string; description: string }) => void | Promise<void>;
   onRenameCollection?: (id: string, input: { name: string; description: string }) => void | Promise<void>;
   onDeleteCollection?: (id: string) => void | Promise<void>;
+  onRemoveProjectFromCollection?: (collectionId: string, projectId: string) => void | Promise<void>;
 }) {
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
@@ -171,13 +173,24 @@ export function CollectionsView({
                   .map((id) => projects.find((project) => project.id === id))
                   .filter((project): project is Project => Boolean(project))
                   .map((project) => (
-                    <button className="saved-tile" key={project.id} type="button" onClick={() => setView({ name: "project", id: project.id })}>
-                      <img src={project.image} alt="" />
-                      <span>
-                        {project.title}
-                        <small>{creatorById(project.creatorId).name}</small>
-                      </span>
-                    </button>
+                    <div className="saved-tile-wrap" key={project.id}>
+                      <button className="saved-tile" type="button" onClick={() => setView({ name: "project", id: project.id })}>
+                        <img src={project.image} alt="" />
+                        <span>
+                          {project.title}
+                          <small>{creatorById(project.creatorId).name}</small>
+                        </span>
+                      </button>
+                      {canManage && onRemoveProjectFromCollection ? (
+                        <button
+                          type="button"
+                          className="text-button saved-tile-remove"
+                          onClick={() => void onRemoveProjectFromCollection(collection.id, project.id)}
+                        >
+                          Remove
+                        </button>
+                      ) : null}
+                    </div>
                   ))}
                 {collection.projectIds.length === 0 ? (
                   <EmptyState title="Nothing saved here yet" body="Save projects from Studio or Discover to fill this board." />

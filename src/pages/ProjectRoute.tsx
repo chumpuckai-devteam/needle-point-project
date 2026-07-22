@@ -29,6 +29,8 @@ export function ProjectRoute(props: {
   toggleFollow: (id: string) => void;
   toggleLike: (id: string) => void;
   toggleSave: (id: string) => void;
+  collections?: import("../types").Collection[];
+  onSetProjectInCollection?: (collectionId: string, projectId: string, shouldContain: boolean) => void | Promise<void>;
   shareProject: (id: string) => void;
   saveProjectEdits: (id: string, draft: DraftProject & { progress: number }, imageFile?: File | null) => Promise<void>;
   isOwnerFor: (project: Project) => boolean;
@@ -86,6 +88,8 @@ export function ProjectRoute(props: {
       toggleFollow={props.toggleFollow}
       toggleLike={props.toggleLike}
       toggleSave={props.toggleSave}
+      collections={props.collections}
+      onSetProjectInCollection={props.onSetProjectInCollection}
       shareProject={props.shareProject}
       saveProjectEdits={props.saveProjectEdits}
       stores={props.stores}

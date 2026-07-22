@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useId, useState } from "react";
 import { Bookmark, ExternalLink, Heart, Share2, Store as StoreIcon, UserRound } from "lucide-react";
-import type { Creator, Difficulty, Project, Status, Store, StoreProduct } from "../types";
+import type { Collection, Creator, Difficulty, Project, Status, Store, StoreProduct } from "../types";
 import type { DraftProject, View } from "../appModel";
 import type { ReportInput } from "../api/reports";
 import { difficultyOptions, statusOptions, visibilityHelp, visibilityLabel } from "../appModel";
@@ -48,6 +48,8 @@ export function ProjectDetail(props: {
   toggleFollow: (id: string) => void;
   toggleLike: (id: string) => void;
   toggleSave: (id: string) => void;
+  collections?: Collection[];
+  onSetProjectInCollection?: (collectionId: string, projectId: string, shouldContain: boolean) => void | Promise<void>;
   shareProject: (id: string) => void;
   saveProjectEdits: (id: string, draft: DraftProject & { progress: number }, imageFile?: File | null) => Promise<void>;
   stores: Store[];
@@ -58,6 +60,9 @@ export function ProjectDetail(props: {
   const isFollowed = props.followedCreators.includes(props.creator.id);
   const [editing, setEditing] = useState(false);
   const [editBusy, setEditBusy] = useState(false);
+  const [showBoards, setShowBoards] = useState(false);
+  const [boardBusyId, setBoardBusyId] = useState<string | null>(null);
+  const boards = props.collections ?? [];
   const [editError, setEditError] = useState("");
   const [editDraft, setEditDraft] = useState<DraftProject & { progress: number }>(() => projectToDraft(props.project));
   const [editPreview, setEditPreview] = useState("");
@@ -425,8 +430,18 @@ export function ProjectDetail(props: {
                   <Heart size={17} /> {props.project.likes}
                 </button>
                 <button type="button" onClick={() => props.toggleSave(props.project.id)} className={props.project.isSaved ? "selected" : ""}>
-                  <Bookmark size={17} /> Save
+                  <Bookmark size={17} /> {props.project.isSaved ? "Saved" : "Save"}
                 </button>
+                {props.onSetProjectInCollection && boards.length ? (
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => setShowBoards((open) => !open)}
+                    data-testid="save-to-board-toggle"
+                  >
+                    {showBoards ? "Hide boards" : "Save to board"}
+                  </button>
+                ) : null}
                 {!props.isOwner && (
                   <button type="button" onClick={() => props.toggleFollow(props.creator.id)} className={isFollowed ? "selected" : ""}>
                     <UserRound size={17} /> {isFollowed ? "Following" : "Follow"}
@@ -438,6 +453,38 @@ export function ProjectDetail(props: {
                   </button>
                 )}
               </div>
+              {showBoards && props.onSetProjectInCollection && boards.length ? (
+                <div className="panel project-board-picker" data-testid="project-board-picker">
+                  <p className="field-help">Add this project to one or more boards. Bookmark still toggles your default Saved board quickly.</p>
+                  <ul className="project-board-list">
+                    {boards.map((board) => {
+                      const checked = board.projectIds.includes(props.project.id);
+                      return (
+                        <li key={board.id}>
+                          <label className="checkbox-field">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              disabled={boardBusyId === board.id}
+                              onChange={(event) => {
+                                const next = event.target.checked;
+                                setBoardBusyId(board.id);
+                                void Promise.resolve(props.onSetProjectInCollection?.(board.id, props.project.id, next)).finally(() =>
+                                  setBoardBusyId(null),
+                                );
+                              }}
+                            />
+                            <span>
+                              {board.name}
+                              {board.isDefault || board.id === "col1" ? " · Default" : ""}
+                            </span>
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ) : null}
               <Meta label="Difficulty" value={props.project.difficulty} />
               <Meta label="Canvas" value={props.project.canvasType} />
               <Meta label="Materials" value={props.project.materials.join(", ") || "—"} />

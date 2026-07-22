@@ -2,9 +2,11 @@ import { createProjectOnline, fetchRecommendedProjects, dismissRecommendedProjec
 import { fetchProfiles, toggleFollowOnline } from "../api/profiles";
 import { addCommentOnline, toggleProjectLikeOnline, toggleSaveOnline } from "../api/social";
 import {
+  addProjectToCollectionOnline,
   createCollectionOnline,
   deleteCollectionOnline,
   listCollectionsOnline,
+  removeProjectFromCollectionOnline,
   renameCollectionOnline,
 } from "../api/collections";
 import { submitReportOnline, type ReportInput } from "../api/reports";
@@ -581,6 +583,49 @@ export function AppShell() {
       await deleteCollectionOnline({ id: target.id, isDefault: Boolean(target.isDefault) });
     }
     setCollections((current) => current.filter((c) => c.id !== id));
+  }
+
+  /** Add/remove a project on a named board; bookmark state follows “any board”. */
+  async function setProjectInCollection(collectionId: string, projectId: string, shouldContain: boolean) {
+    if (!requireAuth("save posts")) throw new Error("Sign in to save posts.");
+    const project = projects.find((item) => item.id === projectId);
+    if (!project) return;
+
+    setCollections((current) =>
+      current.map((collection) => {
+        if (collection.id !== collectionId) return collection;
+        const has = collection.projectIds.includes(projectId);
+        if (shouldContain && !has) return { ...collection, projectIds: [...collection.projectIds, projectId] };
+        if (!shouldContain && has) {
+          return { ...collection, projectIds: collection.projectIds.filter((id) => id !== projectId) };
+        }
+        return collection;
+      }),
+    );
+
+    // isSaved = present on any board after local update
+    setProjects((current) =>
+      current.map((item) => {
+        if (item.id !== projectId) return item;
+        // compute from next collections snapshot via functional update already applied — use collections state may lag;
+        // approximate: if adding, saved true; if removing, check other boards
+        if (shouldContain) return { ...item, isSaved: true };
+        const stillOnOther = collections.some(
+          (c) => c.id !== collectionId && c.projectIds.includes(projectId),
+        );
+        return { ...item, isSaved: stillOnOther };
+      }),
+    );
+
+    if (isSupabaseConfigured && user && !isDemoMode) {
+      try {
+        if (shouldContain) await addProjectToCollectionOnline(collectionId, projectId);
+        else await removeProjectFromCollectionOnline(collectionId, projectId);
+      } catch (error) {
+        setRemoteError(friendlyUserError(error, "Could not update board"));
+        setRemoteBootKey((k) => k + 1);
+      }
+    }
   }
 
   async function submitReport(input: ReportInput) {
@@ -2035,6 +2080,9 @@ export function AppShell() {
         onCreateCollection={(input) => createCollection(input)}
         onRenameCollection={(id, input) => renameCollection(id, input)}
         onDeleteCollection={(id) => deleteCollection(id)}
+        onSetProjectInCollection={(collectionId, projectId, shouldContain) =>
+          setProjectInCollection(collectionId, projectId, shouldContain)
+        }
         onReport={(input) => submitReport(input)}
         draft={draft}
         setDraft={setDraft}

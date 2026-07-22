@@ -55,7 +55,7 @@ The MVP is complete when users can:
 - Create project journal entries with photos, status, notes, and materials.
 - Tag projects with stitch type, canvas type, thread/brand, difficulty, color palette, and pattern source.
 - Browse and search public projects.
-- Save projects to personal collections.
+- Save projects to personal collections. **Multi named boards (shipped)** — create/rename/delete boards; project detail **Save to board** checkboxes; remove from board on Saved page. Bookmark still toggles default Saved.
 - Follow creators or other stitchers.
 - Like and comment on project updates.
 - Join a featured stitch-along or challenge.

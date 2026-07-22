@@ -84,6 +84,7 @@ export type AppRoutesProps = {
   onCreateCollection: (input: { name: string; description: string }) => Promise<void>;
   onRenameCollection: (id: string, input: { name: string; description: string }) => Promise<void>;
   onDeleteCollection: (id: string) => Promise<void>;
+  onSetProjectInCollection: (collectionId: string, projectId: string, shouldContain: boolean) => void | Promise<void>;
   onReport: (input: import("../api/reports").ReportInput) => Promise<void>;
   draft: DraftProject;
   setDraft: Dispatch<SetStateAction<DraftProject>>;
@@ -252,6 +253,7 @@ export function AppRoutes(props: AppRoutesProps) {
             onCreateCollection={props.onCreateCollection}
             onRenameCollection={props.onRenameCollection}
             onDeleteCollection={props.onDeleteCollection}
+            onRemoveProjectFromCollection={(collectionId, projectId) => props.onSetProjectInCollection(collectionId, projectId, false)}
           />
         }
       />
@@ -487,6 +489,8 @@ export function AppRoutes(props: AppRoutesProps) {
             toggleFollow={props.toggleFollow}
             toggleLike={props.toggleLike}
             toggleSave={props.toggleSave}
+            collections={props.collections}
+            onSetProjectInCollection={props.onSetProjectInCollection}
             shareProject={props.shareProject}
             saveProjectEdits={props.saveProjectEdits}
             isOwnerFor={props.isOwnerFor}
