@@ -42,6 +42,7 @@ export function AuthPage() {
           <SectionHeader eyebrow="Account" title={`Demo mode active as @${handle}`} />
           <p className="auth-lead">Supabase is not configured in this build, so you are using a local demo session.</p>
           <AuthForm mode="signin" />
+          <HelpTipsRecallPanel />
         </div>
       </section>
     );
