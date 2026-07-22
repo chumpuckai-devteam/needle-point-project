@@ -6,6 +6,7 @@ import { fetchPublicProjects } from "../api/projects";
 import { AuthForm, useAuth } from "../context/AuthContext";
 import { MyReportsPanel } from "../components/MyReportsPanel";
 import { HelpTipsRecallPanel } from "../components/HelpTipsRecallPanel";
+import { ThemeToggle } from "../components/ThemeToggle";
 import { useHelpTips } from "../context/HelpTipsContext";
 import { userIsModerator } from "../api/reports";
 import { isSupabaseConfigured } from "../lib/supabase";
@@ -43,6 +44,7 @@ export function AuthPage() {
           <p className="auth-lead">Supabase is not configured in this build, so you are using a local demo session.</p>
           <AuthForm mode="signin" />
           <HelpTipsRecallPanel />
+          <ThemeToggle />
         </div>
       </section>
     );
@@ -103,6 +105,7 @@ export function AuthPage() {
           </button>{" "}
           (skippable, browse-only).
         </p>
+        <ThemeToggle />
       </div>
     </section>
   );
@@ -298,6 +301,7 @@ function AccountSettings({
         </div>
       </div>
       <HelpTipsRecallPanel />
+      <ThemeToggle />
       <MyReportsPanel enabled />
       {isModerator ? (
         <div className="panel" data-testid="moderation-entry">

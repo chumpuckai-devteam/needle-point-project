@@ -3,7 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
     <title>Needlepoint Project</title>
+    <script>
+      (function () {
+        try {
+          var key = "needlepoint:themePreference";
+          var pref = localStorage.getItem(key);
+          if (pref) {
+            try {
+              var parsed = JSON.parse(pref);
+              if (parsed === "light" || parsed === "dark" || parsed === "system") pref = parsed;
+            } catch (e) {}
+          }
+          if (pref !== "light" && pref !== "dark" && pref !== "system") pref = "system";
+          var resolved =
+            pref === "system"
+              ? window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light"
+              : pref;
+          document.documentElement.dataset.theme = resolved;
+          document.documentElement.style.colorScheme = resolved;
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

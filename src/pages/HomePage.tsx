@@ -14,6 +14,7 @@ import { FeedPost, FollowedStoresRail, type FollowedStoreRailItem } from "../com
 import { EmptyState, ErrorState, FeedListSkeleton } from "../components/ui";
 import { uiCopy } from "../lib/uiCopy";
 import { HOME_BRAND, HOME_FEED_ARIA } from "../lib/brand";
+import { ThemeToggle } from "../components/ThemeToggle";
 
 export function HomeView(props: {
   projects: Project[];
@@ -115,6 +116,12 @@ export function HomeView(props: {
           )}
         </div>
       </header>
+
+      {!canPost ? (
+        <div className="guest-theme-slot" data-testid="guest-theme-toggle">
+          <ThemeToggle compact />
+        </div>
+      ) : null}
 
       {activeStitchAlongs.length > 0 ? (
         <section className="studio-sal-rail" aria-label="Active stitch-alongs">

@@ -7,8 +7,8 @@
   --np-teal: #3f6f5b;
   --np-gold: #c9a66b;
   --touch-min: 44px;
-  color: #1f2a24;
-  background: #f7f4ee;
+  color: var(--np-ink);
+  background: var(--np-bg);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
@@ -302,10 +302,11 @@ p {
 .empty-state,
 .error-state,
 .page-loading {
-  border: 1px solid #e1d8cd;
+  border: 1px solid var(--np-line-strong, #e1d8cd);
   border-radius: 8px;
-  background: #fffdf9;
-  box-shadow: 0 14px 36px rgba(54, 46, 39, 0.08);
+  background: var(--np-panel-soft, #fffdf9);
+  box-shadow: var(--np-shadow, 0 14px 36px rgba(54, 46, 39, 0.08));
+  color: var(--np-ink);
 }
 
 .panel {
@@ -2431,14 +2432,44 @@ a.store-card:focus-visible {
   --np-muted: #5f6b63;
   --np-bg: #f7f4ee;
   --np-panel: #ffffff;
+  --np-panel-soft: #fffdf9;
   --np-line: #d9d2c6;
+  --np-line-strong: #e1d8cd;
   --np-teal: #3f6f5b;
   --np-teal-soft: rgba(63, 111, 91, 0.12);
   --np-coral: #b86b45;
   --np-coral-soft: rgba(184, 107, 69, 0.14);
   --np-gold: #c9a66b;
   --np-gold-soft: rgba(201, 166, 107, 0.18);
+  --np-input-bg: #ffffff;
+  --np-shadow: 0 14px 36px rgba(54, 46, 39, 0.08);
+  --np-feed-hover: rgba(63, 111, 91, 0.04);
+  --np-chip-bg: rgba(255, 255, 255, 0.72);
   --touch-min: 44px;
+  color-scheme: light;
+  color: var(--np-ink);
+  background: var(--np-bg);
+}
+
+html[data-theme="dark"] {
+  --np-ink: #eef3ef;
+  --np-muted: #a7b4ac;
+  --np-bg: #121916;
+  --np-panel: #1b2420;
+  --np-panel-soft: #1f2a25;
+  --np-line: #2c3a33;
+  --np-line-strong: #35443c;
+  --np-teal: #7fb59a;
+  --np-teal-soft: rgba(127, 181, 154, 0.16);
+  --np-coral: #e09a78;
+  --np-coral-soft: rgba(224, 154, 120, 0.16);
+  --np-gold: #d4b57d;
+  --np-gold-soft: rgba(212, 181, 125, 0.18);
+  --np-input-bg: #151d19;
+  --np-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  --np-feed-hover: rgba(127, 181, 154, 0.07);
+  --np-chip-bg: rgba(27, 36, 32, 0.92);
+  color-scheme: dark;
   color: var(--np-ink);
   background: var(--np-bg);
 }
@@ -2455,6 +2486,13 @@ body {
     var(--np-bg);
   color: var(--np-ink);
   grid-template-columns: minmax(84px, 250px) minmax(0, 1fr);
+}
+
+html[data-theme="dark"] .app-shell {
+  background:
+    radial-gradient(circle at top left, rgba(127, 181, 154, 0.08), transparent 32%),
+    radial-gradient(circle at top right, rgba(212, 181, 125, 0.08), transparent 28%),
+    var(--np-bg);
 }
 
 .sidebar {
@@ -5947,4 +5985,164 @@ label textarea::placeholder {
 }
 .project-comment {
   position: relative;
+}
+
+
+/* —— Theme toggle + dark surface polish —— */
+.theme-toggle {
+  margin-top: 0.75rem;
+}
+.theme-toggle-head {
+  margin-bottom: 0.75rem;
+}
+.theme-toggle-title {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+}
+.theme-toggle-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+.theme-toggle-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  min-height: var(--touch-min);
+  padding: 0.7rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--np-line);
+  background: var(--np-input-bg, var(--np-panel));
+  color: var(--np-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.theme-toggle-option strong {
+  display: block;
+  font-size: 0.92rem;
+}
+.theme-toggle-option small {
+  display: block;
+  margin-top: 0.1rem;
+  color: var(--np-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+.theme-toggle-option.selected {
+  border-color: var(--np-teal);
+  background: var(--np-teal-soft);
+  box-shadow: inset 0 0 0 1px var(--np-teal);
+}
+.theme-toggle-compact {
+  margin: 0 16px 10px;
+  padding: 12px 14px;
+}
+.theme-toggle-compact .theme-toggle-options {
+  gap: 0.4rem;
+}
+.theme-toggle-compact .theme-toggle-option {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.6rem;
+}
+.theme-toggle-compact .theme-toggle-option strong {
+  font-size: 0.85rem;
+}
+.guest-theme-slot {
+  margin-bottom: 0.25rem;
+}
+
+/* Dark-mode surface fixes for hardcoded light chips */
+html[data-theme="dark"] .feed-post:hover {
+  background: var(--np-feed-hover);
+}
+html[data-theme="dark"] .feed-post-text {
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .feed-media {
+  background: #1a221e;
+  border-color: rgba(212, 181, 125, 0.22);
+}
+html[data-theme="dark"] .followed-stores-rail,
+html[data-theme="dark"] .feed-store-strip-block,
+html[data-theme="dark"] .feed-store-strip {
+  background: rgba(27, 36, 32, 0.55);
+}
+html[data-theme="dark"] .followed-stores-empty {
+  background: var(--np-panel-soft);
+  border-color: rgba(127, 181, 154, 0.28);
+}
+html[data-theme="dark"] .palace-feed-section {
+  border-top-color: rgba(127, 181, 154, 0.22);
+  background: linear-gradient(180deg, rgba(127, 181, 154, 0.06) 0%, transparent 72px), transparent;
+}
+html[data-theme="dark"] .secondary {
+  background: var(--np-panel-soft);
+  color: var(--np-ink);
+  border-color: var(--np-line);
+}
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select {
+  background: var(--np-input-bg);
+  color: var(--np-ink);
+  border-color: var(--np-line);
+}
+html[data-theme="dark"] .field-help,
+html[data-theme="dark"] .feed-subtitle,
+html[data-theme="dark"] .palace-feed-lede,
+html[data-theme="dark"] .palace-feed-kicker {
+  color: var(--np-muted);
+}
+html[data-theme="dark"] .feed-title,
+html[data-theme="dark"] .palace-feed-title,
+html[data-theme="dark"] h1,
+html[data-theme="dark"] h2,
+html[data-theme="dark"] h3 {
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .comment-composer-sheet {
+  background: var(--np-panel-soft);
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .comment-composer-form textarea {
+  background: var(--np-input-bg);
+  color: var(--np-ink);
+  border-color: var(--np-line);
+}
+html[data-theme="dark"] .project-comment {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--np-line);
+}
+html[data-theme="dark"] .auth-card {
+  background: var(--np-panel-soft);
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .feed-store-chip {
+  background: var(--np-chip-bg);
+  color: var(--np-ink);
+  border-color: var(--np-line);
+}
+html[data-theme="dark"] .timeline {
+  border-top-color: var(--np-line);
+}
+html[data-theme="dark"] .mobile-more-sheet {
+  background: var(--np-panel-soft);
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .mobile-more-sheet,
+html[data-theme="dark"] .mobile-more-sheet button,
+html[data-theme="dark"] .mobile-more-sheet .nav-label {
+  color: var(--np-ink) !important;
+}
+
+@media (max-width: 560px) {
+  .theme-toggle-options {
+    grid-template-columns: 1fr;
+  }
+  .theme-toggle-compact .theme-toggle-options {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
