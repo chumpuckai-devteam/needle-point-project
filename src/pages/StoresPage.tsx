@@ -83,19 +83,17 @@ function buildCoachModel(
 
   switch (state) {
     case "permission_not_asked":
+      // Coach card suppressed — location is requested by default on Shops.
       return {
-        headline: "Want shops near you?",
-        body: "Share your location to sort local needlepoint shops within 60 miles. You can keep browsing by city or online shops without sharing.",
+        headline: "Finding shops near you…",
+        body: "Checking your location to sort local needlepoint shops.",
         helper: "Location is only used for this search and is not shown on your profile.",
-        primary: { label: "Use my location", action: "use_location" },
-        secondary: recoverySecondary,
       };
     case "requesting_location":
       return {
         headline: "Finding shops near you…",
-        body: "Checking for local needlepoint shops within 60 miles. Online shops are still available below.",
-        primary: { label: "Locating…", action: "noop" },
-        secondary: recoverySecondary,
+        body: "Checking for local needlepoint shops within 60 miles.",
+        helper: "Location is only used for this search and is not shown on your profile.",
         loadingPrimary: true,
       };
     case "location_ready_nearby":
@@ -153,10 +151,8 @@ function buildCoachModel(
       };
     default:
       return {
-        headline: "Want shops near you?",
-        body: "Share your location to sort local needlepoint shops within 60 miles.",
-        primary: { label: "Use my location", action: "use_location" },
-        secondary: recoverySecondary,
+        headline: "Finding shops near you…",
+        body: "Checking your location to sort local needlepoint shops.",
       };
   }
 }
@@ -204,26 +200,66 @@ export function StoresView({
   );
   const hasMoreList = discovery.list.length > listVisibleCount;
 
-  // Permissions probe only — never auto-call getCurrentPosition on mount.
+  // Permissions + default nearby: request location once when landing without a URL search.
+  const autoLocationBootstrapped = useRef(false);
   useEffect(() => {
     let cancelled = false;
+    if (autoLocationBootstrapped.current) return;
+    if (storesLoading) return;
+
+    const zip = searchParams.get("zip")?.trim() || "";
+    const city = searchParams.get("city")?.trim() || "";
+    const source = searchParams.get("source");
+    const lat = Number(searchParams.get("lat"));
+    const lng = Number(searchParams.get("lng"));
+    const hasUrlSearch =
+      Boolean(zip) ||
+      Boolean(city) ||
+      (source === "location" && Number.isFinite(lat) && Number.isFinite(lng));
+
+    if (hasUrlSearch) {
+      autoLocationBootstrapped.current = true;
+      if (!isGeolocationSupported()) return;
+      void queryGeolocationPermission().then((state) => {
+        if (cancelled) return;
+        if (state === "denied") {
+          setPermissionDeniedPersistent(true);
+          setLocationErrorKind("denied");
+          setLocationStatus("denied");
+        }
+      });
+      return;
+    }
+
+    // Wait for catalog so nearby results can populate after permission.
+    if (stores.length === 0) return;
+
+    autoLocationBootstrapped.current = true;
+
     if (!isGeolocationSupported()) {
       setLocationErrorKind("unsupported");
       setLocationStatus("unsupported");
       return;
     }
-    void queryGeolocationPermission().then((state) => {
+
+    void (async () => {
+      const state = await queryGeolocationPermission();
       if (cancelled) return;
       if (state === "denied") {
         setPermissionDeniedPersistent(true);
         setLocationErrorKind("denied");
         setLocationStatus("denied");
+        return;
       }
-    });
+      // Prompt (or use granted) — default path for Shops browse.
+      await requestUserLocation();
+    })();
+
     return () => {
       cancelled = true;
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot default location when catalog ready
+  }, [storesLoading, stores]);
 
   const applyResponse = useCallback((response: StoreDiscoveryResponse, options?: { preservePriorOnInvalid?: boolean }) => {
     if (response.status === "invalid-input") {
@@ -289,7 +325,7 @@ export function StoresView({
     [applyResponse, syncUrl],
   );
 
-  // Hydrate from URL once stores are available — never request geolocation on mount.
+  // Hydrate from URL once stores are available. Location default runs in the auto-location effect.
   useEffect(() => {
     const zip = searchParams.get("zip")?.trim() || "";
     const city = searchParams.get("city")?.trim() || "";
@@ -584,12 +620,22 @@ export function StoresView({
   const mapPins = discovery.mapPins;
   const listMissingPins = discovery.list.length > 0 && mapPins.length < discovery.list.length;
 
+  /** Hide the old “Want shops near you?” duplicate card; keep coach for errors / results. */
+  const showLocationCoachPanel =
+    placeSearchCoaching ||
+    coachState === "location_denied_first_time" ||
+    coachState === "location_denied_persistent" ||
+    coachState === "location_unavailable_timeout" ||
+    coachState === "location_unavailable_unsupported" ||
+    coachState === "location_ready_nearby" ||
+    coachState === "location_ready_empty_nearby";
+
   return (
     <section className="page stores-discovery-page">
       <SectionHeader eyebrow="Shops" title="Local shops near you" />
       <p className="lede">
-        Search by ZIP or city, browse the city directory, or use your location. Needlepoint links you out to each shop&apos;s own
-        site — checkout happens there.
+        We ask for your location to sort shops nearby (you can decline). Or search by ZIP or city, browse the directory, and open
+        each shop&apos;s own site — checkout happens there.
       </p>
 
       <form className="store-discovery-search panel" onSubmit={onSearchSubmit} noValidate>
@@ -646,8 +692,15 @@ export function StoresView({
             {searchError}
           </p>
         ) : null}
+
+        {locationStatus === "loading" && !showLocationCoachPanel ? (
+          <p className="store-location-inline-status" aria-live="polite">
+            Finding shops near you…
+          </p>
+        ) : null}
       </form>
 
+      {showLocationCoachPanel ? (
       <div
         className="store-location-bar panel store-location-coaching"
         data-location-status={locationStatus}
@@ -728,6 +781,11 @@ export function StoresView({
           </div>
         )}
       </div>
+      ) : (
+        <h2 id={resultsHeadingId} className="visually-hidden">
+          Shop results
+        </h2>
+      )}
 
       {cityCandidates?.length ? (
         <div className="store-city-ambiguity panel" role="region" aria-label="Choose a city">
