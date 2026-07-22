@@ -101,13 +101,7 @@ export function HomeView(props: {
       <header className="feed-topbar">
         <div>
           <h1 className="feed-title">{HOME_BRAND}</h1>
-          <p className="feed-subtitle">
-            {followedFeedCount
-              ? "Canvases from people you follow, then picks matched to your interests"
-              : props.hasInterests
-                ? "Picks matched to your onboarding interests"
-                : "Projects, progress notes, photos & video"}
-          </p>
+          <p className="feed-subtitle">Your home in the Palace — shops up top, stitches below</p>
         </div>
         <div className="feed-top-actions">
           {canPost ? (
@@ -191,26 +185,53 @@ export function HomeView(props: {
       />
 
       {rankedStores.length > 0 && (
-        <div className="feed-store-strip" aria-label="Shops near you">
-          {rankedStores.map((store) => (
-            <button
-              key={store.id}
-              type="button"
-              className="feed-store-chip"
-              onClick={() => props.setView({ name: "store", handle: store.handle })}
-            >
-              <img src={store.avatar || "/assets/needlepoint-hero.png"} alt="" />
-              <span>
-                {store.name}
-                {store.distanceMiles != null ? ` · ${formatDistanceMiles(store.distanceMiles)}` : ""}
-              </span>
+        <div className="feed-store-strip-block" aria-label="Shops near you">
+          <div className="followed-stores-rail-header">
+            <h2 className="followed-stores-rail-title">
+              <MapPin size={16} aria-hidden /> Shops near you
+            </h2>
+            <button type="button" className="text-button" onClick={() => props.setView({ name: "stores" })}>
+              See all
             </button>
-          ))}
-          <button type="button" className="feed-store-chip more" onClick={() => props.setView({ name: "stores" })}>
-            All shops
-          </button>
+          </div>
+          <div className="feed-store-strip">
+            {rankedStores.map((store) => (
+              <button
+                key={store.id}
+                type="button"
+                className="feed-store-chip"
+                onClick={() => props.setView({ name: "store", handle: store.handle })}
+              >
+                <img src={store.avatar || "/assets/needlepoint-hero.png"} alt="" />
+                <span>
+                  {store.name}
+                  {store.distanceMiles != null ? ` · ${formatDistanceMiles(store.distanceMiles)}` : ""}
+                </span>
+              </button>
+            ))}
+            <button type="button" className="feed-store-chip more" onClick={() => props.setView({ name: "stores" })}>
+              All shops
+            </button>
+          </div>
         </div>
       )}
+
+      <section className="palace-feed-section" aria-labelledby="palace-feed-heading">
+        <header className="palace-feed-header">
+          <div>
+            <p className="palace-feed-kicker">Community</p>
+            <h2 id="palace-feed-heading" className="palace-feed-title">
+              Latest stitches
+            </h2>
+            <p className="palace-feed-lede">
+              {followedFeedCount
+                ? "Posts from makers you follow, then fresh public projects"
+                : props.hasInterests
+                  ? "Projects matched to your interests, plus fresh public stitches"
+                  : "Progress notes, photos, and finished canvases from the community"}
+            </p>
+          </div>
+        </header>
 
       {feedRefreshError && !feedLoading && feed.length > 0 ? (
         <div className="feed-refresh-notice panel" role="status">
@@ -278,6 +299,7 @@ export function HomeView(props: {
           />
         </div>
       )}
+      </section>
     </section>
   );
 }

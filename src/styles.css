@@ -2556,6 +2556,58 @@ main {
   background: rgba(255, 255, 255, 0.55);
 }
 
+.feed-store-strip-block {
+  border-bottom: 1px solid var(--np-line);
+  background: rgba(255, 255, 255, 0.42);
+  padding: 12px 0 0;
+}
+.feed-store-strip-block .followed-stores-rail-header {
+  padding: 0 16px;
+  margin-bottom: 4px;
+}
+.feed-store-strip-block .feed-store-strip {
+  border-bottom: 0;
+  background: transparent;
+}
+
+/* Clear break: shops rails above → community feed below */
+.palace-feed-section {
+  margin-top: 0.35rem;
+  padding-top: 0.15rem;
+  border-top: 2px solid rgba(63, 111, 91, 0.18);
+  background:
+    linear-gradient(180deg, rgba(63, 111, 91, 0.045) 0%, rgba(63, 111, 91, 0) 72px),
+    transparent;
+}
+.palace-feed-header {
+  padding: 14px 16px 8px;
+}
+.palace-feed-kicker {
+  margin: 0 0 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #5f7468;
+}
+.palace-feed-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--np-ink);
+}
+.palace-feed-lede {
+  margin: 0.3rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--np-muted);
+  max-width: 36rem;
+}
+.palace-feed-section .feed-timeline {
+  border-top: 1px solid var(--np-line);
+}
+
 .feed-refresh-notice {
   display: flex;
   flex-wrap: wrap;
