@@ -9,6 +9,7 @@ import {
   requestBrowserLocation,
   type GeoPoint,
 } from "../lib/geo";
+import { loadLocationConsent } from "../lib/locationConsent";
 import { filterUpcomingMeetups, formatMeetupPlace, formatMeetupWhen } from "../lib/meetups";
 import { FeedPost, FollowedStoresRail, type FollowedStoreRailItem } from "../components/feed";
 import { EmptyState, ErrorState, FeedListSkeleton } from "../components/ui";
@@ -80,6 +81,8 @@ export function HomeView(props: {
 
   useEffect(() => {
     let cancelled = false;
+    // Only use GPS on home after the user allowed location on Shops (no silent prompt).
+    if (loadLocationConsent() !== "allowed") return;
     requestBrowserLocation()
       .then((point) => {
         if (!cancelled) setUserPoint(point);

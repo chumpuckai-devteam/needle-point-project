@@ -11,6 +11,7 @@ import {
   type GeoPoint,
   type LocationRequestErrorKind,
 } from "../lib/geo";
+import { loadLocationConsent, saveLocationConsent, type LocationConsent } from "../lib/locationConsent";
 import {
   buildCityBrowseCards,
   BROWSE_CITY_CARD_CAP,
@@ -44,7 +45,8 @@ type NearYouCoachState =
   | "location_denied_first_time"
   | "location_denied_persistent"
   | "location_unavailable_timeout"
-  | "location_unavailable_unsupported";
+  | "location_unavailable_unsupported"
+  | "browse_idle";
 
 const ONLINE_HEADING_ID = "online-shops-heading";
 
@@ -83,17 +85,20 @@ function buildCoachModel(
 
   switch (state) {
     case "permission_not_asked":
-      // Coach card suppressed — location is requested by default on Shops.
+      // Shown as explicit in-app consent — browser may not re-prompt if already granted.
       return {
-        headline: "Finding shops near you…",
-        body: "Checking your location to sort local needlepoint shops.",
+        headline: "Use your location for nearby shops?",
+        body: "Needlepoint can sort local shops within about 60 miles. We’ll ask your browser next if you allow. You can search by ZIP or city instead.",
         helper: "Location is only used for this search and is not shown on your profile.",
+        primary: { label: "Allow location", action: "use_location" },
+        secondary: { label: "Not now", action: "browse_all" },
       };
     case "requesting_location":
       return {
         headline: "Finding shops near you…",
         body: "Checking for local needlepoint shops within 60 miles.",
         helper: "Location is only used for this search and is not shown on your profile.",
+        primary: { label: "Locating…", action: "noop" },
         loadingPrimary: true,
       };
     case "location_ready_nearby":
@@ -149,10 +154,15 @@ function buildCoachModel(
         primary: recoverySecondary,
         secondary: allShopsCta,
       };
+    case "browse_idle":
+      return {
+        headline: "",
+        body: "",
+      };
     default:
       return {
-        headline: "Finding shops near you…",
-        body: "Checking your location to sort local needlepoint shops.",
+        headline: "",
+        body: "",
       };
   }
 }
@@ -190,6 +200,8 @@ export function StoresView({
   const [locationErrorKind, setLocationErrorKind] = useState<LocationRequestErrorKind | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [listVisibleCount, setListVisibleCount] = useState(STORE_LIST_PAGE_SIZE);
+  /** In-app consent — never call geolocation until Allow (or prior allow). */
+  const [locationConsent, setLocationConsent] = useState<LocationConsent | null>(() => loadLocationConsent());
 
   const allCityCards = useMemo(() => buildCityBrowseCards(stores), [stores]);
   const cityCards = useMemo(() => allCityCards.slice(0, BROWSE_CITY_CARD_CAP), [allCityCards]);
@@ -200,7 +212,8 @@ export function StoresView({
   );
   const hasMoreList = discovery.list.length > listVisibleCount;
 
-  // Permissions + default nearby: request location once when landing without a URL search.
+  // Only auto-use location after the user has already allowed in-app.
+  // Never call getCurrentPosition on first visit — browser may skip its dialog if already granted.
   const autoLocationBootstrapped = useRef(false);
   useEffect(() => {
     let cancelled = false;
@@ -219,20 +232,29 @@ export function StoresView({
 
     if (hasUrlSearch) {
       autoLocationBootstrapped.current = true;
-      if (!isGeolocationSupported()) return;
-      void queryGeolocationPermission().then((state) => {
-        if (cancelled) return;
-        if (state === "denied") {
-          setPermissionDeniedPersistent(true);
-          setLocationErrorKind("denied");
-          setLocationStatus("denied");
-        }
-      });
       return;
     }
 
-    // Wait for catalog so nearby results can populate after permission.
     if (stores.length === 0) return;
+
+    // First visit or declined: wait for explicit Allow — do not touch GPS.
+    if (locationConsent !== "allowed") {
+      autoLocationBootstrapped.current = true;
+      if (!isGeolocationSupported()) {
+        setLocationErrorKind("unsupported");
+        setLocationStatus("unsupported");
+      } else {
+        void queryGeolocationPermission().then((state) => {
+          if (cancelled) return;
+          if (state === "denied") {
+            setPermissionDeniedPersistent(true);
+            setLocationErrorKind("denied");
+            setLocationStatus("denied");
+          }
+        });
+      }
+      return;
+    }
 
     autoLocationBootstrapped.current = true;
 
@@ -251,15 +273,14 @@ export function StoresView({
         setLocationStatus("denied");
         return;
       }
-      // Prompt (or use granted) — default path for Shops browse.
       await requestUserLocation();
     })();
 
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot default location when catalog ready
-  }, [storesLoading, stores]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot after consent / catalog ready
+  }, [storesLoading, stores, locationConsent]);
 
   const applyResponse = useCallback((response: StoreDiscoveryResponse, options?: { preservePriorOnInvalid?: boolean }) => {
     if (response.status === "invalid-input") {
@@ -551,7 +572,9 @@ export function StoresView({
     if (locationStatus === "error" || locationErrorKind === "timeout" || locationErrorKind === "unavailable") {
       return "location_unavailable_timeout";
     }
-    return "permission_not_asked";
+    // First visit only — must tap Allow before any GPS call.
+    if (locationConsent === null && !hasActiveSearch) return "permission_not_asked";
+    return "browse_idle";
   })();
 
   const placeSearchCoaching =
@@ -600,12 +623,18 @@ export function StoresView({
       case "retry_location":
       case "settings_retry":
       case "refresh_location":
+        saveLocationConsent("allowed");
+        setLocationConsent("allowed");
         void requestUserLocation();
         break;
       case "browse_online":
         scrollToOnline();
         break;
       case "browse_all":
+        if (locationConsent === null) {
+          saveLocationConsent("declined");
+          setLocationConsent("declined");
+        }
         clearSearch();
         break;
       case "browse_search":
@@ -620,9 +649,11 @@ export function StoresView({
   const mapPins = discovery.mapPins;
   const listMissingPins = discovery.list.length > 0 && mapPins.length < discovery.list.length;
 
-  /** Hide the old “Want shops near you?” duplicate card; keep coach for errors / results. */
+  /** Consent card + error/result coaches — never silent GPS. */
   const showLocationCoachPanel =
     placeSearchCoaching ||
+    coachState === "permission_not_asked" ||
+    coachState === "requesting_location" ||
     coachState === "location_denied_first_time" ||
     coachState === "location_denied_persistent" ||
     coachState === "location_unavailable_timeout" ||
@@ -634,8 +665,8 @@ export function StoresView({
     <section className="page stores-discovery-page">
       <SectionHeader eyebrow="Shops" title="Local shops near you" />
       <p className="lede">
-        We ask for your location to sort shops nearby (you can decline). Or search by ZIP or city, browse the directory, and open
-        each shop&apos;s own site — checkout happens there.
+        Search by ZIP or city, browse the directory, or allow location when asked — we never use GPS until you agree. Each
+        shop links out to its own site for checkout.
       </p>
 
       <form className="store-discovery-search panel" onSubmit={onSearchSubmit} noValidate>
@@ -673,7 +704,11 @@ export function StoresView({
             <button
               className="secondary"
               type="button"
-              onClick={() => void requestUserLocation()}
+              onClick={() => {
+                saveLocationConsent("allowed");
+                setLocationConsent("allowed");
+                void requestUserLocation();
+              }}
               disabled={locationStatus === "loading" || searchBusy}
             >
               <Navigation size={16} aria-hidden />
