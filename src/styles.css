@@ -1278,6 +1278,22 @@ ul {
     scrollbar-width: none;
   }
 
+  /* Mobile bottom bar is fixed at ≤760px; don't turn desktop list into a mystery scroll at tablet */
+  .sidebar-nav-desktop {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+
+  .sidebar-nav-desktop::-webkit-scrollbar {
+    display: none;
+  }
+
   .sidebar nav::-webkit-scrollbar {
     display: none;
   }
@@ -3112,43 +3128,87 @@ label textarea::placeholder {
     display: none !important;
   }
 
+  /* Never horizontal-scroll the bottom bar — all 4 slots always visible */
   .sidebar-nav-mobile {
     display: grid !important;
+    width: 100%;
+    max-width: 100%;
     height: 72px;
-    grid-template-columns: repeat(4, 1fr);
-    align-items: center;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: stretch;
+    justify-items: stretch;
     gap: 0;
+    overflow: hidden;
+    flex-wrap: nowrap;
   }
 
   .sidebar-nav-mobile button {
+    display: flex;
+    flex-direction: column;
     justify-content: center;
+    align-items: center;
+    gap: 3px;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
     min-height: 56px;
-    padding: 0;
-    border-radius: 999px;
-    font-size: 0;
+    margin: 0;
+    padding: 6px 2px;
+    border-radius: 14px;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.05;
     position: relative;
     color: #f7f4ee;
+    white-space: nowrap;
+    overflow: hidden;
   }
 
   .sidebar-nav-mobile button svg {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
     color: inherit;
+  }
+
+  .sidebar-nav-mobile .nav-label {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.62rem;
+    line-height: 1.1;
+    opacity: 0.95;
   }
 
   .sidebar-nav-mobile button.active {
     color: #fff;
-    background: transparent;
+    background: rgba(255, 255, 255, 0.12);
   }
 
   .sidebar-nav-mobile button.active::after {
     content: "";
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    background: var(--np-gold);
+    background: var(--np-gold, #c9a66b);
     position: absolute;
-    transform: translate(12px, -16px);
+    top: 6px;
+    right: calc(50% - 18px);
+    transform: none;
+  }
+
+  /* Kill tablet horizontal-scroll rules if they leak onto the bottom bar */
+  .sidebar .sidebar-nav-mobile {
+    display: grid !important;
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
+  }
+  .sidebar .sidebar-nav-mobile button {
+    flex: unset !important;
+    width: 100% !important;
   }
 
   .mobile-more-backdrop {

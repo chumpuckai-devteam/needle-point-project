@@ -168,7 +168,7 @@ export function Sidebar({
           data-testid="mobile-more-nav"
           onClick={() => setMoreOpen((open) => !open)}
         >
-          {moreOpen ? <X size={18} /> : <Menu size={18} />}
+          {moreOpen ? <X size={18} aria-hidden /> : <Menu size={18} aria-hidden />}
           <span className="nav-label">More</span>
           {!moreOpen && messagesUnread > 0 ? (
             <span className="nav-unread-badge more-toggle-badge" aria-label={`${messagesUnread} unread`}>
