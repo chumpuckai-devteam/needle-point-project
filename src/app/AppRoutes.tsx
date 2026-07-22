@@ -140,6 +140,9 @@ export type AppRoutesProps = {
   joinStitchAlong: (stitchAlongId?: string) => void;
   submitToStitchAlong: (projectId: string, stitchAlongId?: string) => void;
   canHost: boolean;
+  onEndStitchAlong: (id: string) => void | Promise<void>;
+  hostActionBusy?: boolean;
+  hostActionError?: string;
   onCreateStitchAlong: (input: StitchAlongCreateInput) => void;
   salCreateBusy: boolean;
   salCreateError: string;
@@ -368,6 +371,10 @@ export function AppRoutes(props: AppRoutesProps) {
             setView={props.setView}
             canHost={props.canHost}
             onCreate={props.onCreateStitchAlong}
+            viewerId={props.viewerId}
+            onEndStitchAlong={props.onEndStitchAlong}
+            hostActionBusy={props.hostActionBusy}
+            hostActionError={props.hostActionError}
             createBusy={props.salCreateBusy}
             createError={props.salCreateError}
           />
@@ -386,6 +393,10 @@ export function AppRoutes(props: AppRoutesProps) {
             setView={props.setView}
             canHost={props.canHost}
             onCreate={props.onCreateStitchAlong}
+            viewerId={props.viewerId}
+            onEndStitchAlong={props.onEndStitchAlong}
+            hostActionBusy={props.hostActionBusy}
+            hostActionError={props.hostActionError}
             createBusy={props.salCreateBusy}
             createError={props.salCreateError}
           />

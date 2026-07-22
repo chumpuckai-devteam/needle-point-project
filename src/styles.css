@@ -5358,3 +5358,31 @@ label textarea::placeholder {
   overflow: auto;
   padding-right: 0.25rem;
 }
+
+/* Multi-SAL polish */
+.sal-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0.75rem 0 1rem;
+}
+.sal-template-row {
+  display: grid;
+  gap: 0.4rem;
+}
+.sal-template-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.sal-host-tools {
+  margin: 1rem 0;
+}
+.sal-roster-list {
+  list-style: none;
+  margin: 0.4rem 0 0.75rem;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+}

@@ -12,6 +12,7 @@ import {
 import { submitReportOnline, type ReportInput } from "../api/reports";
 import {
   createStitchAlongOnline,
+  updateStitchAlongOnline,
   getStitchAlongOnline,
   joinStitchAlongOnline,
   leaveStitchAlongOnline,
@@ -167,6 +168,8 @@ export function AppShell() {
   const [claimNotice, setClaimNotice] = useState("");
   const [productBusy, setProductBusy] = useState(false);
   const [productError, setProductError] = useState("");
+  const [salHostActionBusy, setSalHostActionBusy] = useState(false);
+  const [salHostActionError, setSalHostActionError] = useState("");
   const [salCreateBusy, setSalCreateBusy] = useState(false);
   const [salCreateError, setSalCreateError] = useState("");
   const [profileBusy, setProfileBusy] = useState(false);
@@ -1299,6 +1302,33 @@ export function AppShell() {
     }
   }
 
+  
+  async function endStitchAlong(stitchAlongId: string) {
+    if (!requireAuth("end a stitch-along")) return;
+    const event = stitchAlongs.find((item) => item.id === stitchAlongId);
+    if (!event) return;
+    if (user && event.hostId !== user.id && event.hostId !== meCreatorId) {
+      setSalHostActionError("Only the host can end this stitch-along.");
+      return;
+    }
+    setSalHostActionError("");
+    setSalHostActionBusy(true);
+    try {
+      if (isSupabaseConfigured && user) {
+        const updated = await updateStitchAlongOnline(stitchAlongId, user.id, { status: "ended" });
+        setStitchAlongs((current) => current.map((item) => (item.id === stitchAlongId ? updated : item)));
+      } else {
+        setStitchAlongs((current) =>
+          current.map((item) => (item.id === stitchAlongId ? { ...item, status: "ended" as const } : item)),
+        );
+      }
+    } catch (error) {
+      setSalHostActionError(friendlyUserError(error, "Could not end stitch-along"));
+    } finally {
+      setSalHostActionBusy(false);
+    }
+  }
+
   async function createStitchAlong(input: {
     title: string;
     description: string;
@@ -2136,6 +2166,9 @@ export function AppShell() {
         submitToStitchAlong={submitToStitchAlong}
         canHost={Boolean(user) || isDemoMode}
         onCreateStitchAlong={(input) => void createStitchAlong(input)}
+        onEndStitchAlong={(id) => void endStitchAlong(id)}
+        hostActionBusy={salHostActionBusy}
+        hostActionError={salHostActionError}
         salCreateBusy={salCreateBusy}
         salCreateError={salCreateError}
         meetups={meetups}

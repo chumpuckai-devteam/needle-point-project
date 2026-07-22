@@ -124,6 +124,8 @@ export type StitchAlong = {
   description: string;
   rules: string[];
   participantProjectIds: string[];
+  /** User ids who joined (roster). */
+  participantUserIds?: string[];
   joined: boolean;
   isPublic: boolean;
   coverImageUrl?: string;

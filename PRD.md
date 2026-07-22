@@ -128,7 +128,7 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- Stitch-alongs have start/end dates, host, description, and participant count.
+- Stitch-along (**multi-SAL + host tools shipped**: filters, templates, end event, roster)s have start/end dates, host, description, and participant count.
 - Users can submit eligible projects.
 - Stitch-along pages create a concentrated discovery surface.
 

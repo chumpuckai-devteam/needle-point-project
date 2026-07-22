@@ -46,6 +46,7 @@ function formatWindow(startDate: string, endDate: string): string {
 
 function mapStitchAlong(row: DbStitchAlongRow, currentUserId?: string | null): StitchAlong {
   const joins = row.stitch_along_joins ?? [];
+  const participantUserIds = joins.map((join) => join.user_id);
   const participantProjectIds = (row.stitch_along_submissions ?? []).map((submission) => submission.project_id);
   const joined = Boolean(currentUserId && joins.some((join) => join.user_id === currentUserId));
   const startDate = row.start_date ?? "";
@@ -61,6 +62,7 @@ function mapStitchAlong(row: DbStitchAlongRow, currentUserId?: string | null): S
     description: row.description,
     rules: row.rules ?? [],
     participantProjectIds,
+    participantUserIds,
     joined,
     isPublic: row.is_public,
     coverImageUrl: row.cover_image_url,
@@ -127,7 +129,40 @@ export async function createStitchAlongOnline(userId: string, input: StitchAlong
     .select(STITCH_ALONG_SELECT)
     .single();
   if (error) throw error;
+  // Host auto-joins their own event.
+  await client.from("stitch_along_joins").upsert(
+    { stitch_along_id: (data as DbStitchAlongRow).id, user_id: userId },
+    { onConflict: "stitch_along_id,user_id" },
+  );
   return mapStitchAlong(data as DbStitchAlongRow, userId);
+}
+
+export async function updateStitchAlongOnline(
+  stitchAlongId: string,
+  hostUserId: string,
+  patch: Partial<StitchAlongInput> & { status?: "draft" | "active" | "ended" },
+): Promise<StitchAlong> {
+  const client = requireSupabase();
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (patch.title !== undefined) updates.title = patch.title.trim();
+  if (patch.description !== undefined) updates.description = patch.description.trim();
+  if (patch.theme !== undefined) updates.theme = patch.theme.trim();
+  if (patch.rules !== undefined) updates.rules = patch.rules.map((r) => r.trim()).filter(Boolean);
+  if (patch.startDate !== undefined) updates.start_date = patch.startDate || null;
+  if (patch.endDate !== undefined) updates.end_date = patch.endDate || null;
+  if (patch.coverImageUrl !== undefined) updates.cover_image_url = patch.coverImageUrl.trim();
+  if (patch.status !== undefined) updates.status = patch.status;
+  if (patch.isPublic !== undefined) updates.is_public = patch.isPublic;
+
+  const { data, error } = await client
+    .from("stitch_alongs")
+    .update(updates)
+    .eq("id", stitchAlongId)
+    .eq("host_user_id", hostUserId)
+    .select(STITCH_ALONG_SELECT)
+    .single();
+  if (error) throw error;
+  return mapStitchAlong(data as DbStitchAlongRow, hostUserId);
 }
 
 export async function joinStitchAlongOnline(stitchAlongId: string, userId: string): Promise<void> {

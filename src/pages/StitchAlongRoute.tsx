@@ -12,9 +12,13 @@ export function StitchAlongRoute({
   submitToStitchAlong,
   setView,
   canHost,
+  viewerId,
   onCreate,
   createBusy,
   createError,
+  onEndStitchAlong,
+  hostActionBusy,
+  hostActionError,
 }: {
   stitchAlongs: StitchAlong[];
   projects: Project[];
@@ -24,6 +28,7 @@ export function StitchAlongRoute({
   submitToStitchAlong: (projectId: string, stitchAlongId?: string) => void;
   setView: (view: View) => void;
   canHost: boolean;
+  viewerId?: string | null;
   onCreate?: (input: {
     title: string;
     description: string;
@@ -35,6 +40,9 @@ export function StitchAlongRoute({
   }) => Promise<void> | void;
   createBusy?: boolean;
   createError?: string;
+  onEndStitchAlong?: (stitchAlongId: string) => Promise<void> | void;
+  hostActionBusy?: boolean;
+  hostActionError?: string;
 }) {
   const { id } = useParams();
 
@@ -45,6 +53,7 @@ export function StitchAlongRoute({
         creatorById={creatorById}
         setView={setView}
         canHost={canHost}
+        viewerId={viewerId}
         onCreate={onCreate}
         createBusy={createBusy}
         createError={createError}
@@ -79,6 +88,10 @@ export function StitchAlongRoute({
       joinStitchAlong={() => joinStitchAlong(stitchAlong.id)}
       submitToStitchAlong={(projectId) => submitToStitchAlong(projectId, stitchAlong.id)}
       setView={setView}
+      viewerId={viewerId}
+      onEndStitchAlong={() => onEndStitchAlong?.(stitchAlong.id)}
+      hostActionBusy={hostActionBusy}
+      hostActionError={hostActionError}
     />
   );
 }
