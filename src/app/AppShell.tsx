@@ -19,6 +19,7 @@ import {
 import {
   cancelMeetupOnline,
   cancelMeetupRegistrationOnline,
+  confirmMeetupSeatOnline,
   createMeetupOnline,
   fetchMyMeetupRsvpsOnline,
   joinMeetupWaitlistOnline,
@@ -298,6 +299,9 @@ export function AppShell() {
                 ...meetup,
                 myRsvp: mine?.status ?? null,
                 myRegistrationConfirmedAt: mine?.confirmedAt ?? null,
+                myCheckInCode: mine?.checkInCode ?? null,
+                myHoldExpiresAt: mine?.holdExpiresAt ?? null,
+                mySeatConfirmedAt: mine?.seatConfirmedAt ?? null,
               };
             }),
           );
@@ -1624,6 +1628,9 @@ export function AppShell() {
       myRsvp?: StitchingMeetup["myRsvp"];
       myWaitlistPosition?: number | null;
       myRegistrationConfirmedAt?: string | null;
+      myCheckInCode?: string | null;
+      myHoldExpiresAt?: string | null;
+      mySeatConfirmedAt?: string | null;
     },
   ): StitchingMeetup {
     const registered = patch.registeredCount ?? meetup.registeredCount ?? meetup.goingCount ?? 0;
@@ -1686,6 +1693,9 @@ export function AppShell() {
                     spotsLeft: result.spotsLeft,
                     myWaitlistPosition: null,
                     myRegistrationConfirmedAt: result.confirmedAt ?? new Date().toISOString(),
+                    myCheckInCode: result.checkInCode ?? meetup.myCheckInCode ?? null,
+                    myHoldExpiresAt: result.holdExpiresAt ?? null,
+                    mySeatConfirmedAt: result.seatConfirmedAt ?? new Date().toISOString(),
                   })
                 : meetup,
             ),
@@ -1772,6 +1782,9 @@ export function AppShell() {
               spotsLeft: 0,
               myWaitlistPosition: null,
               myRegistrationConfirmedAt: null,
+              myCheckInCode: null,
+              myHoldExpiresAt: null,
+              mySeatConfirmedAt: null,
             });
           }
           const registered = Math.max((meetup.registeredCount ?? meetup.goingCount ?? 1) - 1, 0);
@@ -1782,6 +1795,9 @@ export function AppShell() {
             spotsLeft,
             myWaitlistPosition: null,
             myRegistrationConfirmedAt: null,
+            myCheckInCode: null,
+            myHoldExpiresAt: null,
+            mySeatConfirmedAt: null,
           });
         }
 
@@ -1809,19 +1825,63 @@ export function AppShell() {
                     spotsLeft: result.spotsLeft,
                     myWaitlistPosition: null,
                     myRegistrationConfirmedAt: null,
+                    myCheckInCode: null,
+                    myHoldExpiresAt: null,
+                    mySeatConfirmedAt: null,
                   })
                 : meetup,
             ),
           );
-          // Promoted waitlist guests get an in-app notification; refresh for both parties.
           void refreshNotifications();
         })
         .catch((error) => {
           setRemoteError(error instanceof Error ? error.message : "Could not cancel registration");
+          setRemoteBootKey((k) => k + 1);
         })
         .finally(() => setMeetupRsvpBusy(false));
       return;
     }
+    setMeetupRsvpBusy(false);
+  }
+
+  function confirmMeetupSeat(meetupId: string) {
+    if (!requireAuth("confirm your meetup seat")) return;
+    setMeetupRsvpBusy(true);
+    if (isSupabaseConfigured && user) {
+      void confirmMeetupSeatOnline(meetupId)
+        .then((result) => {
+          setMeetups((list) =>
+            list.map((meetup) =>
+              meetup.id === meetupId
+                ? {
+                    ...meetup,
+                    myHoldExpiresAt: null,
+                    mySeatConfirmedAt: result.seatConfirmedAt ?? new Date().toISOString(),
+                    myCheckInCode: result.checkInCode ?? meetup.myCheckInCode ?? null,
+                  }
+                : meetup,
+            ),
+          );
+        })
+        .catch((error) => {
+          setRemoteError(error instanceof Error ? error.message : "Could not confirm seat");
+          setRemoteBootKey((k) => k + 1);
+        })
+        .finally(() => setMeetupRsvpBusy(false));
+      return;
+    }
+    setMeetups((list) =>
+      list.map((meetup) =>
+        meetup.id === meetupId
+          ? {
+              ...meetup,
+              myHoldExpiresAt: null,
+              mySeatConfirmedAt: new Date().toISOString(),
+              myCheckInCode: meetup.myCheckInCode || "DEMOCODE",
+            }
+          : meetup,
+      ),
+    );
     setMeetupRsvpBusy(false);
   }
 
@@ -1973,6 +2033,7 @@ export function AppShell() {
         onMeetupRegister={registerForMeetup}
         onMeetupJoinWaitlist={joinMeetupWaitlist}
         onMeetupCancelRegistration={cancelMeetupRegistration}
+        onMeetupConfirmSeat={confirmMeetupSeat}
         onCancelMeetup={cancelMeetup}
         meetupRegisterBusy={meetupRsvpBusy}
         ownedStoreId={stores.find((store) => store.ownerUserId === viewerId)?.id ?? null}

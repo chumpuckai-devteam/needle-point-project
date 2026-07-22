@@ -147,6 +147,7 @@ export type AppRoutesProps = {
   onMeetupRegister: (meetupId: string) => void;
   onMeetupJoinWaitlist: (meetupId: string) => void;
   onMeetupCancelRegistration: (meetupId: string) => void;
+  onMeetupConfirmSeat: (meetupId: string) => void;
   onCancelMeetup: (meetupId: string) => void;
   meetupRegisterBusy: boolean;
   ownedStoreId: string | null;
@@ -399,6 +400,7 @@ export function AppRoutes(props: AppRoutesProps) {
             onRegister={props.onMeetupRegister}
             onJoinWaitlist={props.onMeetupJoinWaitlist}
             onCancelRegistration={props.onMeetupCancelRegistration}
+            onConfirmSeat={props.onMeetupConfirmSeat}
             onCancel={props.onCancelMeetup}
             registerBusy={props.meetupRegisterBusy}
             canUseMine={props.canUseMine !== false}
@@ -422,6 +424,7 @@ export function AppRoutes(props: AppRoutesProps) {
             onRegister={props.onMeetupRegister}
             onJoinWaitlist={props.onMeetupJoinWaitlist}
             onCancelRegistration={props.onMeetupCancelRegistration}
+            onConfirmSeat={props.onMeetupConfirmSeat}
             onCancel={props.onCancelMeetup}
             registerBusy={props.meetupRegisterBusy}
             canUseMine={props.canUseMine !== false}
@@ -445,6 +448,7 @@ export function AppRoutes(props: AppRoutesProps) {
             onRegister={props.onMeetupRegister}
             onJoinWaitlist={props.onMeetupJoinWaitlist}
             onCancelRegistration={props.onMeetupCancelRegistration}
+            onConfirmSeat={props.onMeetupConfirmSeat}
             onCancel={props.onCancelMeetup}
             registerBusy={props.meetupRegisterBusy}
             canUseMine={props.canUseMine !== false}

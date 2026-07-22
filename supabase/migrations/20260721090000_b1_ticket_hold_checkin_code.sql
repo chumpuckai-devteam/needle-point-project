@@ -1,0 +1,5 @@
+-- B.1 ticket hold + check-in code
+-- Applied live: b1_ticket_hold_checkin_code_v2
+-- Columns: check_in_code, hold_expires_at, seat_confirmed_at, promoted_from_waitlist_at
+-- RPCs: meetup_gen_check_in_code, expire_meetup_holds, confirm_meetup_seat,
+--       set_meetup_check_in_by_code; register/cancel/list/check-in updated

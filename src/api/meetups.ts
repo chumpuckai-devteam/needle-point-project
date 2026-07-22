@@ -72,11 +72,17 @@ export type MeetupRegistrationResult = {
   waitlistPosition?: number | null;
   promotedUserId?: string | null;
   confirmedAt?: string | null;
+  checkInCode?: string | null;
+  holdExpiresAt?: string | null;
+  seatConfirmedAt?: string | null;
 };
 
 export type MyMeetupRsvpRow = {
   status: StitchingMeetupRsvpStatus;
   confirmedAt?: string | null;
+  checkInCode?: string | null;
+  holdExpiresAt?: string | null;
+  seatConfirmedAt?: string | null;
 };
 
 function clean(value?: string | null, max = 500): string {
@@ -234,15 +240,25 @@ export async function fetchMyMeetupRsvpsOnline(
   const client = requireSupabase();
   const { data, error } = await client
     .from("stitching_meetup_rsvps")
-    .select("meetup_id,status,confirmed_at")
+    .select("meetup_id,status,confirmed_at,check_in_code,hold_expires_at,seat_confirmed_at")
     .eq("user_id", userId)
     .in("status", ["registered", "going", "interested", "waitlisted"]);
   if (error) throw error;
   const out: Record<string, MyMeetupRsvpRow> = {};
-  for (const row of (data as { meetup_id: string; status: StitchingMeetupRsvpStatus; confirmed_at: string | null }[] | null) ?? []) {
+  for (const row of (data as {
+    meetup_id: string;
+    status: StitchingMeetupRsvpStatus;
+    confirmed_at: string | null;
+    check_in_code?: string | null;
+    hold_expires_at?: string | null;
+    seat_confirmed_at?: string | null;
+  }[] | null) ?? []) {
     out[row.meetup_id] = {
       status: isRegisteredStatus(row.status) ? "registered" : row.status,
       confirmedAt: row.confirmed_at,
+      checkInCode: row.check_in_code ?? null,
+      holdExpiresAt: row.hold_expires_at ?? null,
+      seatConfirmedAt: row.seat_confirmed_at ?? null,
     };
   }
   return out;
@@ -312,6 +328,9 @@ function mapRegistrationRpc(data: unknown): MeetupRegistrationResult {
     status: string;
     promoted_user_id?: string | null;
     confirmed_at?: string | null;
+    check_in_code?: string | null;
+    hold_expires_at?: string | null;
+    seat_confirmed_at?: string | null;
   };
   const statusRaw = r.status;
   const status: StitchingMeetupRsvpStatus =
@@ -330,6 +349,9 @@ function mapRegistrationRpc(data: unknown): MeetupRegistrationResult {
     waitlistPosition: r.waitlist_position == null ? null : Number(r.waitlist_position),
     promotedUserId: r.promoted_user_id ?? null,
     confirmedAt: r.confirmed_at ?? null,
+    checkInCode: r.check_in_code ?? null,
+    holdExpiresAt: r.hold_expires_at ?? null,
+    seatConfirmedAt: r.seat_confirmed_at ?? null,
   };
 }
 
@@ -364,6 +386,23 @@ export async function cancelMeetupRegistrationOnline(meetupId: string): Promise<
   return mapRegistrationRpc(data);
 }
 
+/** Guest confirms a waitlist-promoted seat (clears 24h hold). */
+export async function confirmMeetupSeatOnline(meetupId: string): Promise<{
+  checkInCode: string | null;
+  holdExpiresAt: string | null;
+  seatConfirmedAt: string | null;
+}> {
+  const client = requireSupabase();
+  const { data, error } = await client.rpc("confirm_meetup_seat", { p_meetup_id: meetupId });
+  if (error) throw new Error(error.message || "Could not confirm seat");
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    checkInCode: ((row as { check_in_code?: string | null })?.check_in_code as string | null) ?? null,
+    holdExpiresAt: null,
+    seatConfirmedAt: ((row as { seat_confirmed_at?: string | null })?.seat_confirmed_at as string | null) ?? null,
+  };
+}
+
 export type MeetupRosterEntry = {
   userId: string;
   handle: string;
@@ -373,6 +412,8 @@ export type MeetupRosterEntry = {
   confirmedAt?: string | null;
   createdAt?: string | null;
   checkedInAt?: string | null;
+  holdExpiresAt?: string | null;
+  seatConfirmedAt?: string | null;
 };
 
 export async function listMeetupRegistrationsOnline(meetupId: string): Promise<MeetupRosterEntry[]> {
@@ -389,6 +430,8 @@ export async function listMeetupRegistrationsOnline(meetupId: string): Promise<M
     confirmed_at: string | null;
     created_at: string | null;
     checked_in_at?: string | null;
+    hold_expires_at?: string | null;
+    seat_confirmed_at?: string | null;
   }[] | null) ?? []).map((row) => ({
     userId: row.user_id,
     handle: row.handle ?? "",
@@ -398,6 +441,8 @@ export async function listMeetupRegistrationsOnline(meetupId: string): Promise<M
     confirmedAt: row.confirmed_at,
     createdAt: row.created_at,
     checkedInAt: row.checked_in_at ?? null,
+    holdExpiresAt: row.hold_expires_at ?? null,
+    seatConfirmedAt: row.seat_confirmed_at ?? null,
   }));
 }
 
@@ -417,6 +462,27 @@ export async function setMeetupGuestCheckInOnline(
   const row = Array.isArray(data) ? data[0] : data;
   return {
     userId: String((row as { user_id?: string })?.user_id ?? guestUserId),
+    checkedInAt: ((row as { checked_in_at?: string | null })?.checked_in_at as string | null) ?? null,
+  };
+}
+
+/** Host check-in by door code from guest ticket / QR. */
+export async function setMeetupCheckInByCodeOnline(
+  meetupId: string,
+  checkInCode: string,
+  checkedIn = true,
+): Promise<{ userId: string; displayName: string; checkedInAt: string | null }> {
+  const client = requireSupabase();
+  const { data, error } = await client.rpc("set_meetup_check_in_by_code", {
+    p_meetup_id: meetupId,
+    p_check_in_code: checkInCode,
+    p_checked_in: checkedIn,
+  });
+  if (error) throw new Error(error.message || "Could not check in by code");
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    userId: String((row as { user_id?: string })?.user_id ?? ""),
+    displayName: String((row as { display_name?: string })?.display_name ?? "Guest"),
     checkedInAt: ((row as { checked_in_at?: string | null })?.checked_in_at as string | null) ?? null,
   };
 }

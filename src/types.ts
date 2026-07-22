@@ -176,6 +176,12 @@ export type StitchingMeetup = {
   myWaitlistPosition?: number | null;
   /** When the viewer’s seat was confirmed (ISO). */
   myRegistrationConfirmedAt?: string | null;
+  /** Door check-in code for ticket / QR. */
+  myCheckInCode?: string | null;
+  /** Waitlist promote hold deadline (ISO); null when confirmed. */
+  myHoldExpiresAt?: string | null;
+  /** When guest confirmed seat after promote. */
+  mySeatConfirmedAt?: string | null;
   /** Remaining seats when capacity is set. */
   spotsLeft?: number | null;
   /** Viewer registration when known. */

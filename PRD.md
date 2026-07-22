@@ -520,16 +520,16 @@ Ordered themes after private-beta density (Studio, shops, stitch-alongs, collect
 
 Build only after free registration is trusted:
 
-- Paid or free **tickets** with confirmation email / in-app ticket state.
-- Host check-in (QR or name list). **Name-list check-in (shipped)** — host taps Check in on roster; QR later.
-- Waitlist notify + expire hold (auto-promote already ships for free seats). **In-app promote notify (shipped)** — when a seat opens, the next waitlist guest gets a notification (“You got a seat!”).
+- Paid or free **tickets** with confirmation email / in-app ticket state. **In-app free ticket + door code + QR (shipped)**; email deferred.
+- Host check-in (QR or name list). **Name-list check-in (shipped)** — host taps Check in on roster; **code check-in (shipped)**; camera scan later.
+- Waitlist notify + expire hold (auto-promote already ships for free seats). **In-app promote notify (shipped)** — when a seat opens, the next waitlist guest gets a notification (“You got a seat!”). **24h promote hold + Confirm seat + expire (shipped)**.
 - **Cancel deadline server-side (shipped)** — free cancel until **48h** before start (more time for last-minute seat fills); UI locks cancel; waitlist leave anytime.
 - Stripe adapters optional.
 
 ### Phase C — Deeper community & creator value
 
 - Richer stitch-along hosting tools.
-- Creator analytics (link clicks, meetup draw).
+- Creator analytics (link clicks, meetup draw). **Store owner outbound click panel (shipped)** — 30-day product + website totals on own shop.
 - Guilds / groups (lighter than full forums).
 - **Private DMs (M3.A + M3.B live)** — 1:1 user↔user and user↔store. Inbox `/messages`, Message CTAs, **unread badges**, mark-read on open, light poll while viewing. No groups / media / websockets yet.
 

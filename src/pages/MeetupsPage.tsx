@@ -3,7 +3,7 @@ import { CalendarDays, MapPin, Plus, Users } from "lucide-react";
 import type { Creator, StitchingMeetup, Store } from "../types";
 import type { View } from "../appModel";
 import type { MeetupRosterEntry, StitchingMeetupInput } from "../api/meetups";
-import { isRegisteredStatus, isWaitlistedStatus, listMeetupRegistrationsOnline, setMeetupGuestCheckInOnline } from "../api/meetups";
+import { isRegisteredStatus, isWaitlistedStatus, listMeetupRegistrationsOnline, setMeetupCheckInByCodeOnline, setMeetupGuestCheckInOnline } from "../api/meetups";
 import { EmptyState, SectionHeader } from "../components/ui";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { downloadMeetupIcs } from "../lib/meetupIcs";
@@ -472,6 +472,7 @@ export function MeetupDetailView({
   onRegister,
   onJoinWaitlist,
   onCancelRegistration,
+  onConfirmSeat,
   onCancel,
   registerBusy,
 }: {
@@ -483,6 +484,7 @@ export function MeetupDetailView({
   onRegister: () => void;
   onJoinWaitlist: () => void;
   onCancelRegistration: () => void;
+  onConfirmSeat?: () => void;
   onCancel?: () => void;
   registerBusy?: boolean;
 }) {
@@ -497,6 +499,9 @@ export function MeetupDetailView({
   const [rosterLoading, setRosterLoading] = useState(false);
   const [rosterError, setRosterError] = useState("");
   const [checkInBusyId, setCheckInBusyId] = useState<string | null>(null);
+  const [hostCode, setHostCode] = useState("");
+  const [hostCodeBusy, setHostCodeBusy] = useState(false);
+  const [hostCodeMsg, setHostCodeMsg] = useState("");
 
   useEffect(() => {
     if (!isHost || cancelled) {
@@ -661,31 +666,66 @@ export function MeetupDetailView({
             ) : null}
             {registered ? (
               <>
-                <div className="meetup-confirmation-card" data-testid="meetup-confirmation">
-                  <p className="meetup-registered-banner">You’re registered — seat confirmed.</p>
-                  <dl className="meetup-confirmation-meta">
-                    <div>
-                      <dt>Status</dt>
-                      <dd>{formatMeetupConfirmation(meetup.myRegistrationConfirmedAt)}</dd>
+                {meetup.myHoldExpiresAt && !meetup.mySeatConfirmedAt ? (
+                  <div className="meetup-hold-banner panel" data-testid="meetup-hold-banner">
+                    <p className="meetup-registered-banner">Seat on hold — confirm to keep it</p>
+                    <p className="field-help">
+                      Hold ends {new Date(meetup.myHoldExpiresAt).toLocaleString()}. If you don’t confirm, the next waitlist guest gets the seat.
+                    </p>
+                    {onConfirmSeat ? (
+                      <button className="primary" type="button" disabled={registerBusy} onClick={onConfirmSeat}>
+                        {registerBusy ? "Confirming…" : "Confirm seat"}
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+                <div className="meetup-ticket-card" data-testid="meetup-confirmation">
+                  <div className="meetup-ticket-main">
+                    <p className="meetup-ticket-eyebrow">Needlepoint · free ticket</p>
+                    <h3 className="meetup-ticket-title">{meetup.title}</h3>
+                    <dl className="meetup-confirmation-meta">
+                      <div>
+                        <dt>Status</dt>
+                        <dd>
+                          {meetup.myHoldExpiresAt && !meetup.mySeatConfirmedAt
+                            ? "Hold — confirm soon"
+                            : formatMeetupConfirmation(meetup.myRegistrationConfirmedAt || meetup.mySeatConfirmedAt)}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Door code</dt>
+                        <dd>
+                          <code data-testid="meetup-check-in-code">
+                            {meetup.myCheckInCode || meetupConfirmationRef(meetup)}
+                          </code>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>When</dt>
+                        <dd>{formatMeetupWhen(meetup)}</dd>
+                      </div>
+                      <div>
+                        <dt>Where</dt>
+                        <dd>{formatMeetupPlace(meetup)}</dd>
+                      </div>
+                    </dl>
+                    <p className="field-help meetup-policy">
+                      Show this ticket (or door code) at check-in. Email tickets later — your seat is managed in-app.
+                    </p>
+                  </div>
+                  {meetup.myCheckInCode ? (
+                    <div className="meetup-ticket-qr">
+                      <img
+                        alt={`Check-in QR for code ${meetup.myCheckInCode}`}
+                        width={148}
+                        height={148}
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=148x148&data=${encodeURIComponent(
+                          `NP-CHECKIN:${meetup.id}:${meetup.myCheckInCode}`,
+                        )}`}
+                      />
+                      <span className="field-help">Host scans or types code</span>
                     </div>
-                    <div>
-                      <dt>Reference</dt>
-                      <dd>
-                        <code>{meetupConfirmationRef(meetup)}</code>
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>When</dt>
-                      <dd>{formatMeetupWhen(meetup)}</dd>
-                    </div>
-                    <div>
-                      <dt>Where</dt>
-                      <dd>{formatMeetupPlace(meetup)}</dd>
-                    </div>
-                  </dl>
-                  <p className="field-help meetup-policy">
-                    Screenshot this confirmation for your records. Email tickets and host check-in come later — this holds your seat now.
-                  </p>
+                  ) : null}
                 </div>
                 <div className="card-actions wrap">
                   <button
@@ -750,9 +790,56 @@ export function MeetupDetailView({
           <section className="meetup-host-roster" aria-label="Host roster" data-testid="meetup-host-roster">
             <h2 className="meetup-roster-title">Guest roster</h2>
             <p className="field-help">
-              Only you (the host) can see names. Tap <strong>Check in</strong> when a guest arrives.
+              Only you (the host) can see names. Tap <strong>Check in</strong> or enter a door code from the guest ticket.
               {rosterRegistered.length ? ` · ${checkedInCount}/${rosterRegistered.length} checked in` : ""}
             </p>
+            <form
+              className="meetup-code-checkin"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const code = hostCode.trim();
+                if (!code) return;
+                setHostCodeBusy(true);
+                setHostCodeMsg("");
+                setRosterError("");
+                void (async () => {
+                  try {
+                    if (!isSupabaseConfigured) {
+                      setHostCodeMsg(`Demo: would check in code ${code.toUpperCase()}`);
+                      setHostCode("");
+                      return;
+                    }
+                    const result = await setMeetupCheckInByCodeOnline(meetup.id, code, true);
+                    setHostCodeMsg(`Checked in ${result.displayName}`);
+                    setHostCode("");
+                    setRoster((rows) =>
+                      rows.map((r) =>
+                        r.userId === result.userId ? { ...r, checkedInAt: result.checkedInAt } : r,
+                      ),
+                    );
+                  } catch (error) {
+                    setRosterError(error instanceof Error ? error.message : "Code check-in failed");
+                  } finally {
+                    setHostCodeBusy(false);
+                  }
+                })();
+              }}
+            >
+              <label className="field">
+                <span>Door code</span>
+                <input
+                  value={hostCode}
+                  onChange={(e) => setHostCode(e.target.value.toUpperCase())}
+                  placeholder="8-character code"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </label>
+              <button className="primary" type="submit" disabled={hostCodeBusy || hostCode.trim().length < 4}>
+                {hostCodeBusy ? "…" : "Check in by code"}
+              </button>
+              {hostCodeMsg ? <p className="field-help">{hostCodeMsg}</p> : null}
+            </form>
             {rosterLoading ? <p className="field-help">Loading roster…</p> : null}
             {rosterError ? <p className="form-error">{rosterError}</p> : null}
             {!rosterLoading && !rosterError ? (

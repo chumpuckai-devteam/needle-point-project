@@ -19,6 +19,7 @@ export function MeetupsRoute({
   onRegister,
   onJoinWaitlist,
   onCancelRegistration,
+  onConfirmSeat,
   onCancel,
   registerBusy,
   canUseMine = true,
@@ -36,6 +37,7 @@ export function MeetupsRoute({
   onRegister: (meetupId: string) => void;
   onJoinWaitlist: (meetupId: string) => void;
   onCancelRegistration: (meetupId: string) => void;
+  onConfirmSeat?: (meetupId: string) => void;
   onCancel?: (meetupId: string) => void;
   registerBusy?: boolean;
   canUseMine?: boolean;
@@ -87,6 +89,7 @@ export function MeetupsRoute({
       onRegister={() => onRegister(meetup.id)}
       onJoinWaitlist={() => onJoinWaitlist(meetup.id)}
       onCancelRegistration={() => onCancelRegistration(meetup.id)}
+      onConfirmSeat={onConfirmSeat ? () => onConfirmSeat(meetup.id) : undefined}
       onCancel={onCancel ? () => onCancel(meetup.id) : undefined}
       registerBusy={registerBusy}
     />

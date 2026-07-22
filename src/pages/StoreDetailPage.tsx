@@ -9,6 +9,7 @@ import { recordOutboundClickEvent } from "../api/clickEvents";
 import type { View } from "../appModel";
 import { ImageFilePicker } from "../components/ImageFilePicker";
 import { ReportControl } from "../components/ReportControl";
+import { StoreOwnerAnalytics } from "../components/StoreOwnerAnalytics";
 import { EmptyState, SectionTitle } from "../components/ui";
 import { isStoresBrowseReturnPath } from "../lib/storeLinks";
 import { storeMapLinks } from "../lib/storeMaps";
@@ -403,6 +404,7 @@ export function StoreDetailView({
 
       {claimNotice ? <p className="field-help success-text store-profile-banner">{claimNotice}</p> : null}
       {profileSuccess && !showProfileForm ? <p className="field-help success-text store-profile-banner">{profileSuccess}</p> : null}
+      {isOwner ? <StoreOwnerAnalytics storeId={store.id} /> : null}
 
       {isOwner && showProfileForm ? (
         <form className="panel store-product-form store-profile-form" onSubmit={(event) => void submitProfile(event)}>

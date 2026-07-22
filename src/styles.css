@@ -4876,3 +4876,86 @@ label textarea::placeholder {
   justify-content: center;
   margin: 8px 0 16px;
 }
+
+/* B.1 free ticket + hold + host code check-in */
+.meetup-ticket-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: start;
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  border: 1px dashed color-mix(in srgb, var(--moss, #3f6f5b) 45%, transparent);
+  background: color-mix(in srgb, var(--moss, #3f6f5b) 6%, #fbf8f2);
+}
+.meetup-ticket-eyebrow {
+  margin: 0 0 0.25rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink, #2f3a2e) 55%, transparent);
+}
+.meetup-ticket-title {
+  margin: 0 0 0.65rem;
+  font-size: 1.15rem;
+}
+.meetup-ticket-qr {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+}
+.meetup-ticket-qr img {
+  border-radius: 10px;
+  background: #fff;
+  padding: 6px;
+}
+.meetup-hold-banner {
+  margin-bottom: 0.75rem;
+  border-left: 4px solid var(--gold, #c4a35a);
+}
+.meetup-code-checkin {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.75rem;
+  align-items: end;
+  margin: 0.35rem 0 0.65rem;
+}
+.meetup-code-checkin .field {
+  min-width: 10rem;
+  flex: 1 1 10rem;
+}
+@media (max-width: 640px) {
+  .meetup-ticket-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* C.A store owner analytics */
+.store-owner-analytics {
+  margin: 0.75rem 0 1rem;
+  padding: 0.9rem 1rem;
+}
+.store-owner-analytics-title {
+  margin: 0 0 0.55rem;
+  font-size: 1.05rem;
+}
+.store-owner-analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 0.45rem;
+}
+.store-owner-analytics-grid div {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 12px;
+  background: #f7f4ee;
+}
+.store-owner-analytics-grid strong {
+  font-size: 1.25rem;
+}
+.store-owner-analytics-grid span {
+  font-size: 0.8rem;
+  color: color-mix(in srgb, var(--ink, #2f3a2e) 58%, transparent);
+}
