@@ -198,7 +198,7 @@ export function Sidebar({
         {desktopItems.map((item) => renderButton(item, { showLabel: true }))}
       </nav>
 
-      <nav className="sidebar-nav-mobile" aria-label="Primary navigation">
+      <nav className="sidebar-nav-mobile" aria-label="Mobile navigation">
         {primary.map((item) => renderButton(item))}
         <button
           type="button"
