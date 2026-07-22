@@ -6,6 +6,9 @@ import { EmptyState, SectionHeader } from "../components/ui";
 import type { View } from "../appModel";
 import type { Creator } from "../types";
 
+/** Group/attachments/realtime require live DM-depth migration — off until unblocked. */
+const DM_DEPTH_UI = false;
+
 function formatWhen(iso?: string | null) {
   if (!iso) return "";
   const d = new Date(iso);
@@ -77,7 +80,8 @@ export function MessagesInboxView({
   return (
     <section className="page">
       <SectionHeader eyebrow="Community" title="Messages" />
-      <p className="feed-rank-note">Private chats with people, shops, and small groups — updates arrive live.</p>
+      <p className="feed-rank-note">Private chats with stitchers and shops.</p>
+      {DM_DEPTH_UI ? (
       <div className="panel dm-group-composer">
         <button className="secondary" type="button" onClick={() => setShowGroup((current) => !current)}>
           <Users size={16} /> New group
@@ -114,6 +118,7 @@ export function MessagesInboxView({
           </form>
         ) : null}
       </div>
+      ) : null}
       {error ? <p className="form-error">{error}</p> : null}
       {loading ? <p className="field-help">Loading conversations…</p> : null}
       {!loading && !threads.length ? (
@@ -256,12 +261,16 @@ export function MessagesThreadView({
               placeholder="Write a private message…"
             />
           </label>
+          {DM_DEPTH_UI ? (
+          <>
           <label className="secondary dm-attach-button">
             <Paperclip size={16} /> Attach file
             <input className="sr-only" type="file" multiple onChange={handleFileChange} />
           </label>
           {files.length ? <p className="field-help">{files.map((file) => file.name).join(", ")}</p> : null}
-          <button className="primary" type="submit" disabled={sendBusy || (!draft.trim() && !files.length)}>
+          </>
+          ) : null}
+          <button className="primary" type="submit" disabled={sendBusy || (!draft.trim() && !(DM_DEPTH_UI && files.length))}>
             <Send size={16} /> {sendBusy ? "Sending…" : "Send"}
           </button>
         </form>

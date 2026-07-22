@@ -258,16 +258,36 @@ export async function sendDmMessageOnline(
   attachments: DmAttachmentInput[] = [],
 ): Promise<DmMessage> {
   const client = requireSupabase();
-  const { data, error } = await client.rpc("send_dm_message", {
+  // Live beta is M3.B (body-only). Attachment payload is optional until DM-depth migration is applied.
+  const payload: Record<string, unknown> = {
     p_thread_id: threadId,
     p_body: body,
-    p_attachments: attachments.map((attachment) => ({
+  };
+  if (attachments.length) {
+    payload.p_attachments = attachments.map((attachment) => ({
       storage_path: attachment.storagePath,
       file_name: attachment.fileName,
       mime_type: attachment.mimeType,
       size_bytes: attachment.sizeBytes,
-    })),
-  });
+    }));
+  }
+  let { data, error } = await client.rpc("send_dm_message", payload);
+  if (error && attachments.length) {
+    // Schema without p_attachments: retry text-only so chat still works
+    const retry = await client.rpc("send_dm_message", { p_thread_id: threadId, p_body: body });
+    data = retry.data;
+    error = retry.error;
+    if (!error) {
+      return {
+        ...mapMessage({
+          ...(data as Record<string, unknown>),
+          sender_name: "You",
+          sender_handle: "",
+        }),
+        attachments: [],
+      };
+    }
+  }
   if (error) throw new Error(friendlyDmError(error, "Could not send message"));
   const row = data as Record<string, unknown>;
   return {

@@ -31,11 +31,17 @@ test("host meetup draw stats RPC is host-scoped and aggregate-only", () => {
   assert.match(sql, /r\.checked_in_at is not null/i);
   assert.match(sql, /grant execute on function public\.host_meetup_draw_stats/i);
   assert.match(sql, /to authenticated, service_role/i);
-  // Aggregate only — no guest identity columns returned.
-  assert.doesNotMatch(
-    sql.match(/create or replace function public\.host_meetup_draw_stats[\s\S]*?\$\$;/i)?.[0] ?? "",
-    /display_name|avatar_url|user_id|handle/i,
-  );
+  // Aggregate only — RETURNS TABLE must not expose guest identity columns.
+  // (host_user_id in the WHERE clause is intentional host scoping, not a guest leak.)
+  const returnsTable =
+    sql.match(
+      /create or replace function public\.host_meetup_draw_stats[\s\S]*?returns table\s*\(([\s\S]*?)\)\s*language/i,
+    )?.[1] ?? "";
+  assert.match(returnsTable, /meetups_hosted/i);
+  assert.match(returnsTable, /registrations/i);
+  assert.match(returnsTable, /checked_in/i);
+  assert.match(returnsTable, /waitlisted/i);
+  assert.doesNotMatch(returnsTable, /display_name|avatar_url|\buser_id\b|handle|email/i);
 });
 
 test("host meetup draw client API + Mine tab panel are wired", () => {
