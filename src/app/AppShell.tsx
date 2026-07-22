@@ -1223,10 +1223,10 @@ export function AppShell() {
     }
   }
 
-  function addComment(projectId: string) {
+  function addComment(projectId: string, bodyOverride?: string) {
     if (!requireAuth("comment on posts")) return;
-    if (!commentText.trim()) return;
-    const body = commentText.trim();
+    const body = (bodyOverride ?? commentText).trim();
+    if (!body) return;
     const author = user?.name || "You";
     const project = projects.find((item) => item.id === projectId);
     const latestUpdateId = project?.updates[0]?.id;
@@ -1248,7 +1248,11 @@ export function AppShell() {
       ),
     );
     setCommentText("");
-    if (isSupabaseConfigured && user && latestUpdateId && !latestUpdateId.startsWith("u") && !latestUpdateId.startsWith("local-")) {
+    if (!latestUpdateId) {
+      setRemoteError("Comments open after the first progress update.");
+      return;
+    }
+    if (isSupabaseConfigured && user && !latestUpdateId.startsWith("u") && !latestUpdateId.startsWith("local-")) {
       void addCommentOnline(latestUpdateId, user.id, body).catch((error) => {
         setRemoteError(friendlyUserError(error, "Comment failed"));
       });

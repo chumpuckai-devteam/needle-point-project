@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Bookmark, Heart, MessageCircle, Share2, X } from "lucide-react";
 import type { Creator, Project, Status, Store } from "../types";
 import type { View } from "../appModel";
 import { projectCommentCount, resolveMediaKind } from "../appModel";
+import { CommentComposerDialog } from "./CommentComposerDialog";
 import { uiCopy } from "../lib/uiCopy";
 
 const STATUS_LABELS: Record<Status, string> = {
@@ -116,6 +118,9 @@ export function FeedPost({
   shareProject,
   onDismiss,
   matchHint,
+  canComment = false,
+  onAddComment,
+  onRequireAuth,
 }: {
   project: Project;
   creator: Creator;
@@ -127,6 +132,9 @@ export function FeedPost({
   onDismiss?: (projectId: string) => void;
   /** Optional “Because you picked …” copy when matched interests exist. */
   matchHint?: string;
+  canComment?: boolean;
+  onAddComment?: (projectId: string, body: string) => void | Promise<void>;
+  onRequireAuth?: () => void;
 }) {
   const mediaKind = resolveMediaKind(project);
   const commentCount = projectCommentCount(project);
@@ -140,6 +148,26 @@ export function FeedPost({
     (project.matchedInterests?.length
       ? `Because you picked ${project.matchedInterests.slice(0, 2).join(" · ")}`
       : undefined);
+  const [commentOpen, setCommentOpen] = useState(false);
+  const [commentBusy, setCommentBusy] = useState(false);
+  const [commentError, setCommentError] = useState("");
+
+  async function submitFeedComment(text: string) {
+    if (!onAddComment) {
+      setView({ name: "project", id: project.id });
+      return;
+    }
+    setCommentBusy(true);
+    setCommentError("");
+    try {
+      await onAddComment(project.id, text);
+    } catch (err) {
+      setCommentError(err instanceof Error ? err.message : "Could not post comment");
+      throw err;
+    } finally {
+      setCommentBusy(false);
+    }
+  }
 
   return (
     <article className="feed-post">
@@ -223,7 +251,13 @@ export function FeedPost({
         ) : null}
 
         <div className="feed-actions" role="group" aria-label="Post actions">
-          <button type="button" className="feed-action" onClick={() => setView({ name: "project", id: project.id })} aria-label="Comment">
+          <button
+            type="button"
+            className="feed-action"
+            onClick={() => setCommentOpen(true)}
+            aria-label="Comment"
+            data-testid="feed-comment-btn"
+          >
             <MessageCircle size={18} />
             {commentCount > 0 ? <span>{commentCount}</span> : null}
           </button>
@@ -251,6 +285,26 @@ export function FeedPost({
           </button>
         </div>
       </div>
+
+      <CommentComposerDialog
+        open={commentOpen}
+        project={project}
+        creator={creator}
+        canComment={canComment}
+        busy={commentBusy}
+        error={commentError}
+        onClose={() => setCommentOpen(false)}
+        onSubmit={submitFeedComment}
+        onSignIn={() => {
+          setCommentOpen(false);
+          onRequireAuth?.();
+          setView({ name: "auth" });
+        }}
+        onViewPost={() => {
+          setCommentOpen(false);
+          setView({ name: "project", id: project.id });
+        }}
+      />
     </article>
   );
 }

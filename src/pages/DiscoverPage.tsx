@@ -18,6 +18,9 @@ export function DiscoverView(props: {
   creatorById: (id: string) => Creator;
   setView: (view: View) => void;
   toggleLike: (id: string) => void;
+  canComment?: boolean;
+  onAddComment?: (projectId: string, body: string) => void | Promise<void>;
+  onRequireAuth?: () => void;
   toggleSave: (id: string) => void;
   shareProject: (id: string) => void;
   /** Skip/dismiss recommendation from Discover surface. */
@@ -56,6 +59,9 @@ export function DiscoverView(props: {
               toggleSave={props.toggleSave}
               shareProject={props.shareProject}
               onDismiss={props.dismissRecommendation}
+              canComment={Boolean(props.canComment)}
+              onAddComment={props.onAddComment}
+              onRequireAuth={props.onRequireAuth}
             />
           ))}
         </div>

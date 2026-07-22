@@ -25,7 +25,7 @@ export function ProjectRoute(props: {
   onPickUpdateImage: (file: File | null) => void;
   onClearUpdateImage: () => void;
   addProgressUpdate: (id: string) => void;
-  addComment: (id: string) => void;
+  addComment: (id: string, body?: string) => void;
   toggleFollow: (id: string) => void;
   toggleLike: (id: string) => void;
   toggleSave: (id: string) => void;

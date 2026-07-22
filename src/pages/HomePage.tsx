@@ -32,6 +32,8 @@ export function HomeView(props: {
   setView: (view: View) => void;
   openDiscover: (patch?: Partial<{ category: string; stitch: string; color: string; status: string; query: string }>) => void;
   toggleLike: (id: string) => void;
+  onAddComment?: (projectId: string, body: string) => void | Promise<void>;
+  onRequireAuth?: () => void;
   toggleSave: (id: string) => void;
   shareProject: (id: string) => void;
   dismissRecommendation?: (projectId: string) => void;
@@ -257,6 +259,9 @@ export function HomeView(props: {
               toggleSave={props.toggleSave}
               shareProject={props.shareProject}
               onDismiss={props.dismissRecommendation}
+              canComment={canPost}
+              onAddComment={props.onAddComment}
+              onRequireAuth={props.onRequireAuth}
             />
           ))}
         </div>

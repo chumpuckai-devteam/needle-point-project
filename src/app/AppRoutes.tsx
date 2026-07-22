@@ -178,7 +178,7 @@ export type AppRoutesProps = {
   onPickUpdateImage: (file: File | null) => void;
   onClearUpdateImage: () => void;
   addProgressUpdate: (id: string) => void;
-  addComment: (projectId: string) => void;
+  addComment: (projectId: string, body?: string) => void;
   saveProjectEdits: (
     projectId: string,
     draft: DraftProject & { progress: number },
@@ -220,6 +220,7 @@ export function AppRoutes(props: AppRoutesProps) {
             dismissRecommendation={(projectId) => props.dismissRecommendation("studio", projectId)}
             hasInterests={props.hasInterests}
             canPost={props.canPost}
+            onAddComment={props.addComment}
             feedLoading={props.feedLoading}
             feedRefreshError={props.feedRefreshError}
             onRetryFeed={props.onRetryFeed}
@@ -245,6 +246,8 @@ export function AppRoutes(props: AppRoutesProps) {
             }}
             dismissRecommendation={(projectId) => props.dismissRecommendation("discover", projectId)}
             hasInterests={props.hasInterests}
+            canComment={Boolean(props.canPost)}
+            onAddComment={props.addComment}
           />
         }
       />
