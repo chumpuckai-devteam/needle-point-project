@@ -380,8 +380,8 @@ p {
 .tag-row span {
   padding: 6px 9px;
   border-radius: 999px;
-  background: #efe5d9;
-  color: #5d4b40;
+  background: var(--np-teal-soft, #efe5d9);
+  color: var(--np-ink, #5d4b40);
   font-size: 0.82rem;
 }
 
@@ -409,14 +409,14 @@ p {
 .comment-box button {
   min-height: var(--touch-min);
   border-radius: 8px;
-  border: 1px solid #d9cfc4;
+  border: 1px solid var(--np-line, #d9cfc4);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   padding: 0 14px;
-  background: #fffaf4;
-  color: #2c2926;
+  background: var(--np-panel-soft, #fffaf4);
+  color: var(--np-ink, #2c2926);
   font-weight: 750;
 }
 
@@ -425,20 +425,21 @@ p {
   min-height: var(--touch-min);
   padding: 10px 14px;
   border-radius: 999px;
-  border: 1px solid #d9cfc4;
-  background: #fffdf9;
-  color: #2c2926;
+  border: 1px solid var(--np-line, #d9cfc4);
+  background: var(--np-panel-soft, #fffdf9);
+  color: var(--np-ink, #2c2926);
   font-weight: 650;
 }
 
 .primary {
-  border-color: #2f6f59;
-  background: #2f6f59;
-  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, #3f6f5b, #335c4b);
+  color: #f7fffd;
 }
 
 .secondary {
-  background: #fffdf9;
+  background: var(--np-panel-soft, #fffdf9);
+  color: var(--np-ink, #2c2926);
 }
 
 .primary:disabled,
@@ -1987,16 +1988,16 @@ a.store-card:focus-visible {
   gap: 0.28rem;
   padding: 0.28rem 0.7rem;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--moss, #3f6f5b) 28%, #e5ddd3);
-  background: color-mix(in srgb, var(--moss, #3f6f5b) 8%, #fffdf9);
-  color: var(--moss, #2f5646);
+  border: 1px solid color-mix(in srgb, var(--np-teal, #3f6f5b) 28%, var(--np-line, #e5ddd3));
+  background: var(--np-teal-soft, color-mix(in srgb, var(--moss, #3f6f5b) 8%, #fffdf9));
+  color: var(--np-teal, var(--moss, #2f5646));
   font-size: 0.84rem;
   font-weight: 600;
   text-decoration: none;
 }
 
 .store-maps-link:hover {
-  background: color-mix(in srgb, var(--moss, #3f6f5b) 14%, #fffdf9);
+  background: color-mix(in srgb, var(--np-teal, #3f6f5b) 18%, var(--np-panel-soft, #fffdf9));
 }
 
 .store-detail-desc {
@@ -3209,15 +3210,26 @@ label textarea::placeholder,
 }
 
 .secondary,
-.card-actions button,
+.card-actions button:not(.primary):not(.selected),
 .linklike,
 .external {
   color: var(--np-ink);
   border-color: var(--np-line);
+  background: var(--np-panel-soft, var(--np-panel));
+}
+
+/* Keep filled primary readable — never inherit light ink onto gradient */
+.card-actions button.primary,
+button.primary,
+a.primary,
+.primary {
+  color: #f7fffd;
+  border-color: transparent;
+  background: linear-gradient(135deg, #3f6f5b, #335c4b);
 }
 
 .text-button {
-  color: #2f5646;
+  color: var(--np-teal, #2f5646);
 }
 
 
@@ -6306,6 +6318,70 @@ html[data-theme="dark"] .section-eyebrow {
 }
 html[data-theme="dark"] .feed-rank-note {
   color: var(--np-muted);
+}
+
+/* Store detail — actions, tags, maps in dark */
+html[data-theme="dark"] .store-detail-hero.panel,
+html[data-theme="dark"] .store-detail-hero {
+  background: var(--np-panel-soft);
+  color: var(--np-ink);
+  border-color: var(--np-line);
+}
+html[data-theme="dark"] .store-detail-head h1,
+html[data-theme="dark"] .store-detail-desc {
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .store-detail-meta,
+html[data-theme="dark"] .store-maps-label {
+  color: var(--np-muted);
+}
+html[data-theme="dark"] .store-maps-link {
+  background: var(--np-teal-soft);
+  border-color: color-mix(in srgb, var(--np-teal) 40%, var(--np-line));
+  color: var(--np-teal);
+}
+html[data-theme="dark"] .tag-row span {
+  background: var(--np-teal-soft);
+  color: var(--np-ink);
+  border: 1px solid var(--np-line);
+}
+html[data-theme="dark"] .store-detail-actions > button:not(.primary):not(.selected),
+html[data-theme="dark"] .card-actions button:not(.primary):not(.selected),
+html[data-theme="dark"] .secondary {
+  background: var(--np-panel);
+  color: var(--np-ink);
+  border: 1px solid var(--np-line);
+}
+html[data-theme="dark"] .store-detail-actions > button.primary,
+html[data-theme="dark"] .card-actions button.primary,
+html[data-theme="dark"] button.primary,
+html[data-theme="dark"] .primary {
+  background: linear-gradient(135deg, #4a8a70, #2f5646);
+  color: #f7fffd !important;
+  border-color: transparent;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+}
+html[data-theme="dark"] .store-detail-actions > button.selected,
+html[data-theme="dark"] .card-actions button.selected,
+html[data-theme="dark"] .selected {
+  background: rgba(232, 168, 136, 0.18);
+  border-color: var(--np-coral);
+  color: var(--np-coral);
+}
+html[data-theme="dark"] .store-detail-actions > button:disabled,
+html[data-theme="dark"] .primary:disabled {
+  opacity: 0.55;
+  color: #f7fffd !important;
+}
+html[data-theme="dark"] .product-card-meta a {
+  background: var(--np-teal-soft);
+  border-color: color-mix(in srgb, var(--np-teal) 35%, var(--np-line));
+  color: var(--np-teal);
+}
+html[data-theme="dark"] .store-chip {
+  background: var(--np-teal-soft);
+  border-color: var(--np-line);
+  color: var(--np-ink);
 }
 
 @media (max-width: 560px) {

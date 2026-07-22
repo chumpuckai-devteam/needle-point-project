@@ -358,7 +358,7 @@ export function StoreDetailView({
         </div>
         <div className="card-actions wrap store-detail-actions">
           {!isOwner ? (
-            <button type="button" className={isFollowed ? "selected" : ""} onClick={() => toggleStoreFollow(store.id)}>
+            <button type="button" className={isFollowed ? "secondary selected" : "secondary"} onClick={() => toggleStoreFollow(store.id)}>
               {isFollowed ? "Following" : "Follow store"}
             </button>
           ) : null}
