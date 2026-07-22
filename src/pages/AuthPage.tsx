@@ -252,6 +252,28 @@ function AccountSettings({
   return (
     <section className="page">
       <SectionHeader eyebrow="Account settings" title={name || "Your profile"} />
+      <div className="account-quick-links panel" data-testid="account-quick-links">
+        <p className="field-help">Jump to places that are under More on mobile.</p>
+        <div className="account-quick-link-grid">
+          <button type="button" className="secondary" onClick={() => navigate("/collections")}>
+            Saved boards
+          </button>
+          <button type="button" className="secondary" onClick={() => navigate("/messages")}>
+            Messages
+          </button>
+          <button type="button" className="secondary" onClick={() => navigate("/meetups")}>
+            Meetups
+          </button>
+          <button type="button" className="secondary" onClick={() => navigate("/stitch-along")}>
+            Stitch-along
+          </button>
+          {handle ? (
+            <button type="button" className="secondary" onClick={() => navigate(`/u/${handle}`)}>
+              Public profile
+            </button>
+          ) : null}
+        </div>
+      </div>
       <div className="editor-layout">
         <form className="panel form-grid" onSubmit={(event) => void save(event)} aria-busy={busy || undefined}>
           <div className="full-field account-identity">

@@ -1,5 +1,27 @@
-import { Bookmark, CalendarDays, Home, MessageCircle, Plus, Search, Sparkles, Store as StoreIcon, UsersRound, UserRound } from "lucide-react";
+import { useEffect, useId, useState } from "react";
+import {
+  Bookmark,
+  CalendarDays,
+  Home,
+  Menu,
+  MessageCircle,
+  Plus,
+  Search,
+  Sparkles,
+  Store as StoreIcon,
+  UserRound,
+  UsersRound,
+  X,
+} from "lucide-react";
 import type { View } from "../appModel";
+
+type NavItem = {
+  id: string;
+  label: string;
+  icon: typeof Home;
+  action: () => void;
+  badge?: number;
+};
 
 export function Sidebar({
   view,
@@ -15,63 +37,197 @@ export function Sidebar({
   /** When false (signed-out online guest), hide New post + Onboarding from nav. */
   canPost?: boolean;
 }) {
-  // Order matters on mobile: only the first 5 items appear in the bottom bar.
-  const messagesLabel =
-    messagesUnread > 0
-      ? `Messages (${messagesUnread > 99 ? "99+" : messagesUnread})`
-      : "Messages";
+  const [moreOpen, setMoreOpen] = useState(false);
+  const titleId = useId();
 
-  const items = [
-    { id: "home", label: "Studio", icon: Home, action: () => setView({ name: "home" }) },
-    { id: "discover", label: "Discover", icon: Search, action: () => setView({ name: "discover" }) },
-    { id: "stores", label: "Shops", icon: StoreIcon, action: () => setView({ name: "stores" }) },
+  // Close sheet when route/view changes
+  useEffect(() => {
+    setMoreOpen(false);
+  }, [view]);
+
+  // Escape closes More sheet
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMoreOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [moreOpen]);
+
+  const go = (next: View) => {
+    setMoreOpen(false);
+    setView(next);
+  };
+
+  const messagesLabel =
+    messagesUnread > 0 ? `Messages (${messagesUnread > 99 ? "99+" : messagesUnread})` : "Messages";
+
+  /** Bottom bar keeps 5 slots. Everything else lives under More on mobile. */
+  const primary: NavItem[] = [
+    { id: "home", label: "Studio", icon: Home, action: () => go({ name: "home" }) },
+    { id: "discover", label: "Discover", icon: Search, action: () => go({ name: "discover" }) },
+    { id: "stores", label: "Shops", icon: StoreIcon, action: () => go({ name: "stores" }) },
+    canPost
+      ? { id: "journal", label: "New post", icon: Plus, action: () => go({ name: "journal" }) }
+      : {
+          id: "collections",
+          label: `Saved (${savedCount})`,
+          icon: Bookmark,
+          action: () => go({ name: "collections" }),
+        },
+  ];
+
+  const more: NavItem[] = [
     ...(canPost
-      ? [{ id: "journal", label: "New post", icon: Plus, action: () => setView({ name: "journal" }) }]
-      : [{ id: "collections", label: `Saved (${savedCount})`, icon: Bookmark, action: () => setView({ name: "collections" }) }]),
-    { id: "auth", label: "Account", icon: UserRound, action: () => setView({ name: "auth" }) },
-    ...(canPost
-      ? [{ id: "collections", label: `Saved (${savedCount})`, icon: Bookmark, action: () => setView({ name: "collections" }) }]
+      ? [
+          {
+            id: "collections",
+            label: `Saved boards (${savedCount})`,
+            icon: Bookmark,
+            action: () => go({ name: "collections" }),
+          } satisfies NavItem,
+        ]
       : []),
-    { id: "stitchAlong", label: "Stitch-along", icon: CalendarDays, action: () => setView({ name: "stitchAlong" }) },
-    { id: "meetups", label: "Meetups", icon: UsersRound, action: () => setView({ name: "meetups" }) },
-    { id: "messages", label: messagesLabel, icon: MessageCircle, action: () => setView({ name: "messages" }), badge: messagesUnread },
+    {
+      id: "messages",
+      label: messagesLabel,
+      icon: MessageCircle,
+      action: () => go({ name: "messages" }),
+      badge: messagesUnread,
+    },
+    { id: "meetups", label: "Meetups", icon: UsersRound, action: () => go({ name: "meetups" }) },
+    {
+      id: "stitchAlong",
+      label: "Stitch-along",
+      icon: CalendarDays,
+      action: () => go({ name: "stitchAlong" }),
+    },
+    { id: "auth", label: "Account", icon: UserRound, action: () => go({ name: "auth" }) },
     ...(canPost
-      ? [{ id: "onboarding", label: "Onboarding", icon: Sparkles, action: () => setView({ name: "onboarding" }) }]
+      ? [
+          {
+            id: "onboarding",
+            label: "Onboarding",
+            icon: Sparkles,
+            action: () => go({ name: "onboarding" }),
+          } satisfies NavItem,
+        ]
       : []),
   ];
 
+  /** Desktop sidebar still shows the full list (primary + more, no sheet). */
+  const desktopItems = [...primary, ...more];
+
+  const isActive = (item: NavItem) =>
+    view === item.id ||
+    (item.id === "meetups" && (view === "meetup" || view === "meetups")) ||
+    (item.id === "messages" && view === "messages") ||
+    (item.id === "collections" && view === "collections") ||
+    (item.id === "auth" && view === "auth");
+
+  const moreSectionActive = more.some(isActive);
+
+  function renderButton(item: NavItem, opts?: { showLabel?: boolean }) {
+    const Icon = item.icon;
+    const active = isActive(item);
+    const badge = Number(item.badge || 0);
+    return (
+      <button key={item.id} type="button" className={active ? "active" : ""} onClick={item.action}>
+        <Icon size={18} />
+        <span className="nav-label">
+          {item.id === "messages" && !opts?.showLabel ? "Messages" : item.label}
+          {item.id === "messages" && badge > 0 ? (
+            <span className="nav-unread-badge" data-testid="messages-unread-badge" aria-label={`${badge} unread`}>
+              {badge > 99 ? "99+" : badge}
+            </span>
+          ) : null}
+        </span>
+      </button>
+    );
+  }
+
   return (
-    <aside className="sidebar">
-      <button className="brand" onClick={() => setView({ name: "home" })} aria-label="Go to studio">
+    <aside className={`sidebar${moreOpen ? " more-open" : ""}`}>
+      <button className="brand" type="button" onClick={() => go({ name: "home" })} aria-label="Go to studio">
         <span className="brand-mark">NP</span>
         <span>
           <strong>Needlepoint</strong>
           <small>visual studio</small>
         </span>
       </button>
-      <nav aria-label="Primary navigation">
-        {items.map((item) => {
-          const Icon = item.icon;
-          const active =
-            view === item.id ||
-            (item.id === "meetups" && (view === "meetup" || view === "meetups")) ||
-            (item.id === "messages" && view === "messages");
-          const badge = "badge" in item ? Number(item.badge || 0) : 0;
-          return (
-            <button key={item.id} className={active ? "active" : ""} onClick={item.action}>
-              <Icon size={18} />
-              <span className="nav-label">
-                {item.id === "messages" ? "Messages" : item.label}
-                {item.id === "messages" && badge > 0 ? (
-                  <span className="nav-unread-badge" data-testid="messages-unread-badge" aria-label={`${badge} unread`}>
-                    {badge > 99 ? "99+" : badge}
-                  </span>
-                ) : null}
-              </span>
-            </button>
-          );
-        })}
+
+      {/* Desktop / tablet: full primary nav */}
+      <nav className="sidebar-nav-desktop" aria-label="Primary navigation">
+        {desktopItems.map((item) => renderButton(item, { showLabel: true }))}
       </nav>
+
+      {/* Mobile bottom bar: 4 primaries + More */}
+      <nav className="sidebar-nav-mobile" aria-label="Primary navigation">
+        {primary.map((item) => renderButton(item))}
+        <button
+          type="button"
+          className={moreOpen || moreSectionActive ? "active more-toggle" : "more-toggle"}
+          aria-expanded={moreOpen}
+          aria-controls="mobile-more-sheet"
+          data-testid="mobile-more-nav"
+          onClick={() => setMoreOpen((open) => !open)}
+        >
+          {moreOpen ? <X size={18} /> : <Menu size={18} />}
+          <span className="nav-label">More</span>
+          {!moreOpen && messagesUnread > 0 ? (
+            <span className="nav-unread-badge more-toggle-badge" aria-label={`${messagesUnread} unread`}>
+              {messagesUnread > 99 ? "99+" : messagesUnread}
+            </span>
+          ) : null}
+        </button>
+      </nav>
+
+      {moreOpen ? (
+        <div className="mobile-more-backdrop" role="presentation" onClick={() => setMoreOpen(false)} />
+      ) : null}
+
+      <div
+        id="mobile-more-sheet"
+        className="mobile-more-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        hidden={!moreOpen}
+      >
+        <div className="mobile-more-sheet-head">
+          <h2 id={titleId}>More</h2>
+          <button type="button" className="text-button" onClick={() => setMoreOpen(false)}>
+            Close
+          </button>
+        </div>
+        <p className="field-help mobile-more-help">Saved boards, messages, meetups, and account.</p>
+        <div className="mobile-more-grid">
+          {more.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item);
+            const badge = Number(item.badge || 0);
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={active ? "mobile-more-item active" : "mobile-more-item"}
+                onClick={item.action}
+              >
+                <Icon size={20} />
+                <span>
+                  {item.label}
+                  {item.id === "messages" && badge > 0 ? (
+                    <span className="nav-unread-badge" aria-label={`${badge} unread`}>
+                      {badge > 99 ? "99+" : badge}
+                    </span>
+                  ) : null}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </aside>
   );
 }

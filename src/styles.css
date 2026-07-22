@@ -55,7 +55,9 @@ button {
 }
 
 .brand,
-.sidebar nav button {
+.sidebar nav button,
+.sidebar-nav-desktop button,
+.sidebar-nav-mobile button {
   width: 100%;
   border: 0;
   background: transparent;
@@ -91,19 +93,24 @@ button {
   opacity: 0.72;
 }
 
-.sidebar nav {
+.sidebar nav,
+.sidebar-nav-desktop {
   display: grid;
   gap: 8px;
 }
 
-.sidebar nav button {
+.sidebar nav button,
+.sidebar-nav-desktop button {
   min-height: 44px;
   padding: 0 12px;
   border-radius: 8px;
 }
 
 .sidebar nav button.active,
-.sidebar nav button:hover {
+.sidebar nav button:hover,
+.sidebar-nav-desktop button.active,
+.sidebar-nav-desktop button:hover,
+.sidebar-nav-mobile button:hover {
   background: rgba(255, 255, 255, 0.12);
 }
 
@@ -3053,6 +3060,30 @@ label textarea::placeholder {
   color: #2f5646;
 }
 
+
+/* Dual nav: desktop full list, mobile bottom bar + More sheet */
+.sidebar-nav-desktop {
+  display: grid;
+  gap: inherit;
+}
+.sidebar-nav-mobile {
+  display: none;
+}
+.mobile-more-backdrop,
+.mobile-more-sheet {
+  display: none;
+}
+.account-quick-links {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+}
+.account-quick-link-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
 @media (max-width: 760px) {
   .app-shell {
     display: block;
@@ -3077,15 +3108,19 @@ label textarea::placeholder {
     display: none;
   }
 
-  .sidebar nav {
+  .sidebar-nav-desktop {
+    display: none !important;
+  }
+
+  .sidebar-nav-mobile {
+    display: grid !important;
     height: 72px;
-    display: grid;
     grid-template-columns: repeat(5, 1fr);
     align-items: center;
     gap: 0;
   }
 
-  .sidebar nav button {
+  .sidebar-nav-mobile button {
     justify-content: center;
     min-height: 56px;
     padding: 0;
@@ -3094,21 +3129,17 @@ label textarea::placeholder {
     position: relative;
   }
 
-  .sidebar nav button:nth-child(n + 6) {
-    display: none;
-  }
-
-  .sidebar nav button svg {
+  .sidebar-nav-mobile button svg {
     width: 28px;
     height: 28px;
   }
 
-  .sidebar nav button.active {
+  .sidebar-nav-mobile button.active {
     color: #fff;
     background: transparent;
   }
 
-  .sidebar nav button.active::after {
+  .sidebar-nav-mobile button.active::after {
     content: "";
     width: 8px;
     height: 8px;
@@ -3116,6 +3147,92 @@ label textarea::placeholder {
     background: var(--np-gold);
     position: absolute;
     transform: translate(12px, -16px);
+  }
+
+  .mobile-more-backdrop {
+    position: fixed;
+    inset: 0 0 calc(72px + env(safe-area-inset-bottom)) 0;
+    background: rgba(20, 28, 24, 0.45);
+    z-index: 60;
+  }
+
+  .mobile-more-backdrop {
+    display: block;
+  }
+
+  .mobile-more-sheet {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+    z-index: 70;
+    max-height: min(70vh, 480px);
+    overflow: auto;
+    padding: 14px 16px 18px;
+    border-radius: 18px 18px 0 0;
+    border: 1px solid var(--np-line);
+    border-bottom: 0;
+    background: var(--np-panel, #f7f1e8);
+    box-shadow: 0 -12px 40px rgba(20, 28, 24, 0.18);
+  }
+
+  .mobile-more-sheet[hidden] {
+    display: none !important;
+  }
+
+  .mobile-more-sheet-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+
+  .mobile-more-sheet-head h2 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  .mobile-more-help {
+    margin: 0 0 12px;
+  }
+
+  .mobile-more-grid {
+    display: grid;
+    gap: 8px;
+  }
+
+  .mobile-more-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--np-line);
+    background: #fff;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+  }
+
+  .mobile-more-item.active {
+    border-color: var(--np-moss, #3d5a45);
+    background: rgba(61, 90, 69, 0.08);
+  }
+
+  .mobile-more-item span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .more-toggle-badge {
+    position: absolute;
+    top: 8px;
+    right: 18%;
   }
 
   .page.feed-page {
