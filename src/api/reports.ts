@@ -1,6 +1,6 @@
 import { isSupabaseConfigured, requireSupabase } from "../lib/supabase";
 
-export type ReportTargetType = "project" | "profile" | "store";
+export type ReportTargetType = "project" | "profile" | "store" | "comment";
 export type ReportReason = "spam" | "harassment" | "hate" | "scam" | "nudity" | "self_harm" | "illegal" | "other";
 export type ReportStatus = "queued" | "open" | "reviewed" | "dismissed";
 
@@ -40,7 +40,7 @@ type DbReport = {
   reviewed_at?: string | null;
 };
 
-const reportTargetTypes = new Set<ReportTargetType>(["project", "profile", "store"]);
+const reportTargetTypes = new Set<ReportTargetType>(["project", "profile", "store", "comment"]);
 const reportReasons = new Set<ReportReason>([
   "spam",
   "harassment",

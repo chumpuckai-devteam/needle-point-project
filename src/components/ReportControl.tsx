@@ -19,6 +19,7 @@ export function ReportControl({
   targetLabel,
   onSubmit,
   disabled,
+  compact = false,
 }: {
   targetType: ReportTargetType;
   targetId: string;
@@ -31,6 +32,8 @@ export function ReportControl({
     targetLabel: string;
   }) => void | Promise<void>;
   disabled?: boolean;
+  /** Icon-only trigger for dense rows (comments). */
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<ReportReason>("spam");
@@ -63,16 +66,24 @@ export function ReportControl({
 
   if (done) {
     return (
-      <p className="field-help success-text" role="status" data-testid="report-thanks">
-        Thanks — your report is queued. You can check status under Account → Your reports.
+      <p className={`field-help success-text${compact ? " report-thanks-compact" : ""}`} role="status" data-testid="report-thanks">
+        {compact ? "Reported" : "Thanks — your report is queued. You can check status under Account → Your reports."}
       </p>
     );
   }
 
   return (
-    <div className="report-control" data-help-anchor="help-report">
-      <button className="secondary report-trigger" type="button" disabled={disabled} onClick={() => setOpen((v) => !v)}>
-        <Flag size={15} aria-hidden /> {open ? "Cancel report" : "Report"}
+    <div className={`report-control${compact ? " report-control-compact" : ""}`} data-help-anchor={compact ? undefined : "help-report"}>
+      <button
+        className={compact ? "report-trigger-icon" : "secondary report-trigger"}
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+        aria-label={open ? "Cancel report" : "Report"}
+        title={open ? "Cancel report" : "Report"}
+      >
+        <Flag size={compact ? 14 : 15} aria-hidden />
+        {compact ? null : open ? " Cancel report" : " Report"}
       </button>
       {open ? (
         <form className="report-form panel" onSubmit={(e) => void handleSubmit(e)}>
@@ -104,8 +115,8 @@ export function ReportControl({
               {error}
             </p>
           ) : null}
-          <button className="primary" type="submit" disabled={busy || disabled}>
-            {busy ? "Sending…" : "Submit report"}
+          <button className="primary" type="submit" disabled={busy}>
+            {busy ? "Submitting…" : "Submit report"}
           </button>
         </form>
       ) : null}

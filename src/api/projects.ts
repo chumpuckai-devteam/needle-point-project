@@ -224,10 +224,41 @@ async function loadProjectRelations(rows: DbProjectRow[], currentUserId?: string
 
   const materialsByProject = groupMaterials(materials as DbMaterial[] | null);
   const tagsByProject = groupTags(tags as DbTag[] | null);
+
+  const updateRows = (updates as DbUpdateRow[] | null) ?? [];
+  const updateIds = updateRows.map((u) => u.id);
+  const commentsByUpdate = new Map<string, ProgressUpdate["comments"]>();
+  if (updateIds.length) {
+    const { data: commentRows } = await client
+      .from("comments")
+      .select("id,user_id,target_id,body,created_at")
+      .eq("target_type", "project_update")
+      .in("target_id", updateIds)
+      .order("created_at", { ascending: true });
+    const authorIds = Array.from(new Set(((commentRows as { user_id: string }[] | null) ?? []).map((c) => c.user_id)));
+    const nameByUser = new Map<string, string>();
+    if (authorIds.length) {
+      const { data: profiles } = await client.from("profiles").select("id,name,handle").in("id", authorIds);
+      for (const profile of (profiles as { id: string; name: string | null; handle: string | null }[] | null) ?? []) {
+        nameByUser.set(profile.id, (profile.name || profile.handle || "Stitcher").trim() || "Stitcher");
+      }
+    }
+    for (const row of (commentRows as { id: string; user_id: string; target_id: string; body: string }[] | null) ?? []) {
+      const list = commentsByUpdate.get(row.target_id) ?? [];
+      list.push({
+        id: row.id,
+        author: nameByUser.get(row.user_id) || "Stitcher",
+        body: row.body,
+        authorUserId: row.user_id,
+      });
+      commentsByUpdate.set(row.target_id, list);
+    }
+  }
+
   const updatesByProject = new Map<string, ProgressUpdate[]>();
-  for (const u of (updates as DbUpdateRow[] | null) ?? []) {
+  for (const u of updateRows) {
     const list = updatesByProject.get(u.project_id) ?? [];
-    list.push(mapUpdate(u));
+    list.push(mapUpdate(u, commentsByUpdate.get(u.id) ?? []));
     updatesByProject.set(u.project_id, list);
   }
 

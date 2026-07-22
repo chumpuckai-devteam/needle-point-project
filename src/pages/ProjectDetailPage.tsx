@@ -33,6 +33,8 @@ export function ProjectDetail(props: {
   updateMilestone: string;
   commentText: string;
   canComment?: boolean;
+  /** Current viewer user id for comment report gating. */
+  viewerId?: string | null;
   updateBusy: boolean;
   updateError: string;
   updateImagePreview: string;
@@ -196,17 +198,13 @@ export function ProjectDetail(props: {
             )}
             {hasUpdates ? (
               props.project.updates.map((update) => (
-                <article className="timeline" key={update.id}>
+                <article className="timeline progress-update" key={update.id} data-testid="progress-update">
                   <img src={update.image || props.project.image} alt="" />
                   <div>
+                    <p className="progress-update-kicker">Owner update</p>
                     <strong>{update.milestone}</strong>
                     <small>{update.date}</small>
                     <p>{update.note}</p>
-                    {update.comments.map((comment) => (
-                      <p className="comment" key={comment.id}>
-                        <b>{comment.author}:</b> {comment.body}
-                      </p>
-                    ))}
                   </div>
                 </article>
               ))
@@ -226,25 +224,66 @@ export function ProjectDetail(props: {
                 }
               />
             )}
-            {!hasUpdates ? (
-              <div className="comment-box comment-box-disabled">
-                <p className="field-help">{uiCopy.projectDetail.commentsDisabledUntilUpdate}</p>
-              </div>
-            ) : props.canComment === false ? (
-              <div className="comment-box comment-box-guest">
-                <p className="field-help">Sign in to leave a comment on this update.</p>
-                <button className="secondary" type="button" onClick={() => props.setView({ name: "auth" })}>
-                  Sign in to comment
-                </button>
-              </div>
-            ) : (
-              <div className="comment-box">
-                <input value={props.commentText} onChange={(event) => props.setCommentText(event.target.value)} placeholder="Comment on the latest update" />
-                <button className="secondary" type="button" onClick={() => props.addComment(props.project.id)}>
-                  Comment
-                </button>
-              </div>
-            )}
+
+            <div className="project-comments-section" data-testid="project-comments">
+              <h3 className="project-comments-title">Comments</h3>
+              <p className="field-help">Replies from the community — separate from the owner’s progress updates.</p>
+              {!hasUpdates ? (
+                <div className="comment-box comment-box-disabled">
+                  <p className="field-help">{uiCopy.projectDetail.commentsDisabledUntilUpdate}</p>
+                </div>
+              ) : (
+                <>
+                  <ul className="project-comment-list">
+                    {props.project.updates.flatMap((update) =>
+                      update.comments.map((comment) => (
+                        <li className="project-comment" key={comment.id} data-testid="project-comment">
+                          <div className="project-comment-body">
+                            <strong>{comment.author}</strong>
+                            <p>{comment.body}</p>
+                          </div>
+                          {props.onReport &&
+                          comment.id &&
+                          !comment.id.startsWith("cm") &&
+                          comment.authorUserId !== props.viewerId ? (
+                            <ReportControl
+                              compact
+                              targetType="comment"
+                              targetId={comment.id}
+                              targetLabel={`${comment.author}: ${comment.body.slice(0, 80)}`}
+                              onSubmit={props.onReport}
+                            />
+                          ) : null}
+                        </li>
+                      )),
+                    )}
+                  </ul>
+                  {props.project.updates.every((u) => u.comments.length === 0) ? (
+                    <p className="field-help">No comments yet. Be the first to reply.</p>
+                  ) : null}
+                  {props.canComment === false ? (
+                    <div className="comment-box comment-box-guest">
+                      <p className="field-help">Sign in to leave a comment.</p>
+                      <button className="secondary" type="button" onClick={() => props.setView({ name: "auth" })}>
+                        Sign in to comment
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="comment-box">
+                      <input
+                        value={props.commentText}
+                        onChange={(event) => props.setCommentText(event.target.value)}
+                        placeholder="Write a comment"
+                        aria-label="Write a comment"
+                      />
+                      <button className="secondary" type="button" onClick={() => props.addComment(props.project.id)}>
+                        Comment
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
         <aside className="panel sticky">

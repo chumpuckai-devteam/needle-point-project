@@ -487,6 +487,7 @@ export function AppRoutes(props: AppRoutesProps) {
           <ProjectRoute
             projectById={props.projectById}
             creatorById={props.creatorById}
+            viewerId={props.viewerId}
             followedCreators={props.followedCreators}
             updateNote={props.updateNote}
             updateMilestone={props.updateMilestone}

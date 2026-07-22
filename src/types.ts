@@ -33,6 +33,8 @@ export type Comment = {
   id: string;
   author: string;
   body: string;
+  /** Comment author user id when known (online). */
+  authorUserId?: string;
 };
 
 export type Project = {

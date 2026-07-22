@@ -14,6 +14,7 @@ export function ProjectRoute(props: {
   updateMilestone: string;
   commentText: string;
   canComment?: boolean;
+  viewerId?: string | null;
   updateBusy: boolean;
   updateError: string;
   updateImagePreview: string;

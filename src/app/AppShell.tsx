@@ -1230,6 +1230,7 @@ export function AppShell() {
     const author = user?.name || "You";
     const project = projects.find((item) => item.id === projectId);
     const latestUpdateId = project?.updates[0]?.id;
+    const tempId = `cm${Date.now()}`;
     setProjects((current) =>
       current.map((item) =>
         item.id === projectId
@@ -1239,7 +1240,7 @@ export function AppShell() {
                 index === 0
                   ? {
                       ...update,
-                      comments: [...update.comments, { id: `cm${Date.now()}`, author, body }],
+                      comments: [...update.comments, { id: tempId, author, body, authorUserId: user?.id }],
                     }
                   : update,
               ),
@@ -1253,9 +1254,32 @@ export function AppShell() {
       return;
     }
     if (isSupabaseConfigured && user && !latestUpdateId.startsWith("u") && !latestUpdateId.startsWith("local-")) {
-      void addCommentOnline(latestUpdateId, user.id, body).catch((error) => {
-        setRemoteError(friendlyUserError(error, "Comment failed"));
-      });
+      void addCommentOnline(latestUpdateId, user.id, body)
+        .then((realId) => {
+          if (!realId) return;
+          setProjects((current) =>
+            current.map((item) =>
+              item.id === projectId
+                ? {
+                    ...item,
+                    updates: item.updates.map((update, index) =>
+                      index === 0
+                        ? {
+                            ...update,
+                            comments: update.comments.map((comment) =>
+                              comment.id === tempId ? { ...comment, id: realId } : comment,
+                            ),
+                          }
+                        : update,
+                    ),
+                  }
+                : item,
+            ),
+          );
+        })
+        .catch((error) => {
+          setRemoteError(friendlyUserError(error, "Comment failed"));
+        });
     }
   }
 
