@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from "react";
 import {
   Bookmark,
   CalendarDays,
+  CircleHelp,
   Home,
   Menu,
   MessageCircle,
@@ -14,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import type { View } from "../appModel";
+import { useHelpTipsOptional } from "../context/HelpTipsContext";
 
 type NavItem = {
   id: string;
@@ -39,22 +41,32 @@ export function Sidebar({
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const titleId = useId();
+  const help = useHelpTipsOptional();
+  const forceMoreOpen = Boolean(help?.forceMoreOpen);
 
   useEffect(() => {
+    // Don't collapse More while a coach mark needs items inside the sheet.
+    if (forceMoreOpen) return;
     setMoreOpen(false);
-  }, [view]);
+  }, [view, forceMoreOpen]);
+
+  useEffect(() => {
+    if (forceMoreOpen) setMoreOpen(true);
+  }, [forceMoreOpen]);
 
   useEffect(() => {
     if (!moreOpen) return;
     const onKey = (event: KeyboardEvent) => {
+      // Help coach owns Escape while active.
+      if (help?.active) return;
       if (event.key === "Escape") setMoreOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [moreOpen]);
+  }, [moreOpen, help?.active]);
 
   const go = (next: View) => {
-    setMoreOpen(false);
+    if (!forceMoreOpen) setMoreOpen(false);
     setView(next);
   };
 
@@ -100,6 +112,15 @@ export function Sidebar({
       action: () => go({ name: "stitchAlong" }),
     },
     { id: "auth", label: "Account", icon: UserRound, action: () => go({ name: "auth" }) },
+    {
+      id: "helpTips",
+      label: "Help tips",
+      icon: CircleHelp,
+      action: () => {
+        setMoreOpen(false);
+        help?.startTour();
+      },
+    },
     ...(canPost
       ? [
           {
@@ -125,12 +146,30 @@ export function Sidebar({
 
   const moreSectionActive = more.some(isActive);
 
+  const anchorFor = (id: string): string | undefined => {
+    if (id === "home") return "nav-studio";
+    if (id === "discover") return "nav-discover";
+    if (id === "stores") return "nav-shops";
+    if (id === "collections") return "nav-saved";
+    if (id === "meetups") return "nav-meetups";
+    if (id === "messages") return "nav-messages";
+    if (id === "helpTips") return "nav-help";
+    return undefined;
+  };
+
   function renderButton(item: NavItem, opts?: { showLabel?: boolean }) {
     const Icon = item.icon;
     const active = isActive(item);
     const badge = Number(item.badge || 0);
+    const anchor = anchorFor(item.id);
     return (
-      <button key={item.id} type="button" className={active ? "active" : ""} onClick={item.action}>
+      <button
+        key={item.id}
+        type="button"
+        className={active ? "active" : ""}
+        onClick={item.action}
+        data-help-anchor={anchor}
+      >
         <Icon size={18} />
         <span className="nav-label">
           {item.id === "messages" && !opts?.showLabel ? "Messages" : item.label}
@@ -166,6 +205,7 @@ export function Sidebar({
           aria-expanded={moreOpen}
           aria-controls="mobile-more-sheet"
           data-testid="mobile-more-nav"
+          data-help-anchor="nav-more"
           onClick={() => setMoreOpen((open) => !open)}
         >
           {moreOpen ? <X size={18} aria-hidden /> : <Menu size={18} aria-hidden />}
@@ -179,7 +219,13 @@ export function Sidebar({
       </nav>
 
       {moreOpen ? (
-        <div className="mobile-more-backdrop" role="presentation" onClick={() => setMoreOpen(false)} />
+        <div
+          className="mobile-more-backdrop"
+          role="presentation"
+          onClick={() => {
+            if (!forceMoreOpen) setMoreOpen(false);
+          }}
+        />
       ) : null}
 
       <div
@@ -192,7 +238,13 @@ export function Sidebar({
       >
         <div className="mobile-more-sheet-head">
           <h2 id={titleId}>More</h2>
-          <button type="button" className="mobile-more-close" onClick={() => setMoreOpen(false)}>
+          <button
+            type="button"
+            className="mobile-more-close"
+            onClick={() => {
+              if (!forceMoreOpen) setMoreOpen(false);
+            }}
+          >
             Close
           </button>
         </div>
@@ -202,12 +254,14 @@ export function Sidebar({
             const Icon = item.icon;
             const active = isActive(item);
             const badge = Number(item.badge || 0);
+            const anchor = anchorFor(item.id);
             return (
               <button
                 key={item.id}
                 type="button"
                 className={active ? "mobile-more-item active" : "mobile-more-item"}
                 onClick={item.action}
+                data-help-anchor={anchor}
               >
                 <Icon size={20} aria-hidden />
                 <span className="mobile-more-item-label">

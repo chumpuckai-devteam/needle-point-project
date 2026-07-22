@@ -5412,3 +5412,137 @@ label textarea::placeholder {
 .report-form {
   margin-top: 0.5rem;
 }
+
+/* First-time help coach marks (Phase A) */
+.help-coach {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+}
+.help-coach-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 28, 24, 0.28);
+  pointer-events: auto;
+}
+.help-coach-spotlight {
+  position: fixed;
+  border-radius: 14px;
+  border: 2px solid var(--np-gold, #c9a66b);
+  box-shadow:
+    0 0 0 9999px rgba(20, 28, 24, 0.32),
+    0 0 0 4px rgba(201, 166, 107, 0.28);
+  pointer-events: none;
+  z-index: 101;
+}
+.help-coach-card {
+  pointer-events: auto;
+  z-index: 102;
+  padding: 0.9rem 1rem 1rem;
+  border-radius: 16px;
+  background: #fbf8f1 !important;
+  color: #1f2a24 !important;
+  border: 1px solid #c9c0a8 !important;
+  box-shadow: 0 14px 40px rgba(20, 28, 24, 0.28);
+  max-height: min(280px, 52vh);
+  overflow: auto;
+}
+.help-coach-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+.help-coach-step {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #3f6f5b;
+}
+.help-coach-close {
+  border: 0;
+  background: transparent;
+  color: #3d5248;
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.help-coach-close:hover {
+  background: rgba(63, 111, 91, 0.1);
+  color: #1f2a24;
+}
+.help-coach-title {
+  margin: 0.1rem 0 0.35rem;
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #1f2a24;
+}
+.help-coach-body {
+  margin: 0 0 0.85rem;
+  color: #2c3831;
+  line-height: 1.45;
+  font-size: 0.95rem;
+}
+.help-coach-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.help-coach-nav {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+.help-coach-skip,
+.help-coach-card .text-button {
+  color: #3d5248 !important;
+  min-height: 40px;
+}
+.help-coach-card .secondary {
+  color: #1f2a24 !important;
+  border-color: #b7b09a;
+  background: #fff;
+}
+.help-coach-card .primary {
+  background: #2f5d50;
+  color: #fbf8f1;
+  border-color: #2f5d50;
+}
+.help-tips-recall {
+  margin: 0 0 1rem;
+}
+.help-tips-recall .field-help {
+  margin-top: 0.25rem;
+  color: #4d5a53;
+}
+@media (max-width: 760px) {
+  .help-coach-card {
+    max-width: calc(100vw - 24px);
+  }
+  .help-coach-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .help-coach-nav {
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+  .help-coach-nav .primary,
+  .help-coach-nav .secondary {
+    min-height: 44px;
+  }
+}

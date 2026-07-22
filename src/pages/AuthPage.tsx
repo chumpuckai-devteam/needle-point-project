@@ -5,6 +5,8 @@ import { fetchProfileById, updateProfile } from "../api/profiles";
 import { fetchPublicProjects } from "../api/projects";
 import { AuthForm, useAuth } from "../context/AuthContext";
 import { MyReportsPanel } from "../components/MyReportsPanel";
+import { HelpTipsRecallPanel } from "../components/HelpTipsRecallPanel";
+import { useHelpTips } from "../context/HelpTipsContext";
 import { userIsModerator } from "../api/reports";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { mapAccountSaveError, uiCopy } from "../lib/uiCopy";
@@ -16,6 +18,7 @@ export function AuthPage() {
   const { isDemoMode, handle, user, signOut, loading, refreshUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { startTour } = useHelpTips();
   const mode: "signin" | "signup" = location.pathname.includes("/signup") ? "signup" : "signin";
 
   if (loading) {
@@ -84,6 +87,21 @@ export function AuthPage() {
             to set skill level and interests.
           </p>
         ) : null}
+
+        <p className="auth-footnote" data-testid="guest-help-tips">
+          New here?{" "}
+          <button
+            className="text-button"
+            type="button"
+            onClick={() => {
+              navigate("/");
+              startTour();
+            }}
+          >
+            Show navigation tips
+          </button>{" "}
+          (skippable, browse-only).
+        </p>
       </div>
     </section>
   );
@@ -278,6 +296,7 @@ function AccountSettings({
           ) : null}
         </div>
       </div>
+      <HelpTipsRecallPanel />
       <MyReportsPanel enabled />
       {isModerator ? (
         <div className="panel" data-testid="moderation-entry">

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import { Sidebar } from "../components/Sidebar";
 import { NotificationsPanel } from "../components/NotificationsPanel";
+import { HelpCoach } from "../components/HelpCoach";
 import type { AppNotification } from "../api/notifications";
 import type { View } from "../appModel";
 import { viewNameForPath } from "./navigation";
@@ -25,6 +26,7 @@ type AppLayoutProps = {
 /**
  * Chrome shell: primary nav + main content column.
  * Route bodies render as children; no product logic here.
+ * HelpTipsProvider lives in app/providers (single instance for Account + coach).
  */
 export function AppLayout({
   savedCount,
@@ -69,6 +71,7 @@ export function AppLayout({
         ) : null}
         {children}
       </main>
+      <HelpCoach />
     </div>
   );
 }

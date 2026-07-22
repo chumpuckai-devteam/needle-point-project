@@ -70,7 +70,7 @@ export function ReportControl({
   }
 
   return (
-    <div className="report-control">
+    <div className="report-control" data-help-anchor="help-report">
       <button className="secondary report-trigger" type="button" disabled={disabled} onClick={() => setOpen((v) => !v)}>
         <Flag size={15} aria-hidden /> {open ? "Cancel report" : "Report"}
       </button>

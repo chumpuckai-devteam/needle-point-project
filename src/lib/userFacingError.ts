@@ -18,6 +18,6 @@ export function friendlyUserError(error: unknown, fallback: string): string {
     return fallback;
   }
   // Keep short product-facing messages
-  if (msg.length <= 140 && !/[\"'].*_id|SELECT |INSERT |UPDATE /i.test(msg)) return msg;
+  if (msg.length <= 140 && !/["'].*_id|SELECT |INSERT |UPDATE /i.test(msg)) return msg;
   return fallback;
 }
