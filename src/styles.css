@@ -476,9 +476,10 @@ p {
   margin-bottom: 14px;
   padding: 0 14px;
   min-height: 52px;
-  border: 1px solid #d8cec2;
+  border: 1px solid var(--np-line, #d8cec2);
   border-radius: 8px;
-  background: #fffdf9;
+  background: var(--np-input-bg, #fffdf9);
+  color: var(--np-ink);
 }
 
 .searchbar input,
@@ -488,10 +489,10 @@ label textarea,
 label select,
 .update-composer textarea {
   width: 100%;
-  border: 1px solid #d8cec2;
+  border: 1px solid var(--np-line, #d8cec2);
   border-radius: 8px;
-  background: #fffdf9;
-  color: #241f21;
+  background: var(--np-input-bg, #fffdf9);
+  color: var(--np-ink, #241f21);
 }
 
 .searchbar input {
@@ -499,16 +500,19 @@ label select,
   outline: 0;
   min-height: var(--touch-min);
   font-size: 16px;
+  background: transparent;
+  color: var(--np-ink);
 }
 
 .filters {
   margin-bottom: 22px;
+  color: var(--np-ink);
 }
 
 label {
   display: grid;
   gap: 7px;
-  color: #5e5149;
+  color: var(--np-muted, #5e5149);
   font-size: 0.86rem;
   font-weight: 750;
 }
@@ -3134,22 +3138,22 @@ main {
 input,
 textarea,
 select {
-  background: #fff;
+  background: var(--np-input-bg, #fff);
   color: var(--np-ink);
   border-color: var(--np-line);
 }
 
-/* Form text contrast on light Moss & Flax panels */
+/* Form text contrast — theme tokens (light + dark) */
 label {
-  color: #4d5a53;
+  color: var(--np-muted);
 }
 
 .field-label {
-  color: #4d5a53;
+  color: var(--np-muted);
 }
 
 .field-help {
-  color: #6b756f;
+  color: var(--np-muted);
 }
 
 label input:not([type="checkbox"]):not([type="radio"]),
@@ -3158,15 +3162,16 @@ label select,
 .searchbar input,
 .comment-box input,
 .update-composer textarea {
-  color: #1f2a24;
-  background: #fff;
-  border-color: #d2cbbc;
+  color: var(--np-ink);
+  background: var(--np-input-bg, #fff);
+  border-color: var(--np-line, #d2cbbc);
 }
 
 label input:not([type="checkbox"]):not([type="radio"])::placeholder,
-label textarea::placeholder {
-  color: #7a857e;
-  opacity: 1;
+label textarea::placeholder,
+.searchbar input::placeholder {
+  color: var(--np-muted);
+  opacity: 0.9;
 }
 
 .checkbox-field {
@@ -3175,17 +3180,17 @@ label textarea::placeholder {
 }
 
 .checkbox-field:hover {
-  background: rgba(63, 111, 91, 0.06);
+  background: var(--np-teal-soft);
   border-color: rgba(63, 111, 91, 0.18);
 }
 
 .checkbox-field:has(input:checked) {
-  background: rgba(63, 111, 91, 0.1);
+  background: var(--np-teal-soft);
   border-color: rgba(63, 111, 91, 0.32);
 }
 
 .checkbox-field span {
-  color: #1f2a24;
+  color: var(--np-ink);
 }
 
 .checkbox-field span small {
@@ -6242,6 +6247,65 @@ html[data-theme="dark"] .page.discover-page,
 html[data-theme="dark"] .page.auth-page {
   background: var(--np-bg);
   color: var(--np-ink);
+}
+
+/* Discover filters + search — stay on dark chrome */
+html[data-theme="dark"] .searchbar {
+  background: var(--np-panel-soft);
+  border-color: var(--np-line);
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .searchbar svg {
+  color: var(--np-muted);
+  flex-shrink: 0;
+}
+html[data-theme="dark"] .searchbar input {
+  background: transparent;
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .searchbar input::placeholder {
+  color: var(--np-muted);
+  opacity: 0.95;
+}
+html[data-theme="dark"] .filters {
+  background: transparent;
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .filters > svg {
+  color: var(--np-muted);
+  flex-shrink: 0;
+}
+html[data-theme="dark"] .filters label,
+html[data-theme="dark"] .filters .field-label,
+html[data-theme="dark"] .filters .label-text {
+  color: var(--np-muted);
+}
+html[data-theme="dark"] .filters select,
+html[data-theme="dark"] .filters label select,
+html[data-theme="dark"] label select {
+  background: var(--np-panel-soft);
+  color: var(--np-ink);
+  border: 1px solid var(--np-line);
+  border-radius: 999px;
+  color-scheme: dark;
+}
+html[data-theme="dark"] .filters .secondary,
+html[data-theme="dark"] .filters button.secondary {
+  background: var(--np-panel-soft);
+  color: var(--np-ink);
+  border-color: var(--np-line);
+}
+html[data-theme="dark"] select option {
+  background: var(--np-panel);
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .section-header,
+html[data-theme="dark"] .section-title,
+html[data-theme="dark"] .section-eyebrow {
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .feed-rank-note {
+  color: var(--np-muted);
 }
 
 @media (max-width: 560px) {
