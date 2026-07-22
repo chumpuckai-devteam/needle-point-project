@@ -40,12 +40,10 @@ export function Sidebar({
   const [moreOpen, setMoreOpen] = useState(false);
   const titleId = useId();
 
-  // Close sheet when route/view changes
   useEffect(() => {
     setMoreOpen(false);
   }, [view]);
 
-  // Escape closes More sheet
   useEffect(() => {
     if (!moreOpen) return;
     const onKey = (event: KeyboardEvent) => {
@@ -63,32 +61,30 @@ export function Sidebar({
   const messagesLabel =
     messagesUnread > 0 ? `Messages (${messagesUnread > 99 ? "99+" : messagesUnread})` : "Messages";
 
-  /** Bottom bar keeps 5 slots. Everything else lives under More on mobile. */
+  /** Mobile bottom bar: exactly 4 slots — Studio, Discover, Shops, More. */
   const primary: NavItem[] = [
     { id: "home", label: "Studio", icon: Home, action: () => go({ name: "home" }) },
     { id: "discover", label: "Discover", icon: Search, action: () => go({ name: "discover" }) },
     { id: "stores", label: "Shops", icon: StoreIcon, action: () => go({ name: "stores" }) },
-    canPost
-      ? { id: "journal", label: "New post", icon: Plus, action: () => go({ name: "journal" }) }
-      : {
-          id: "collections",
-          label: `Saved (${savedCount})`,
-          icon: Bookmark,
-          action: () => go({ name: "collections" }),
-        },
   ];
 
   const more: NavItem[] = [
     ...(canPost
       ? [
           {
-            id: "collections",
-            label: `Saved boards (${savedCount})`,
-            icon: Bookmark,
-            action: () => go({ name: "collections" }),
+            id: "journal",
+            label: "New post",
+            icon: Plus,
+            action: () => go({ name: "journal" }),
           } satisfies NavItem,
         ]
       : []),
+    {
+      id: "collections",
+      label: `Saved boards (${savedCount})`,
+      icon: Bookmark,
+      action: () => go({ name: "collections" }),
+    },
     {
       id: "messages",
       label: messagesLabel,
@@ -116,7 +112,7 @@ export function Sidebar({
       : []),
   ];
 
-  /** Desktop sidebar still shows the full list (primary + more, no sheet). */
+  /** Desktop sidebar: full list without a sheet. */
   const desktopItems = [...primary, ...more];
 
   const isActive = (item: NavItem) =>
@@ -124,7 +120,8 @@ export function Sidebar({
     (item.id === "meetups" && (view === "meetup" || view === "meetups")) ||
     (item.id === "messages" && view === "messages") ||
     (item.id === "collections" && view === "collections") ||
-    (item.id === "auth" && view === "auth");
+    (item.id === "auth" && view === "auth") ||
+    (item.id === "journal" && view === "journal");
 
   const moreSectionActive = more.some(isActive);
 
@@ -157,12 +154,10 @@ export function Sidebar({
         </span>
       </button>
 
-      {/* Desktop / tablet: full primary nav */}
       <nav className="sidebar-nav-desktop" aria-label="Primary navigation">
         {desktopItems.map((item) => renderButton(item, { showLabel: true }))}
       </nav>
 
-      {/* Mobile bottom bar: 4 primaries + More */}
       <nav className="sidebar-nav-mobile" aria-label="Primary navigation">
         {primary.map((item) => renderButton(item))}
         <button
@@ -197,11 +192,11 @@ export function Sidebar({
       >
         <div className="mobile-more-sheet-head">
           <h2 id={titleId}>More</h2>
-          <button type="button" className="text-button" onClick={() => setMoreOpen(false)}>
+          <button type="button" className="mobile-more-close" onClick={() => setMoreOpen(false)}>
             Close
           </button>
         </div>
-        <p className="field-help mobile-more-help">Saved boards, messages, meetups, and account.</p>
+        <p className="mobile-more-help">Saved boards, messages, meetups, and account.</p>
         <div className="mobile-more-grid">
           {more.map((item) => {
             const Icon = item.icon;
@@ -214,8 +209,8 @@ export function Sidebar({
                 className={active ? "mobile-more-item active" : "mobile-more-item"}
                 onClick={item.action}
               >
-                <Icon size={20} />
-                <span>
+                <Icon size={20} aria-hidden />
+                <span className="mobile-more-item-label">
                   {item.label}
                   {item.id === "messages" && badge > 0 ? (
                     <span className="nav-unread-badge" aria-label={`${badge} unread`}>

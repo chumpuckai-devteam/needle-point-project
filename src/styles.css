@@ -3115,7 +3115,7 @@ label textarea::placeholder {
   .sidebar-nav-mobile {
     display: grid !important;
     height: 72px;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     align-items: center;
     gap: 0;
   }
@@ -3127,11 +3127,13 @@ label textarea::placeholder {
     border-radius: 999px;
     font-size: 0;
     position: relative;
+    color: #f7f4ee;
   }
 
   .sidebar-nav-mobile button svg {
     width: 28px;
     height: 28px;
+    color: inherit;
   }
 
   .sidebar-nav-mobile button.active {
@@ -3150,16 +3152,14 @@ label textarea::placeholder {
   }
 
   .mobile-more-backdrop {
+    display: block;
     position: fixed;
     inset: 0 0 calc(72px + env(safe-area-inset-bottom)) 0;
     background: rgba(20, 28, 24, 0.45);
     z-index: 60;
   }
 
-  .mobile-more-backdrop {
-    display: block;
-  }
-
+  /* Sheet must NOT inherit sidebar light-on-dark colors */
   .mobile-more-sheet {
     display: block;
     position: fixed;
@@ -3171,9 +3171,10 @@ label textarea::placeholder {
     overflow: auto;
     padding: 14px 16px 18px;
     border-radius: 18px 18px 0 0;
-    border: 1px solid var(--np-line);
+    border: 1px solid #d8d0c4;
     border-bottom: 0;
-    background: var(--np-panel, #f7f1e8);
+    background: #f7f1e8;
+    color: #1f2a24;
     box-shadow: 0 -12px 40px rgba(20, 28, 24, 0.18);
   }
 
@@ -3191,11 +3192,26 @@ label textarea::placeholder {
 
   .mobile-more-sheet-head h2 {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1f2a24;
+  }
+
+  .mobile-more-close {
+    border: 0;
+    background: transparent;
+    color: #2f5646;
+    font: inherit;
+    font-weight: 600;
+    min-height: 44px;
+    padding: 0 8px;
   }
 
   .mobile-more-help {
     margin: 0 0 12px;
+    color: #4a574f;
+    font-size: 0.92rem;
+    line-height: 1.35;
   }
 
   .mobile-more-grid {
@@ -3211,22 +3227,35 @@ label textarea::placeholder {
     min-height: 48px;
     padding: 12px 14px;
     border-radius: 14px;
-    border: 1px solid var(--np-line);
-    background: #fff;
-    color: inherit;
+    border: 1px solid #d8d0c4;
+    background: #ffffff;
+    color: #1f2a24;
     font: inherit;
+    font-size: 1rem;
+    font-weight: 600;
     text-align: left;
   }
 
-  .mobile-more-item.active {
-    border-color: var(--np-moss, #3d5a45);
-    background: rgba(61, 90, 69, 0.08);
+  .mobile-more-item svg {
+    flex-shrink: 0;
+    color: #2f5646;
   }
 
-  .mobile-more-item span {
+  .mobile-more-item-label {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    color: #1f2a24;
+  }
+
+  .mobile-more-item.active {
+    border-color: #2f5646;
+    background: #e8f0eb;
+    color: #1f2a24;
+  }
+
+  .mobile-more-item.active svg {
+    color: #24362e;
   }
 
   .more-toggle-badge {
