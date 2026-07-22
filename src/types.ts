@@ -60,6 +60,8 @@ export type Project = {
   progress: number;
   updates: ProgressUpdate[];
   storeIds?: string[];
+  /** Optional product-level Shop the look tags (subset of tagged store catalogs). */
+  productIds?: string[];
   /** Optional ranking debug fields from get_recommended_projects / client ranker. */
   recommendationScore?: number;
   matchedInterests?: string[];

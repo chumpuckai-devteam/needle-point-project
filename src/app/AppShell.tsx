@@ -58,6 +58,7 @@ import {
   deleteStoreProductOnline,
   fetchFollowedStoreIds,
   fetchStores,
+  setProjectProducts,
   setProjectStores,
   toggleStoreFollowOnline,
   updateStoreProfileOnline,
@@ -997,6 +998,10 @@ export function AppShell() {
           await setProjectStores(project.id, draft.storeIds);
           project = { ...project, storeIds: draft.storeIds };
         }
+        if (draft.productIds.length) {
+          await setProjectProducts(project.id, draft.productIds);
+          project = { ...project, productIds: draft.productIds };
+        }
       } else {
         project = {
           id: `p${Date.now()}`,
@@ -1005,6 +1010,7 @@ export function AppShell() {
           isSaved: false,
           likes: 0,
           storeIds: draft.storeIds,
+          productIds: draft.productIds,
           videoUrl,
           mediaKind,
           updates: [
@@ -1125,6 +1131,7 @@ export function AppShell() {
               visibility: draft.visibility,
               progress,
               storeIds: draft.storeIds ?? [],
+              productIds: draft.productIds ?? [],
             }
           : item,
       ),
@@ -1132,6 +1139,7 @@ export function AppShell() {
 
     if (isSupabaseConfigured && user) {
       await setProjectStores(projectId, draft.storeIds ?? []);
+      await setProjectProducts(projectId, draft.productIds ?? []);
     }
     setRemoteError("");
   }
@@ -2080,7 +2088,7 @@ export function AppShell() {
         onCreateCollection={(input) => createCollection(input)}
         onRenameCollection={(id, input) => renameCollection(id, input)}
         onDeleteCollection={(id) => deleteCollection(id)}
-        onSetProjectInCollection={(collectionId, projectId, shouldContain) =>
+        onSetProjectInCollection={(collectionId: string, projectId: string, shouldContain: boolean) =>
           setProjectInCollection(collectionId, projectId, shouldContain)
         }
         onReport={(input) => submitReport(input)}
@@ -2113,7 +2121,7 @@ export function AppShell() {
         dmSendBusy={dmSendBusy}
         dmSendError={dmSendError}
         onRefreshDmThread={refreshDmThread}
-        onSendDm={(threadId, body, files) => void sendDm(threadId, body, files)}
+        onSendDm={(threadId: string, body: string, files?: File[]) => void sendDm(threadId, body, files)}
         onCreateDmGroup={(memberUserIds, title) => void createDmGroup(memberUserIds, title)}
         onMessageUser={(userId) => void messageUser(userId)}
         onMessageStore={(storeId) => void messageStore(storeId)}

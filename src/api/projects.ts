@@ -95,6 +95,7 @@ function mapProject(
   updates: ProgressUpdate[],
   flags: { likes: number; isLiked: boolean; isSaved: boolean },
   storeIds: string[] = [],
+  productIds: string[] = [],
 ): Project {
   const image = row.primary_image_url || "";
   const recommended = row as RecommendedProjectRow;
@@ -121,6 +122,7 @@ function mapProject(
     progress: row.progress,
     updates,
     storeIds,
+    productIds,
     recommendationScore: recommended.recommendation_score,
     matchedInterests: recommended.matched_interests,
   };
@@ -189,8 +191,15 @@ async function loadProjectRelations(rows: DbProjectRow[], currentUserId?: string
 
   const ids = rows.map((r) => r.id as string);
 
-  const [{ data: materials }, { data: tags }, { data: updates }, { data: reactions }, { data: saved }, projectStoresResult] =
-    await Promise.all([
+  const [
+    { data: materials },
+    { data: tags },
+    { data: updates },
+    { data: reactions },
+    { data: saved },
+    projectStoresResult,
+    projectProductsResult,
+  ] = await Promise.all([
       client.from("materials").select("project_id,type,brand,color_name,notes").in("project_id", ids),
       client.from("project_tags").select("project_id, tags(name, category)").in("project_id", ids),
       client.from("project_updates").select("*").in("project_id", ids).order("created_at", { ascending: false }),
@@ -206,6 +215,10 @@ async function loadProjectRelations(rows: DbProjectRow[], currentUserId?: string
       client.from("project_stores").select("project_id, store_id").in("project_id", ids).then(
         (result) => result,
         () => ({ data: null as { project_id: string; store_id: string }[] | null, error: null }),
+      ),
+      client.from("project_products").select("project_id, product_id").in("project_id", ids).then(
+        (result) => result,
+        () => ({ data: null as { project_id: string; product_id: string }[] | null, error: { message: "unavailable" } }),
       ),
     ]);
 
@@ -238,6 +251,15 @@ async function loadProjectRelations(rows: DbProjectRow[], currentUserId?: string
     }
   }
 
+  const productIdsByProject = new Map<string, string[]>();
+  if (!projectProductsResult.error) {
+    for (const row of projectProductsResult.data ?? []) {
+      const list = productIdsByProject.get(row.project_id) ?? [];
+      list.push(row.product_id);
+      productIdsByProject.set(row.project_id, list);
+    }
+  }
+
   return (rows as DbProjectRow[]).map((row) => {
     const tagInfo = tagsByProject.get(row.id) ?? { stitches: [], colors: [] };
     const likeInfo = likesByProject.get(row.id) ?? { count: 0, mine: false };
@@ -253,6 +275,7 @@ async function loadProjectRelations(rows: DbProjectRow[], currentUserId?: string
         isSaved: savedSet.has(row.id),
       },
       storeIdsByProject.get(row.id) ?? [],
+      productIdsByProject.get(row.id) ?? [],
     );
   });
 }

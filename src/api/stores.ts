@@ -845,6 +845,41 @@ export async function setProjectStores(projectId: string, storeIds: string[], ro
   if (error) throw error;
 }
 
+/** Replace product-level Shop the look tags for a project (owner). */
+export async function setProjectProducts(projectId: string, productIds: string[]) {
+  if (!isSupabaseConfigured) return;
+  const client = requireSupabase();
+  const { error: delError } = await client.from("project_products").delete().eq("project_id", projectId);
+  if (delError) throw delError;
+  const unique = [...new Set(productIds.filter(Boolean))];
+  if (!unique.length) return;
+  const { error } = await client.from("project_products").insert(
+    unique.map((product_id) => ({ project_id: projectId, product_id })),
+  );
+  if (error) throw error;
+}
+
+/** Map of projectId → product ids for Shop the look. */
+export async function fetchProjectProductIds(projectIds: string[]): Promise<Map<string, string[]>> {
+  const map = new Map<string, string[]>();
+  if (!isSupabaseConfigured || !projectIds.length) return map;
+  const client = requireSupabase();
+  const { data, error } = await client
+    .from("project_products")
+    .select("project_id,product_id")
+    .in("project_id", projectIds);
+  if (error) {
+    // Missing table on older envs — leave empty (store-level fallback).
+    return map;
+  }
+  for (const row of (data as { project_id: string; product_id: string }[] | null) ?? []) {
+    const list = map.get(row.project_id) ?? [];
+    list.push(row.product_id);
+    map.set(row.project_id, list);
+  }
+  return map;
+}
+
 export async function fetchProjectIdsForStore(storeId: string): Promise<string[]> {
   if (!isSupabaseConfigured) return [];
   const client = requireSupabase();

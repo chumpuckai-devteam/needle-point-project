@@ -5142,3 +5142,13 @@ label textarea::placeholder {
   justify-self: start;
   font-size: 0.8rem;
 }
+
+/* Product-level shop the look picker */
+.product-picker {
+  margin-top: 0.35rem;
+}
+.product-picker-options {
+  max-height: 14rem;
+  overflow: auto;
+  padding-right: 0.25rem;
+}

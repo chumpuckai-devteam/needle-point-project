@@ -105,9 +105,14 @@ export function ProjectDetail(props: {
 
   const hasUpdates = props.project.updates.length > 0;
   const taggedStores = props.projectStores;
-  const shopLookProducts = taggedStores.flatMap((store) =>
-    store.products.slice(0, 3).map((product) => ({ store, product })),
+  const explicitProductIds = new Set(props.project.productIds ?? []);
+  const allTaggedProducts = taggedStores.flatMap((store) =>
+    store.products.map((product) => ({ store, product })),
   );
+  const shopLookProducts =
+    explicitProductIds.size > 0
+      ? allTaggedProducts.filter(({ product }) => explicitProductIds.has(product.id))
+      : taggedStores.flatMap((store) => store.products.slice(0, 3).map((product) => ({ store, product })));
   const showShopTheLook = taggedStores.length > 0;
 
   return (
@@ -377,10 +382,21 @@ export function ProjectDetail(props: {
                             type="checkbox"
                             checked={checked}
                             onChange={() =>
-                              setEditDraft((current) => ({
-                                ...current,
-                                storeIds: checked ? current.storeIds.filter((id) => id !== store.id) : [...current.storeIds, store.id],
-                              }))
+                              setEditDraft((current) => {
+                                const storeIds = checked
+                                  ? current.storeIds.filter((id) => id !== store.id)
+                                  : [...current.storeIds, store.id];
+                                const allowedProductIds = new Set(
+                                  props.stores
+                                    .filter((s) => storeIds.includes(s.id))
+                                    .flatMap((s) => s.products.map((p) => p.id)),
+                                );
+                                return {
+                                  ...current,
+                                  storeIds,
+                                  productIds: current.productIds.filter((id) => allowedProductIds.has(id)),
+                                };
+                              })
                             }
                           />
                           <span>
@@ -393,6 +409,52 @@ export function ProjectDetail(props: {
                   </div>
                 </div>
               )}
+              {editDraft.storeIds.length > 0 ? (
+                <div className="full-field product-picker" data-testid="shop-look-product-picker">
+                  <span className="field-label">Shop the look products (optional)</span>
+                  <p className="field-help">
+                    Pick specific catalog items. Leave empty to show a few products from each tagged shop.
+                  </p>
+                  <div className="store-picker-options product-picker-options">
+                    {props.stores
+                      .filter((store) => editDraft.storeIds.includes(store.id))
+                      .flatMap((store) =>
+                        store.products.map((product) => {
+                          const checked = editDraft.productIds.includes(product.id);
+                          return (
+                            <label key={product.id} className="checkbox-field">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() =>
+                                  setEditDraft((current) => ({
+                                    ...current,
+                                    productIds: checked
+                                      ? current.productIds.filter((id) => id !== product.id)
+                                      : [...current.productIds, product.id],
+                                  }))
+                                }
+                              />
+                              <span>
+                                {product.name}
+                                <small>
+                                  {" "}
+                                  · @{store.handle}
+                                  {product.priceLabel ? ` · ${product.priceLabel}` : ""}
+                                </small>
+                              </span>
+                            </label>
+                          );
+                        }),
+                      )}
+                  </div>
+                  {props.stores
+                    .filter((store) => editDraft.storeIds.includes(store.id))
+                    .every((store) => store.products.length === 0) ? (
+                    <p className="field-help">Tagged shops do not have catalog products yet.</p>
+                  ) : null}
+                </div>
+              ) : null}
               {editError ? (
                 <p className="full-field field-help field-error" role="alert">
                   {editError}
@@ -514,7 +576,11 @@ export function ProjectDetail(props: {
                   <SectionTitle title="Shop the look" />
                   {shopLookProducts.length > 0 ? (
                     <>
-                      <p className="field-help">Link-outs from shops tagged on this project. No checkout on Needlepoint.</p>
+                      <p className="field-help">
+                        {explicitProductIds.size > 0
+                          ? "Specific products tagged on this project. Link-outs only — no checkout on Needlepoint."
+                          : "Link-outs from shops tagged on this project. No checkout on Needlepoint."}
+                      </p>
                       <div className="product-grid shop-look-grid">
                         {shopLookProducts.map(({ store, product }) => (
                           <article key={`${store.id}-${product.id}`} className="product-card panel shop-look-card">
@@ -576,6 +642,7 @@ function projectToDraft(project: Project): DraftProject & { progress: number } {
     patternUrl: project.patternUrl,
     visibility: project.visibility,
     storeIds: project.storeIds ?? [],
+    productIds: project.productIds ?? [],
     progress: project.progress,
   };
 }

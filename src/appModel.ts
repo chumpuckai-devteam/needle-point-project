@@ -32,6 +32,8 @@ export type DraftProject = {
   patternUrl: string;
   visibility: "public" | "private";
   storeIds: string[];
+  /** Optional specific catalog products for Shop the look. */
+  productIds: string[];
 };
 
 export const blankDraft: DraftProject = {
@@ -50,6 +52,7 @@ export const blankDraft: DraftProject = {
   patternUrl: "",
   visibility: "public",
   storeIds: [],
+  productIds: [],
 };
 
 export const statusOptions: Status[] = ["planned", "in progress", "finished", "paused"];

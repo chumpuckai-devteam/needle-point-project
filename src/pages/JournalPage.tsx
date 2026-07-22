@@ -138,34 +138,72 @@ export function JournalView({
             />
           </label>
           {stores.length > 0 && (
-            <div className="full-field store-picker">
-              <span className="field-label">Available at (stores)</span>
-              <div className="store-picker-options">
-                {stores.map((store) => {
-                  const checked = draft.storeIds.includes(store.id);
-                  return (
-                    <label key={store.id} className="checkbox-field">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() =>
-                          setDraft({
-                            ...draft,
-                            storeIds: checked ? draft.storeIds.filter((id) => id !== store.id) : [...draft.storeIds, store.id],
-                          })
-                        }
-                      />
-                      <span>
-                        {store.name}
-                        <small> @{store.handle}</small>
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-              <p className="field-help">Tag local or online shops that supply this canvas / kit / finishing. Private projects still hide shop links from others.</p>
-            </div>
-          )}
+                     <div className="full-field store-picker">
+                       <span className="field-label">Available at (stores)</span>
+                       <div className="store-picker-options">
+                         {stores.map((store) => {
+                           const checked = draft.storeIds.includes(store.id);
+                           return (
+                             <label key={store.id} className="checkbox-field">
+                               <input
+                                 type="checkbox"
+                                 checked={checked}
+                                 onChange={() =>
+                                   setDraft({
+                                     ...draft,
+                                     storeIds: checked ? draft.storeIds.filter((id) => id !== store.id) : [...draft.storeIds, store.id],
+                                     productIds: checked
+                                       ? draft.productIds.filter((id) => !(store.products ?? []).some((p) => p.id === id))
+                                       : draft.productIds,
+                                   })
+                                 }
+                               />
+                               <span>
+                                 {store.name}
+                                 <small> @{store.handle}</small>
+                               </span>
+                             </label>
+                           );
+                         })}
+                       </div>
+                       <p className="field-help">Tag local or online shops that supply this canvas / kit / finishing. Private projects still hide shop links from others.</p>
+                     </div>
+                   )}
+                   {draft.storeIds.length > 0 ? (
+                     <div className="full-field product-picker" data-testid="journal-shop-look-products">
+                       <span className="field-label">Shop the look products (optional)</span>
+                       <p className="field-help">Optional specific items. Leave empty to sample each shop’s catalog.</p>
+                       <div className="store-picker-options product-picker-options">
+                         {stores
+                           .filter((store) => draft.storeIds.includes(store.id))
+                           .flatMap((store) =>
+                             (store.products ?? []).map((product) => {
+                               const checked = draft.productIds.includes(product.id);
+                               return (
+                                 <label key={product.id} className="checkbox-field">
+                                   <input
+                                     type="checkbox"
+                                     checked={checked}
+                                     onChange={() =>
+                                       setDraft({
+                                         ...draft,
+                                         productIds: checked
+                                           ? draft.productIds.filter((id) => id !== product.id)
+                                           : [...draft.productIds, product.id],
+                                       })
+                                     }
+                                   />
+                                   <span>
+                                     {product.name}
+                                     <small> · @{store.handle}</small>
+                                   </span>
+                                 </label>
+                               );
+                             }),
+                           )}
+                       </div>
+                     </div>
+                   ) : null}
           <button className="primary full-field" type="submit" disabled={!draft.title.trim() || uploadBusy}>
             <Plus size={18} /> {uploadBusy ? "Saving…" : "Save project"}
           </button>

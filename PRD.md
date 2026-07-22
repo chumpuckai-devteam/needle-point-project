@@ -530,7 +530,7 @@ Build only after free registration is trusted:
 ### Phase C — Deeper community & creator value
 
 - Richer stitch-along hosting tools.
-- Creator analytics (link clicks, meetup draw). **Store owner outbound click panel (shipped)** — 30-day product + website totals on own shop. **Creator profile link clicks panel (shipped)**. **Host meetup draw strip (shipped)**.
+- Product-level Shop the look tags (**shipped**) — optional specific catalog products on projects; empty = store catalog sample.\n- Creator analytics (link clicks, meetup draw). **Store owner outbound click panel (shipped)** — 30-day product + website totals on own shop. **Creator profile link clicks panel (shipped)**. **Host meetup draw strip (shipped)**.
 - Guilds / groups (lighter than full forums).
 - **Private DMs (M3.A + M3.B live)** — 1:1 user↔user and user↔store. Inbox `/messages`, Message CTAs, **unread badges**, mark-read on open, light poll while viewing. No groups / media / websockets yet.
 
