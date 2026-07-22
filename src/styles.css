@@ -93,21 +93,17 @@ button {
   opacity: 0.72;
 }
 
-.sidebar nav,
 .sidebar-nav-desktop {
   display: grid;
   gap: 8px;
 }
 
-.sidebar nav button,
 .sidebar-nav-desktop button {
   min-height: 44px;
   padding: 0 12px;
   border-radius: 8px;
 }
 
-.sidebar nav button.active,
-.sidebar nav button:hover,
 .sidebar-nav-desktop button.active,
 .sidebar-nav-desktop button:hover,
 .sidebar-nav-mobile button:hover {
@@ -1275,16 +1271,11 @@ ul {
     margin-bottom: 12px;
   }
 
-  .sidebar nav {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 4px;
-    scrollbar-width: none;
+  /* Only the desktop list may horizontal-scroll on tablet — never unhide mobile bar */
+  .sidebar-nav-mobile {
+    display: none !important;
   }
 
-  /* Mobile bottom bar is fixed at ≤760px; don't turn desktop list into a mystery scroll at tablet */
   .sidebar-nav-desktop {
     display: grid;
     grid-auto-flow: column;
@@ -1300,11 +1291,7 @@ ul {
     display: none;
   }
 
-  .sidebar nav::-webkit-scrollbar {
-    display: none;
-  }
-
-  .sidebar nav button {
+  .sidebar-nav-desktop button {
     width: auto;
     flex: 0 0 auto;
     white-space: nowrap;
@@ -2541,12 +2528,21 @@ html[data-theme="dark"] .app-shell {
   font-size: 1rem;
 }
 
+.sidebar-nav-desktop button {
+  border-radius: 14px;
+  color: #f7f4ee;
+  font-size: 1rem;
+}
+
 .sidebar nav button.active,
-.sidebar nav button:hover {
+.sidebar nav button:hover,
+.sidebar-nav-desktop button.active,
+.sidebar-nav-desktop button:hover {
   background: rgba(255, 255, 255, 0.1);
 }
 
-.sidebar nav button.active {
+.sidebar nav button.active,
+.sidebar-nav-desktop button.active {
   color: #fff;
   box-shadow: inset 0 0 0 1px rgba(201, 166, 107, 0.35);
 }
@@ -3238,12 +3234,26 @@ a.primary,
   display: grid;
   gap: inherit;
 }
-.sidebar-nav-mobile {
-  display: none;
+/* Desktop/tablet default: never show bottom-bar nav in the sidebar column */
+.sidebar-nav-mobile,
+.mobile-more-backdrop {
+  display: none !important;
 }
-.mobile-more-backdrop,
 .mobile-more-sheet {
-  display: none;
+  display: none !important;
+}
+
+@media (min-width: 761px) {
+  .sidebar-nav-mobile,
+  .mobile-more-backdrop,
+  .mobile-more-sheet {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+  .sidebar-nav-desktop {
+    display: grid !important;
+  }
 }
 .account-quick-links {
   margin: 0 0 1rem;
@@ -3368,7 +3378,7 @@ a.primary,
   }
 
   .mobile-more-backdrop {
-    display: block;
+    display: block !important;
     position: fixed;
     inset: 0 0 calc(72px + env(safe-area-inset-bottom)) 0;
     background: rgba(20, 28, 24, 0.45);
@@ -3377,7 +3387,7 @@ a.primary,
 
   /* Sheet must NOT inherit sidebar light-on-dark colors */
   .mobile-more-sheet {
-    display: block;
+    display: block !important;
     position: fixed;
     left: 0;
     right: 0;
@@ -3392,6 +3402,8 @@ a.primary,
     background: #f7f1e8;
     color: #1f2a24;
     box-shadow: 0 -12px 40px rgba(20, 28, 24, 0.18);
+    visibility: visible !important;
+    pointer-events: auto !important;
   }
 
   .mobile-more-sheet[hidden] {
