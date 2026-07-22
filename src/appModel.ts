@@ -14,7 +14,8 @@ export type View =
   | { name: "stores" }
   | { name: "store"; handle: string }
   | { name: "auth" }
-  | { name: "onboarding" };
+  | { name: "onboarding" }
+  | { name: "moderation" };
 
 export type DraftProject = {
   title: string;

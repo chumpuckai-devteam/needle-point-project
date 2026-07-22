@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Flag } from "lucide-react";
-import type { ReportReason, ReportTargetType } from "../api/reports";
+import { friendlyReportError, type ReportReason, type ReportTargetType } from "../api/reports";
 
 const REASONS: { value: ReportReason; label: string }[] = [
   { value: "spam", label: "Spam" },
@@ -55,14 +55,18 @@ export function ReportControl({
       setOpen(false);
       setNotes("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not submit report.");
+      setError(friendlyReportError(err, "Could not submit report."));
     } finally {
       setBusy(false);
     }
   }
 
   if (done) {
-    return <p className="field-help success-text">Thanks — report queued for review.</p>;
+    return (
+      <p className="field-help success-text" role="status" data-testid="report-thanks">
+        Thanks — your report is queued. You can check status under Account → Your reports.
+      </p>
+    );
   }
 
   return (
@@ -72,7 +76,9 @@ export function ReportControl({
       </button>
       {open ? (
         <form className="report-form panel" onSubmit={(e) => void handleSubmit(e)}>
-          <p className="field-help">Reports are reviewed by moderators. Abuse of reporting may be limited.</p>
+          <p className="field-help">
+            Reports go to moderators. Please don’t report content you simply dislike — abuse of reporting may be limited.
+          </p>
           <label className="field">
             <span className="label-text">Reason</span>
             <select value={reason} onChange={(e) => setReason(e.target.value as ReportReason)} required>
@@ -85,9 +91,19 @@ export function ReportControl({
           </label>
           <label className="field">
             <span className="label-text">Notes (optional)</span>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={1000} rows={3} placeholder="What should reviewers know?" />
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              maxLength={1000}
+              rows={3}
+              placeholder="What should reviewers know?"
+            />
           </label>
-          {error ? <p className="field-help error-text">{error}</p> : null}
+          {error ? (
+            <p className="field-help error-text" role="alert">
+              {error}
+            </p>
+          ) : null}
           <button className="primary" type="submit" disabled={busy || disabled}>
             {busy ? "Sending…" : "Submit report"}
           </button>

@@ -4,6 +4,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { fetchProfileById, updateProfile } from "../api/profiles";
 import { fetchPublicProjects } from "../api/projects";
 import { AuthForm, useAuth } from "../context/AuthContext";
+import { MyReportsPanel } from "../components/MyReportsPanel";
+import { userIsModerator } from "../api/reports";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { mapAccountSaveError, uiCopy } from "../lib/uiCopy";
 import type { Project } from "../types";
@@ -27,7 +29,7 @@ export function AuthPage() {
   }
 
   if (user && !isDemoMode) {
-    return <AccountSettings userId={user.id} email={user.email} onSignOut={() => void signOut()} onSaved={refreshUser} />;
+    return <AccountSettings userId={user.id} email={user.email} isModerator={userIsModerator(user)} onSignOut={() => void signOut()} onSaved={refreshUser} />;
   }
 
   if (isDemoMode) {
@@ -90,11 +92,13 @@ export function AuthPage() {
 function AccountSettings({
   userId,
   email,
+  isModerator = false,
   onSignOut,
   onSaved,
 }: {
   userId: string;
   email?: string;
+  isModerator?: boolean;
   onSignOut: () => void;
   onSaved: (patch: { name?: string; handle?: string }) => void;
 }) {
@@ -274,6 +278,16 @@ function AccountSettings({
           ) : null}
         </div>
       </div>
+      <MyReportsPanel enabled />
+      {isModerator ? (
+        <div className="panel" data-testid="moderation-entry">
+          <h2>Moderator tools</h2>
+          <p className="field-help">Review open abuse reports from the community.</p>
+          <button type="button" className="primary" onClick={() => navigate("/moderation")}>
+            Open report queue
+          </button>
+        </div>
+      ) : null}
       <div className="editor-layout">
         <form className="panel form-grid" onSubmit={(event) => void save(event)} aria-busy={busy || undefined}>
           <div className="full-field account-identity">

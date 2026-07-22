@@ -9,7 +9,7 @@ import {
   removeProjectFromCollectionOnline,
   renameCollectionOnline,
 } from "../api/collections";
-import { submitReportOnline, type ReportInput } from "../api/reports";
+import { friendlyReportError, submitReportOnline, userIsModerator, type ReportInput } from "../api/reports";
 import {
   createStitchAlongOnline,
   updateStitchAlongOnline,
@@ -638,7 +638,11 @@ export function AppShell() {
       // Demo queue: acknowledge without remote write.
       return;
     }
-    await submitReportOnline(input);
+    try {
+      await submitReportOnline(input);
+    } catch (error) {
+      throw new Error(friendlyReportError(error, "Could not submit report"));
+    }
   }
 
   // Soft-load online multi-boards when signed in (best effort).
@@ -2136,6 +2140,7 @@ export function AppShell() {
         toggleStoreFollow={toggleStoreFollow}
         viewerId={viewerId}
         isDemoMode={isDemoMode}
+        isModerator={userIsModerator(user)}
         claimBusy={claimBusy}
         claimPendingStoreIds={pendingClaimStoreIds}
         claimNotice={claimNotice}

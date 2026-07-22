@@ -22,6 +22,8 @@ export type ReportSubmission = {
   status: ReportStatus;
   createdAt: string;
   updatedAt: string;
+  decisionNote?: string;
+  reviewedAt?: string | null;
 };
 
 type DbReport = {
@@ -34,6 +36,8 @@ type DbReport = {
   status: ReportStatus;
   created_at: string;
   updated_at: string;
+  decision_note?: string | null;
+  reviewed_at?: string | null;
 };
 
 const reportTargetTypes = new Set<ReportTargetType>(["project", "profile", "store"]);
@@ -59,7 +63,37 @@ function mapReport(row: DbReport): ReportSubmission {
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    decisionNote: row.decision_note ?? "",
+    reviewedAt: row.reviewed_at ?? null,
   };
+}
+
+export function friendlyReportError(error: unknown, fallback = "Could not submit report"): string {
+  const raw =
+    error && typeof error === "object" && "message" in error
+      ? String((error as { message?: string }).message ?? "")
+      : error instanceof Error
+        ? error.message
+        : String(error ?? "");
+  const lower = raw.toLowerCase();
+  if (lower.includes("already submitted") || lower.includes("duplicate") || lower.includes("23505")) {
+    return "You already have an open report on this item. We’ll review it soon.";
+  }
+  if (lower.includes("please wait") || lower.includes("42900") || lower.includes("rate")) {
+    return "Please wait a moment before submitting another report.";
+  }
+  if (lower.includes("authentication") || lower.includes("sign in") || lower.includes("jwt")) {
+    return "Sign in to submit a report.";
+  }
+  if (lower.includes("moderator access")) {
+    return "You don’t have moderator access.";
+  }
+  if (!raw || lower.includes("column") || lower.includes("sql") || lower.includes("postgres")) {
+    return fallback;
+  }
+  // Prefer short human messages from the DB already.
+  if (raw.length <= 140 && !lower.includes("violates")) return raw;
+  return fallback;
 }
 
 export function validateReportInput(input: ReportInput): Required<ReportInput> {
@@ -100,10 +134,56 @@ export async function submitReportOnline(input: ReportInput): Promise<ReportSubm
 }
 
 /** Admin/moderator queue read path; RLS returns rows only to authorized users. */
-export async function fetchReportQueueOnline(): Promise<ReportSubmission[]> {
+export async function fetchReportQueueOnline(status: ReportStatus | "all" = "open"): Promise<ReportSubmission[]> {
   if (!isSupabaseConfigured) return [];
   const client = requireSupabase();
-  const { data, error } = await client.from("reports").select("*").order("created_at", { ascending: false });
+  let query = client.from("reports").select("*").order("created_at", { ascending: false }).limit(100);
+  if (status !== "all") query = query.eq("status", status);
+  const { data, error } = await query;
   if (error) throw error;
   return ((data as DbReport[] | null) ?? []).map(mapReport);
+}
+
+export async function fetchMyReportsOnline(): Promise<ReportSubmission[]> {
+  if (!isSupabaseConfigured) return [];
+  const client = requireSupabase();
+  const { data, error } = await client.rpc("list_my_reports");
+  if (error) {
+    // Fallback to direct select (own rows via RLS)
+    const { data: rows, error: selectError } = await client
+      .from("reports")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (selectError) throw selectError;
+    return ((rows as DbReport[] | null) ?? []).map(mapReport);
+  }
+  return ((data as DbReport[] | null) ?? []).map(mapReport);
+}
+
+export async function reviewReportOnline(
+  reportId: string,
+  status: Extract<ReportStatus, "reviewed" | "dismissed" | "open">,
+  decisionNote = "",
+): Promise<ReportSubmission> {
+  const client = requireSupabase();
+  const { data, error } = await client.rpc("review_report", {
+    p_report_id: reportId,
+    p_status: status,
+    p_decision_note: decisionNote,
+  });
+  if (error) throw error;
+  return mapReport(data as DbReport);
+}
+
+/** True when JWT app_metadata marks the user as admin/moderator. */
+export function userIsModerator(user: unknown): boolean {
+  if (!user || typeof user !== "object") return false;
+  const meta = (user as { app_metadata?: Record<string, unknown> | null }).app_metadata;
+  if (!meta) return false;
+  const role = String(meta.role ?? "");
+  if (role === "admin" || role === "moderator") return true;
+  const roles = meta.roles;
+  if (Array.isArray(roles)) return roles.some((r) => r === "admin" || r === "moderator");
+  return false;
 }

@@ -5,6 +5,7 @@ import type { StitchingMeetupInput } from "../api/meetups";
 import type { DmMessage, DmThread } from "../api/dms";
 import type { DraftProject, View } from "../appModel";
 import type { Collection, Creator, Project, StitchAlong, StitchingMeetup, Store } from "../types";
+import { ModerationPage } from "../pages/ModerationPage";
 import {
   AuthPage,
   CollectionsView,
@@ -101,6 +102,7 @@ export type AppRoutesProps = {
   toggleStoreFollow: (storeId: string) => void;
   viewerId: string | null;
   isDemoMode: boolean;
+  isModerator?: boolean;
   claimBusy: boolean;
   claimPendingStoreIds: string[];
   claimNotice: string;
@@ -528,7 +530,16 @@ export function AppRoutes(props: AppRoutesProps) {
           />
         }
       />
-      <Route path="/auth" element={<AuthPage />} />
+            <Route
+        path="/moderation"
+        element={
+          <ModerationPage
+            enabled={Boolean(props.isModerator)}
+            onBack={() => props.setView({ name: "auth" })}
+          />
+        }
+      />
+<Route path="/auth" element={<AuthPage />} />
       <Route path="/auth/signup" element={<AuthPage />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />

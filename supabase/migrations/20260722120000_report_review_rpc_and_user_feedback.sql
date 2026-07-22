@@ -1,0 +1,2 @@
+-- Live via MCP: report_review_rpc_and_user_feedback
+-- review_report(), list_my_reports(), decision_note columns
