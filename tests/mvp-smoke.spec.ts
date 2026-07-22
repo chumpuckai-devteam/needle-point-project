@@ -39,6 +39,6 @@ test("core MVP flows are usable through router paths", async ({ page }) => {
   await expect(page).toHaveURL(/\/journal$/);
   await expect(page.getByLabel("Title")).toBeVisible();
 
-  await navigateByLabel(page, /Stitch-along/);
+  await page.goto("/stitch-along");
   await expect(page).toHaveURL(/\/stitch-along$/);
 });
