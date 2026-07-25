@@ -50,6 +50,15 @@ if (!existsSync(catalogPath)) {
 }
 
 const catalog = JSON.parse(readFileSync(catalogPath, "utf8"));
+// Safety: do not re-seed synthetic density fakes after real-LNS cutover unless forced.
+if (process.env.ALLOW_FAKE_STORE_SEED !== "1") {
+  const sample = (catalog.stores || []).slice(0, 5);
+  const looksFake = sample.some((s) => String(s.website_url || "").includes("example.com"));
+  if (looksFake) {
+    console.error("Refusing to seed fake catalog (example.com). Use npm run seed:stores (real LNS) or ALLOW_FAKE_STORE_SEED=1.");
+    process.exit(2);
+  }
+}
 const stores = catalog.stores || [];
 const supabase = createClient(supabaseUrl, serviceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },

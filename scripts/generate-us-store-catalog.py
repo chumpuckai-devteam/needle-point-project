@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""DEPRECATED: synthetic density fakes. Prefer scripts/data/real-lns-catalog.json + npm run seed:stores."""
 """Generate US needlepoint shop catalog: >=2 per state, >=5 per major metro."""
 from __future__ import annotations
 

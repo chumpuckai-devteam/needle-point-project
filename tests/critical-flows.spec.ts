@@ -129,7 +129,7 @@ test.describe("Journal create / edit", () => {
     await page.locator("#project-difficulty").selectOption("beginner");
 
     // Tag a store so Available at stays wired on the new project.
-    const canopy = page.locator(".store-picker label.checkbox-field").filter({ hasText: /Canopy Canvas/i }).first();
+    const canopy = page.locator(".store-picker label.checkbox-field").filter({ hasText: /Maydel/i }).first();
     if (await canopy.count()) {
       await canopy.click();
     }
@@ -144,7 +144,7 @@ test.describe("Journal create / edit", () => {
     await expect(page.getByRole("button", { name: /Add update/i })).toBeVisible();
 
     if (await page.locator(".available-at").count()) {
-      await expect(page.locator(".available-at button.store-chip").filter({ hasText: /Canopy Canvas/i })).toBeVisible();
+      await expect(page.locator(".available-at button.store-chip").filter({ hasText: /Maydel/i })).toBeVisible();
     }
 
     // Side journal list after SPA nav back to form

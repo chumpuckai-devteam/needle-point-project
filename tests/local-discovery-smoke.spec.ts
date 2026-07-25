@@ -59,24 +59,24 @@ test.describe("local discovery shops UI", () => {
     await page.goto("/stores");
     await expect(page.getByRole("heading", { name: /Local shops near you/i })).toBeVisible({ timeout: 15_000 });
 
-    const cityBtn = page.locator("button.store-city-card").filter({ hasText: /Portland/i }).first();
+    const cityBtn = page.locator("button.store-city-card").filter({ hasText: /Chicago/i }).first();
     if ((await cityBtn.count()) > 0) {
       await cityBtn.click();
       await expect(page).toHaveURL(/[?&]city=/i, { timeout: 10_000 });
     }
 
-    const card = page.locator(".store-card").filter({ hasText: /Canopy Canvas/i }).first();
+    const card = page.locator(".store-card").filter({ hasText: /Maydel/i }).first();
     await expect(card).toBeVisible({ timeout: 15_000 });
     const mainLink = card.locator("a.store-card-main");
-    await expect(mainLink).toHaveAttribute("href", /\/stores\/canopycanvas/i);
+    await expect(mainLink).toHaveAttribute("href", /\/stores\/maydel/i);
     // Maps shortcuts on mappable local cards
     await expect(card.getByTestId("store-card-maps")).toBeVisible();
     await expect(card.getByRole("link", { name: /Apple Maps/i })).toBeVisible();
     await expect(card.getByRole("link", { name: /Google Maps/i })).toBeVisible();
     await mainLink.click();
 
-    await expect(page).toHaveURL(/\/stores\/canopycanvas/i, { timeout: 15_000 });
-    await expect(page.getByRole("heading", { name: /Canopy Canvas/i })).toBeVisible();
+    await expect(page).toHaveURL(/\/stores\/maydel/i, { timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: /Maydel/i })).toBeVisible();
 
     const back = page.getByRole("button", { name: /Back to shops|All stores/i });
     await expect(back).toBeVisible();
@@ -86,9 +86,9 @@ test.describe("local discovery shops UI", () => {
   });
 
   test("direct store detail cold open and unknown handle recovery", async ({ page }) => {
-    await page.goto("/stores/bookshopwindows");
-    await expect(page).toHaveURL(/\/stores\/bookshopwindows/i);
-    await expect(page.getByRole("heading", { name: /Bookshop Windows/i })).toBeVisible({ timeout: 15_000 });
+    await page.goto("/stores/maydel");
+    await expect(page).toHaveURL(/\/stores\/maydel/i);
+    await expect(page.getByRole("heading", { name: /Maydel/i })).toBeVisible({ timeout: 15_000 });
 
     await page.goto("/stores/not-a-real-shop-xyz");
     await expect(page.getByText(/not found|can't find|couldn't find|unknown shop|shop not found/i).first()).toBeVisible({
@@ -100,9 +100,9 @@ test.describe("local discovery shops UI", () => {
     await expect(page).toHaveURL(/\/stores\/?(\?.*)?$/i, { timeout: 15_000 });
   });
 
-  test("store id deep link canonicalizes to handle when present in catalog", async ({ page }) => {
-    await page.goto("/stores/store-local-1");
-    await expect(page).toHaveURL(/\/stores\/canopycanvas/i, { timeout: 15_000 });
-    await expect(page.getByRole("heading", { name: /Canopy Canvas/i })).toBeVisible();
+  test("store handle deep link opens catalog shop", async ({ page }) => {
+    await page.goto("/stores/nashvilleneedleworks");
+    await expect(page).toHaveURL(/\/stores\/nashvilleneedleworks/i, { timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: /Nashville Needleworks/i })).toBeVisible();
   });
 });

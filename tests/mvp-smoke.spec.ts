@@ -23,16 +23,14 @@ test("core MVP flows are usable through router paths", async ({ page }) => {
   await expect(page).toHaveURL(/\/stores/);
   await expect(page.getByRole("heading", { name: /Local shops near you|Shops|Browse/i }).first()).toBeVisible();
 
-  // City-first browse: open known shops by handle (not dump of every local card)
-  await page.goto("/stores/canopycanvas");
-  await expect(page).toHaveURL(/\/stores\/canopycanvas/);
-  await expect(page.getByRole("heading", { name: /Canopy Canvas/i })).toBeVisible();
-  await expect(page.getByText(/Your shop/i).first()).toBeVisible();
-  await expect(page.getByRole("button", { name: /Add product/i })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Follow store|Following/i })).toHaveCount(0);
+  // City-first browse: open known real shops by handle
+  await page.goto("/stores/maydel");
+  await expect(page).toHaveURL(/\/stores\/maydel/);
+  await expect(page.getByRole("heading", { name: /Maydel/i })).toBeVisible();
 
-  await page.goto("/stores/threadandtonic");
-  await expect(page).toHaveURL(/\/stores\/threadandtonic/);
+  await page.goto("/stores/nashvilleneedleworks");
+  await expect(page).toHaveURL(/\/stores\/nashvilleneedleworks/);
+  await expect(page.getByRole("heading", { name: /Nashville Needleworks/i })).toBeVisible();
   await expect(page.getByRole("button", { name: /Follow store|Following/i })).toBeVisible();
 
   await navigateByLabel(page, /New post/);

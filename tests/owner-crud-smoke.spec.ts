@@ -4,7 +4,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
  * Owner product CRUD smoke against the demo session.
  *
  * Playwright webServer clears VITE_SUPABASE_* so the app boots offline with
- * the seeded demo owner (Canopy Canvas / meCreatorId c2). Unique product
+ * the seeded demo owner (Nashville Canvas Loft / meCreatorId c2). Unique product
  * names keep reruns isolated; delete leaves no leftover catalog junk.
  *
  * Demo catalog mutations live in React state (not localStorage). Prefer SPA
@@ -19,15 +19,15 @@ async function fillLabeledInput(form: Locator, label: RegExp, value: string) {
 }
 
 async function openOwnedShop(page: Page) {
-  await page.goto("/stores/canopycanvas", { waitUntil: "commit" });
-  await expect(page.getByRole("heading", { name: /Canopy Canvas/i })).toBeVisible({ timeout: 20_000 });
+  await page.goto("/stores/nashvillecanvasloft", { waitUntil: "commit" });
+  await expect(page.getByRole("heading", { name: /Nashville Canvas Loft/i })).toBeVisible({ timeout: 20_000 });
 }
 
 async function spaBackToOwnedShop(page: Page) {
   await page.getByRole("button", { name: /All stores|Back to shops/i }).click();
   await expect(page).toHaveURL(/\/stores/);
   // Keep SPA session (demo catalog is React state). City-first browse may hide Canopy until city/ZIP.
-  const canopy = page.locator(".store-card").filter({ hasText: /Canopy Canvas/i }).first();
+  const canopy = page.locator(".store-card").filter({ hasText: /Nashville Canvas Loft/i }).first();
   if ((await canopy.count()) === 0) {
     const portland = page.locator("button.store-city-card").filter({ hasText: /Portland/i }).first();
     if ((await portland.count()) > 0) {
@@ -37,12 +37,12 @@ async function spaBackToOwnedShop(page: Page) {
       await page.getByRole("button", { name: /Find shops/i }).click();
     }
   }
-  await expect(page.locator(".store-card").filter({ hasText: /Canopy Canvas/i }).first()).toBeVisible({
+  await expect(page.locator(".store-card").filter({ hasText: /Nashville Canvas Loft/i }).first()).toBeVisible({
     timeout: 15_000,
   });
-  await page.locator(".store-card").filter({ hasText: /Canopy Canvas/i }).first().locator("a.store-card-main").click();
-  await expect(page).toHaveURL(/\/stores\/canopycanvas/);
-  await expect(page.getByRole("heading", { name: /Canopy Canvas/i })).toBeVisible({ timeout: 15_000 });
+  await page.locator(".store-card").filter({ hasText: /Nashville Canvas Loft/i }).first().locator("a.store-card-main").click();
+  await expect(page).toHaveURL(/\/stores\/nashvillecanvasloft/);
+  await expect(page.getByRole("heading", { name: /Nashville Canvas Loft/i })).toBeVisible({ timeout: 15_000 });
 }
 
 test.describe("owner product CRUD smoke (demo owner)", () => {

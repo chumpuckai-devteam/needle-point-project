@@ -1,16 +1,16 @@
 import { expect, type Page } from "@playwright/test";
 
-/** Seed handles/ids from DEMO_STORES in src/app/demoData.ts (demo mode). */
+/** Seed handles/ids from DEMO_STORES in src/app/demoData.ts (demo mode, real LNS catalog). */
 export const DEMO_OWNED_SHOP = {
-  handle: "canopycanvas",
-  name: /Canopy Canvas/i,
-  id: "store-local-1",
+  handle: "nashvillecanvasloft",
+  name: /Nashville Canvas Loft/i,
+  id: "demo-nashvillecanvasloft",
 } as const;
 
 export const DEMO_FOLLOWABLE_SHOP = {
-  handle: "threadandtonic",
-  name: /Thread & Tonic|Thread and Tonic/i,
-  id: "store-online-1",
+  handle: "maydel",
+  name: /Maydel/i,
+  id: "demo-maydel",
 } as const;
 
 export const STORE_FOLLOWS_KEY = "needle-point-project:storeFollows";

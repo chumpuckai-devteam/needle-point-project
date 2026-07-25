@@ -18,16 +18,16 @@ test.describe("guest / auth surface smoke", () => {
   });
 
   test("unowned shop shows follow + request-to-claim; demo claim becomes owner", async ({ page }) => {
-    await page.goto("/stores/threadandtonic");
-    await expect(page.getByRole("heading", { name: /Thread/i })).toBeVisible({ timeout: 15_000 });
+    await page.goto("/stores/maydel");
+    await expect(page.getByRole("heading", { name: /Maydel/i })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole("button", { name: /Follow store|Following/i })).toBeVisible();
     const claim = page.getByRole("button", { name: /Request to claim shop|Claim pending review/i });
     await expect(claim).toBeVisible();
     await claim.click();
     // Demo path: instant ownership for dogfood.
     await expect(page.getByText(/Your shop|now the owner/i).first()).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByRole("button", { name: /Add product/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Edit shop profile/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Add product/i }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: /Edit shop profile/i }).first()).toBeVisible();
   });
 
   test("project detail has comment affordance", async ({ page }) => {

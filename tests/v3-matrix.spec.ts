@@ -33,13 +33,13 @@ test.describe("V3 acceptance matrix", () => {
     await shot(page, "01-stores");
 
     // Expect named stores on page (city cards / online rail examples)
-    await expect(page.getByText(/Canopy Canvas|Portland/i).first()).toBeVisible();
-    await expect(page.getByText(/Thread & Tonic|Thread and Tonic|Online shops/i).first()).toBeVisible();
+    await expect(page.getByText(/Maydel|Chicago/i).first()).toBeVisible();
+    await expect(page.getByText(/Nashville Needleworks|Nashville Needleworks|Online shops/i).first()).toBeVisible();
 
     // Owned demo shop (Canopy): CRUD visible, Follow hidden
-    await page.goto("/stores/canopycanvas");
-    await expect(page).toHaveURL(/\/stores\/canopycanvas/i, { timeout: 15_000 });
-    await expect(page.getByRole("heading", { name: /Canopy Canvas/i })).toBeVisible();
+    await page.goto("/stores/maydel");
+    await expect(page).toHaveURL(/\/stores\/maydel/i, { timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: /Maydel/i })).toBeVisible();
     await expect(page.getByText(/Your shop/i).first()).toBeVisible();
     await expect(page.getByRole("button", { name: /Add product/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /Follow store|Following/i })).toHaveCount(0);
@@ -55,11 +55,11 @@ test.describe("V3 acceptance matrix", () => {
     await shot(page, "02-store-detail-canopy");
 
     // Non-owned demo shop: Follow visible, owner CRUD hidden
-    await page.goto("/stores/threadandtonic");
-    await expect(page).toHaveURL(/\/stores\/threadandtonic/i, { timeout: 15_000 });
+    await page.goto("/stores/nashvilleneedleworks");
+    await expect(page).toHaveURL(/\/stores\/nashvilleneedleworks/i, { timeout: 15_000 });
     await expect(page.getByRole("button", { name: /Follow store|Following/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /Add product/i })).toHaveCount(0);
-    await shot(page, "02-store-detail-threadandtonic");
+    await shot(page, "02-store-detail-nashvilleneedleworks");
 
     // Soft assert: no hard page errors
     const hard = consoleErrors.filter((e) => !/favicon|ResizeObserver|net::ERR/i.test(e));
@@ -91,7 +91,7 @@ test.describe("V3 acceptance matrix", () => {
 
   test("4 follow store demo toggle persists in session state", async ({ page }) => {
     // Use a non-owned shop — Canopy is demo-owned and hides Follow
-    await page.goto("/stores/threadandtonic");
+    await page.goto("/stores/nashvilleneedleworks");
     const followBtn = page.getByRole("button", { name: /Follow store|Following/i });
     await expect(followBtn).toBeVisible({ timeout: 20_000 });
     const before = (await followBtn.textContent())?.trim() ?? "";
@@ -133,7 +133,7 @@ test.describe("V3 acceptance matrix", () => {
     await expect(page.getByLabel(/Title/i)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/Available at/i).first()).toBeVisible();
     // store checkboxes or labels
-    await expect(page.getByText(/Canopy Canvas|Thread & Tonic|Bookshop Windows/i).first()).toBeVisible();
+    await expect(page.getByText(/Maydel|Nashville Needleworks|Needlepoint.Com/i).first()).toBeVisible();
     await shot(page, "05-journal-available-at");
   });
 
@@ -170,8 +170,8 @@ test.describe("V3 acceptance matrix", () => {
 
   test("8 mobile viewport no critical horizontal overflow on store/project", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/stores/canopycanvas");
-    await expect(page.getByRole("heading", { name: /Canopy Canvas/i })).toBeVisible({ timeout: 20_000 });
+    await page.goto("/stores/maydel");
+    await expect(page.getByRole("heading", { name: /Maydel/i })).toBeVisible({ timeout: 20_000 });
     const storeOverflow = await page.evaluate(() => {
       const doc = document.documentElement;
       return { scrollWidth: doc.scrollWidth, clientWidth: doc.clientWidth };

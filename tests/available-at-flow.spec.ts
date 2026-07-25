@@ -4,8 +4,8 @@ import { expect, test, type Page } from "@playwright/test";
  * Available-at user flow smoke (demo / offline seed).
  *
  * Seeded project "Bookshop Door Canvas" (id p3) is tagged with:
- *   - Canopy Canvas (store-local-1, handle canopycanvas)
- *   - Bookshop Windows LNS (store-local-2, handle bookshopwindows)
+ *   - Maydel (store-local-1, handle maydel)
+ *   - Nashville Needleworks LNS (store-local-2, handle nashvilleneedleworks)
  *
  * Selectors:
  *   - .available-at           project-detail Available at block
@@ -20,7 +20,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 const SEEDED_PROJECT = /Bookshop Door Canvas/i;
 /** Chips expected on Bookshop Door Canvas in demo seed. */
-const SEEDED_SHOP_NAMES = [/Canopy Canvas/i, /Bookshop Windows/i];
+const SEEDED_SHOP_NAMES = [/Maydel/i, /Nashville Needleworks/i];
 
 async function openSeededProjectFromDiscover(page: Page) {
   await page.goto("/discover");
@@ -68,13 +68,13 @@ test.describe("Available at flow smoke (demo seed)", () => {
     const availableAt = page.locator(".available-at");
     await expect(availableAt).toBeVisible({ timeout: 15_000 });
 
-    // Prefer Canopy (stable handle canopycanvas) for the happy-path drill-in
-    const canopyChip = availableAt.locator("button.store-chip").filter({ hasText: /Canopy Canvas/i }).first();
+    // Prefer Canopy (stable handle maydel) for the happy-path drill-in
+    const canopyChip = availableAt.locator("button.store-chip").filter({ hasText: /Maydel/i }).first();
     await expect(canopyChip).toBeVisible();
     await canopyChip.click();
 
-    await expect(page).toHaveURL(/\/stores\/canopycanvas\/?$/i, { timeout: 15_000 });
-    await expect(page.getByRole("heading", { name: /Canopy Canvas/i })).toBeVisible();
+    await expect(page).toHaveURL(/\/stores\/maydel\/?$/i, { timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: /Maydel/i })).toBeVisible();
 
     // Reverse surface: projects tagged available-at this shop
     await expect(page.getByRole("heading", { name: /Projects available here/i })).toBeVisible();
@@ -98,13 +98,13 @@ test.describe("Available at flow smoke (demo seed)", () => {
 
     const chip = page
       .locator(".available-at button.store-chip")
-      .filter({ hasText: /Bookshop Windows/i })
+      .filter({ hasText: /Nashville Needleworks/i })
       .first();
     await expect(chip).toBeVisible({ timeout: 15_000 });
     await chip.click();
 
-    await expect(page).toHaveURL(/\/stores\/bookshopwindows\/?$/i, { timeout: 15_000 });
-    await expect(page.getByRole("heading", { name: /Bookshop Windows/i })).toBeVisible();
+    await expect(page).toHaveURL(/\/stores\/nashvilleneedleworks\/?$/i, { timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: /Nashville Needleworks/i })).toBeVisible();
     await expect(page.getByRole("heading", { name: /Projects available here/i })).toBeVisible();
   });
 
@@ -124,12 +124,12 @@ test.describe("Available at flow smoke (demo seed)", () => {
     await expect(options.first()).toBeVisible();
     expect(await options.count()).toBeGreaterThanOrEqual(3);
 
-    await expect(picker.getByText(/Canopy Canvas/i).first()).toBeVisible();
+    await expect(picker.getByText(/Maydel/i).first()).toBeVisible();
     await expect(picker.getByText(/Thread & Tonic|Thread and Tonic/i).first()).toBeVisible();
-    await expect(picker.getByText(/Bookshop Windows/i).first()).toBeVisible();
+    await expect(picker.getByText(/Nashville Needleworks/i).first()).toBeVisible();
 
     // Toggle is interactive (draft only — no save required for smoke)
-    const canopy = options.filter({ hasText: /Canopy Canvas/i }).first();
+    const canopy = options.filter({ hasText: /Maydel/i }).first();
     const box = canopy.locator('input[type="checkbox"]');
     await expect(box).toBeVisible();
     const before = await box.isChecked();
