@@ -45,7 +45,7 @@ if (!existsSync(catalogPath)) {
 const catalog = JSON.parse(readFileSync(catalogPath, "utf8"));
 const realStores = catalog.stores || [];
 const preserveHandles = new Set(
-  realStores.filter((s) => s.preserve_owned || s.handle === "needlepointcom-raleigh").map((s) => s.handle),
+  realStores.filter((s) => s.preserve_owned || s.handle === "needlepointcom").map((s) => s.handle),
 );
 
 /** Known first-wave demo handles from seed.mjs / generator */

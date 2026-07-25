@@ -2,9 +2,9 @@ import { expect, type Page } from "@playwright/test";
 
 /** Seed handles/ids from DEMO_STORES in src/app/demoData.ts (demo mode, real LNS catalog). */
 export const DEMO_OWNED_SHOP = {
-  handle: "needlepointcom-raleigh",
-  name: /Needlepoint\.Com — Raleigh|Needlepoint.Com/i,
-  id: "demo-needlepointcom-raleigh",
+  handle: "stitchboutique-wellesley",
+  name: /Stitch Boutique — Wellesley|Stitch Boutique/i,
+  id: "demo-stitchboutique-wellesley",
 } as const;
 
 export const DEMO_FOLLOWABLE_SHOP = {

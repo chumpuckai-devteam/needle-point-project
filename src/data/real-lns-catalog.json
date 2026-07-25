@@ -4,46 +4,6 @@
   "source": "Curated real LNS \u2014 xAI search + Firecrawl verify + retailer directories. See SOURCING.md.",
   "stores": [
     {
-      "name": "Kirk & Bradley",
-      "handle": "kirkandbradley",
-      "store_type": "online",
-      "description": "Designer needlepoint canvases and kits available through retailers and online partners.",
-      "website_url": "https://www.kirkandbradley.com",
-      "location": "Ships nationwide",
-      "city": "",
-      "region": "",
-      "postal_code": "",
-      "country": "US",
-      "ships_nationwide": true,
-      "specialties": [
-        "designer canvases",
-        "kits",
-        "online"
-      ],
-      "latitude": null,
-      "longitude": null
-    },
-    {
-      "name": "Needlepoint.com Online",
-      "handle": "needlepointcom",
-      "store_type": "online",
-      "description": "National online needlepoint retailer for kits, canvases, accessories, and inspiration.",
-      "website_url": "https://needlepoint.com",
-      "location": "Ships nationwide",
-      "city": "",
-      "region": "",
-      "postal_code": "",
-      "country": "US",
-      "ships_nationwide": true,
-      "specialties": [
-        "online",
-        "kits",
-        "accessories"
-      ],
-      "latitude": null,
-      "longitude": null
-    },
-    {
       "name": "Needleworks of Alabama",
       "handle": "needleworksofalabama",
       "store_type": "local",
@@ -671,27 +631,6 @@
       "longitude": -90.412
     },
     {
-      "name": "Needlepoint.Com \u2014 Raleigh",
-      "handle": "needlepointcom-raleigh",
-      "store_type": "both",
-      "description": "Full-service needlepoint retailer with painted canvases, threads, kits, classes, and nationwide shipping. Brick-and-mortar in Raleigh, NC.",
-      "website_url": "https://needlepoint.com",
-      "location": "Raleigh, NC",
-      "city": "Raleigh",
-      "region": "NC",
-      "postal_code": "27609",
-      "country": "US",
-      "ships_nationwide": true,
-      "specialties": [
-        "painted canvases",
-        "kits",
-        "classes",
-        "threads"
-      ],
-      "latitude": 35.8399,
-      "longitude": -78.6437
-    },
-    {
       "name": "Personal Threads Boutique",
       "handle": "personalthreads",
       "store_type": "both",
@@ -778,26 +717,6 @@
       "avatar_url": "/assets/needlepoint-hero.png",
       "cover_image_url": "/assets/needlepoint-hero.png",
       "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
-    },
-    {
-      "name": "Needlepoint.Com \u2014 Charleston",
-      "handle": "needlepointcom-charleston",
-      "store_type": "both",
-      "description": "Needlepoint.Com retail studio in Charleston, SC \u2014 canvases, accessories, and expert help in store plus online shipping.",
-      "website_url": "https://needlepoint.com/pages/our-stores",
-      "location": "Charleston, SC",
-      "city": "Charleston",
-      "region": "SC",
-      "postal_code": "29401",
-      "country": "US",
-      "ships_nationwide": true,
-      "specialties": [
-        "painted canvases",
-        "finishing",
-        "classes"
-      ],
-      "latitude": 32.7765,
-      "longitude": -79.9311
     },
     {
       "name": "Nashville Needleworks",
@@ -967,6 +886,47 @@
       ],
       "latitude": 47.661,
       "longitude": -122.313
+    },
+    {
+      "name": "Kirk & Bradley",
+      "handle": "kirkandbradley",
+      "store_type": "online",
+      "description": "Designer needlepoint canvases and kits available through retailers and online partners.",
+      "website_url": "https://www.kirkandbradley.com",
+      "location": "Ships nationwide",
+      "city": "",
+      "region": "",
+      "postal_code": "",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "designer canvases",
+        "kits",
+        "online"
+      ],
+      "latitude": null,
+      "longitude": null
+    },
+    {
+      "name": "Needlepoint.Com",
+      "handle": "needlepointcom",
+      "store_type": "online",
+      "description": "National online needlepoint retailer for kits, painted canvases, accessories, and inspiration. Brick-and-mortar studios in Raleigh, NC and Charleston, SC \u2014 shop online for nationwide shipping.",
+      "website_url": "https://needlepoint.com",
+      "location": "Ships nationwide",
+      "city": "",
+      "region": "",
+      "postal_code": "",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "online",
+        "kits",
+        "painted canvases",
+        "accessories"
+      ],
+      "latitude": null,
+      "longitude": null
     }
   ]
 }
