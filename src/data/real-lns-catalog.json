@@ -1,10 +1,10 @@
 {
   "version": 2,
   "generated": "2026-07-25",
-  "source": "Curated public LNS directory — real shop names/websites only; coords approximate city-center pending geocode polish",
+  "source": "Curated public LNS directory \u2014 real shop names/websites only; coords approximate city-center pending geocode polish",
   "stores": [
     {
-      "name": "Needlepoint.Com — Raleigh",
+      "name": "Needlepoint.Com \u2014 Raleigh",
       "handle": "needlepointcom-raleigh",
       "store_type": "both",
       "description": "Full-service needlepoint retailer with painted canvases, threads, kits, classes, and nationwide shipping. Brick-and-mortar in Raleigh, NC.",
@@ -15,15 +15,20 @@
       "postal_code": "27609",
       "country": "US",
       "ships_nationwide": true,
-      "specialties": ["painted canvases", "kits", "classes", "threads"],
+      "specialties": [
+        "painted canvases",
+        "kits",
+        "classes",
+        "threads"
+      ],
       "latitude": 35.8399,
       "longitude": -78.6437
     },
     {
-      "name": "Needlepoint.Com — Charleston",
+      "name": "Needlepoint.Com \u2014 Charleston",
       "handle": "needlepointcom-charleston",
       "store_type": "both",
-      "description": "Needlepoint.Com retail studio in Charleston, SC — canvases, accessories, and expert help in store plus online shipping.",
+      "description": "Needlepoint.Com retail studio in Charleston, SC \u2014 canvases, accessories, and expert help in store plus online shipping.",
       "website_url": "https://needlepoint.com/pages/our-stores",
       "location": "Charleston, SC",
       "city": "Charleston",
@@ -31,7 +36,11 @@
       "postal_code": "29401",
       "country": "US",
       "ships_nationwide": true,
-      "specialties": ["painted canvases", "finishing", "classes"],
+      "specialties": [
+        "painted canvases",
+        "finishing",
+        "classes"
+      ],
       "latitude": 32.7765,
       "longitude": -79.9311
     },
@@ -47,7 +56,11 @@
       "postal_code": "37205",
       "country": "US",
       "ships_nationwide": true,
-      "specialties": ["painted canvases", "threads", "online shop"],
+      "specialties": [
+        "painted canvases",
+        "threads",
+        "online shop"
+      ],
       "latitude": 36.1326,
       "longitude": -86.856
     },
@@ -63,7 +76,12 @@
       "postal_code": "60657",
       "country": "US",
       "ships_nationwide": false,
-      "specialties": ["needlepoint", "embroidery", "classes", "goldwork"],
+      "specialties": [
+        "needlepoint",
+        "embroidery",
+        "classes",
+        "goldwork"
+      ],
       "latitude": 41.9403,
       "longitude": -87.6688
     },
@@ -79,7 +97,11 @@
       "postal_code": "63124",
       "country": "US",
       "ships_nationwide": false,
-      "specialties": ["painted canvases", "finishing", "threads"],
+      "specialties": [
+        "painted canvases",
+        "finishing",
+        "threads"
+      ],
       "latitude": 38.642,
       "longitude": -90.412
     },
@@ -95,7 +117,11 @@
       "postal_code": "74105",
       "country": "US",
       "ships_nationwide": true,
-      "specialties": ["painted canvases", "threads", "mail order"],
+      "specialties": [
+        "painted canvases",
+        "threads",
+        "mail order"
+      ],
       "latitude": 36.102,
       "longitude": -95.976
     },
@@ -111,7 +137,11 @@
       "postal_code": "55408",
       "country": "US",
       "ships_nationwide": false,
-      "specialties": ["needlepoint", "embroidery", "classes"],
+      "specialties": [
+        "needlepoint",
+        "embroidery",
+        "classes"
+      ],
       "latitude": 44.948,
       "longitude": -93.299
     },
@@ -127,7 +157,11 @@
       "postal_code": "10021",
       "country": "US",
       "ships_nationwide": false,
-      "specialties": ["painted canvases", "finishing", "NYC shop"],
+      "specialties": [
+        "painted canvases",
+        "finishing",
+        "NYC shop"
+      ],
       "latitude": 40.769,
       "longitude": -73.96
     },
@@ -143,7 +177,11 @@
       "postal_code": "21093",
       "country": "US",
       "ships_nationwide": true,
-      "specialties": ["stitch guides", "painted canvases", "classes"],
+      "specialties": [
+        "stitch guides",
+        "painted canvases",
+        "classes"
+      ],
       "latitude": 39.441,
       "longitude": -76.63
     },
@@ -159,7 +197,11 @@
       "postal_code": "84401",
       "country": "US",
       "ships_nationwide": true,
-      "specialties": ["painted canvases", "threads", "online shop"],
+      "specialties": [
+        "painted canvases",
+        "threads",
+        "online shop"
+      ],
       "latitude": 41.223,
       "longitude": -111.974
     },
@@ -175,7 +217,11 @@
       "postal_code": "35209",
       "country": "US",
       "ships_nationwide": false,
-      "specialties": ["local shop", "painted canvases", "threads"],
+      "specialties": [
+        "local shop",
+        "painted canvases",
+        "threads"
+      ],
       "latitude": 33.4718,
       "longitude": -86.8008
     },
@@ -191,7 +237,11 @@
       "postal_code": "78006",
       "country": "US",
       "ships_nationwide": false,
-      "specialties": ["painted canvases", "classes", "Texas LNS"],
+      "specialties": [
+        "painted canvases",
+        "classes",
+        "Texas LNS"
+      ],
       "latitude": 29.7947,
       "longitude": -98.732
     },
@@ -207,7 +257,11 @@
       "postal_code": "77027",
       "country": "US",
       "ships_nationwide": false,
-      "specialties": ["painted canvases", "threads", "community"],
+      "specialties": [
+        "painted canvases",
+        "threads",
+        "community"
+      ],
       "latitude": 29.742,
       "longitude": -95.444
     },
@@ -223,7 +277,11 @@
       "postal_code": "33410",
       "country": "US",
       "ships_nationwide": true,
-      "specialties": ["painted canvases", "finishing", "Florida LNS"],
+      "specialties": [
+        "painted canvases",
+        "finishing",
+        "Florida LNS"
+      ],
       "latitude": 26.846,
       "longitude": -80.086
     },
@@ -239,7 +297,11 @@
       "postal_code": "",
       "country": "US",
       "ships_nationwide": true,
-      "specialties": ["online", "kits", "community"],
+      "specialties": [
+        "online",
+        "kits",
+        "community"
+      ],
       "latitude": null,
       "longitude": null
     },
@@ -255,7 +317,11 @@
       "postal_code": "",
       "country": "US",
       "ships_nationwide": true,
-      "specialties": ["designer canvases", "kits", "online"],
+      "specialties": [
+        "designer canvases",
+        "kits",
+        "online"
+      ],
       "latitude": null,
       "longitude": null
     },
@@ -271,7 +337,10 @@
       "postal_code": "94549",
       "country": "US",
       "ships_nationwide": false,
-      "specialties": ["painted canvases", "Bay Area LNS"],
+      "specialties": [
+        "painted canvases",
+        "Bay Area LNS"
+      ],
       "latitude": 37.8858,
       "longitude": -122.118
     },
@@ -287,7 +356,11 @@
       "postal_code": "20814",
       "country": "US",
       "ships_nationwide": false,
-      "specialties": ["painted canvases", "finishing", "DC metro"],
+      "specialties": [
+        "painted canvases",
+        "finishing",
+        "DC metro"
+      ],
       "latitude": 38.9847,
       "longitude": -77.0947
     },
@@ -303,7 +376,11 @@
       "postal_code": "30305",
       "country": "US",
       "ships_nationwide": false,
-      "specialties": ["painted canvases", "finishing", "Atlanta"],
+      "specialties": [
+        "painted canvases",
+        "finishing",
+        "Atlanta"
+      ],
       "latitude": 33.84,
       "longitude": -84.386
     },
@@ -319,7 +396,11 @@
       "postal_code": "80209",
       "country": "US",
       "ships_nationwide": false,
-      "specialties": ["needlepoint", "threads", "Colorado"],
+      "specialties": [
+        "needlepoint",
+        "threads",
+        "Colorado"
+      ],
       "latitude": 39.711,
       "longitude": -104.956
     },
@@ -335,7 +416,10 @@
       "postal_code": "98115",
       "country": "US",
       "ships_nationwide": false,
-      "specialties": ["painted canvases", "PNW LNS"],
+      "specialties": [
+        "painted canvases",
+        "PNW LNS"
+      ],
       "latitude": 47.661,
       "longitude": -122.313
     },
@@ -351,7 +435,11 @@
       "postal_code": "85251",
       "country": "US",
       "ships_nationwide": false,
-      "specialties": ["painted canvases", "classes", "Arizona"],
+      "specialties": [
+        "painted canvases",
+        "classes",
+        "Arizona"
+      ],
       "latitude": 33.494,
       "longitude": -111.926
     },
@@ -367,26 +455,13 @@
       "postal_code": "",
       "country": "US",
       "ships_nationwide": true,
-      "specialties": ["online", "kits", "accessories"],
+      "specialties": [
+        "online",
+        "kits",
+        "accessories"
+      ],
       "latitude": null,
       "longitude": null
-    },
-    {
-      "name": "Nashville Canvas Loft",
-      "handle": "nashvillecanvasloft",
-      "store_type": "local",
-      "description": "Nashville local needlepoint loft — claimed shop profile on Needlepoint. Keep this row for owner tools and city density.",
-      "website_url": "",
-      "location": "Nashville, TN",
-      "city": "Nashville",
-      "region": "TN",
-      "postal_code": "37203",
-      "country": "US",
-      "ships_nationwide": false,
-      "specialties": ["local shop", "claimed profile"],
-      "latitude": 36.1627,
-      "longitude": -86.7816,
-      "preserve_owned": true
     }
   ]
 }

@@ -19,7 +19,7 @@ test.describe("shop detail smoke", () => {
 
     await expect(page.getByText(/Your shop/i).first()).toBeVisible();
     await expect(page.getByText(new RegExp(`@${DEMO_OWNED_SHOP.handle}`, "i")).first()).toBeVisible();
-    await expect(page.getByText(/Nashville|TN/i).first()).toBeVisible();
+    await expect(page.getByText(/Raleigh|NC/i).first()).toBeVisible();
 
     await expect(page.getByRole("button", { name: /Add product/i }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: /Edit shop profile/i }).first()).toBeVisible();

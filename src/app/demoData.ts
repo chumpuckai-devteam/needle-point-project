@@ -29,8 +29,8 @@ function mapCatalogStore(store: CatalogStore, index: number): Store {
   const id = `demo-${store.handle}`;
   return {
     id,
-    // Offline demo: no synthetic “owned” canopy shop — claim flow is the online path.
-    ownerUserId: store.handle === "nashvillecanvasloft" ? DEMO_CREATOR_ID : null,
+    // Offline demo: Needlepoint.Com Raleigh is the dogfood-owned shop.
+    ownerUserId: store.handle === "needlepointcom-raleigh" ? DEMO_CREATOR_ID : null,
     name: store.name,
     handle: store.handle,
     storeType: store.store_type,

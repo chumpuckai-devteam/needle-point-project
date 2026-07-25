@@ -3,7 +3,7 @@
  * Replace synthetic US density catalog with curated real LNS rows.
  *
  * 1) Delete demo/fake stores (example.com websites + known seed handles)
- *    — always keeps claimed/owned non-demo shops (e.g. nashvillecanvasloft)
+ *    — preserves owned shops listed with preserve_owned in the real catalog
  * 2) Upsert scripts/data/real-lns-catalog.json
  *
  * Usage: node scripts/replace-demo-stores-with-real-lns.mjs
@@ -45,7 +45,7 @@ if (!existsSync(catalogPath)) {
 const catalog = JSON.parse(readFileSync(catalogPath, "utf8"));
 const realStores = catalog.stores || [];
 const preserveHandles = new Set(
-  realStores.filter((s) => s.preserve_owned || s.handle === "nashvillecanvasloft").map((s) => s.handle),
+  realStores.filter((s) => s.preserve_owned || s.handle === "needlepointcom-raleigh").map((s) => s.handle),
 );
 
 /** Known first-wave demo handles from seed.mjs / generator */
