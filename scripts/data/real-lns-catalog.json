@@ -1,7 +1,7 @@
 {
   "version": 2,
   "generated": "2026-07-25",
-  "source": "Curated real LNS only \u2014 see scripts/data/SOURCING.md. No synthetic city fakes.",
+  "source": "Curated real LNS \u2014 xAI search + Firecrawl verify + retailer directories. See SOURCING.md.",
   "stores": [
     {
       "name": "Kirk & Bradley",
@@ -19,26 +19,6 @@
         "designer canvases",
         "kits",
         "online"
-      ],
-      "latitude": null,
-      "longitude": null
-    },
-    {
-      "name": "Needlepoint Clubhouse",
-      "handle": "needlepointclubhouse",
-      "store_type": "online",
-      "description": "Online needlepoint club and shop for canvases, threads, and community stitch-alongs.",
-      "website_url": "https://www.needlepointclubhouse.com",
-      "location": "Ships nationwide",
-      "city": "",
-      "region": "",
-      "postal_code": "",
-      "country": "US",
-      "ships_nationwide": true,
-      "specialties": [
-        "online",
-        "kits",
-        "community"
       ],
       "latitude": null,
       "longitude": null
@@ -84,6 +64,52 @@
       "longitude": -86.8008
     },
     {
+      "name": "Serendipity Needleworks",
+      "handle": "serendipityneedleworks",
+      "store_type": "both",
+      "description": "Tuscaloosa, Alabama needlework shop listed on national needlepoint retailer locators.",
+      "website_url": "https://www.serendipityneedleworks.com",
+      "location": "Tuscaloosa, AL",
+      "city": "Tuscaloosa",
+      "region": "AL",
+      "postal_code": "35401",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "needlepoint",
+        "Alabama LNS"
+      ],
+      "latitude": 33.2098,
+      "longitude": -87.5692,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
+    },
+    {
+      "name": "BeStitched Needlepoint",
+      "handle": "bestitched",
+      "store_type": "both",
+      "description": "Scottsdale modern needlepoint shop with classes, retreats, kits, and nationwide shipping.",
+      "website_url": "https://bestitchedneedlepointshop.com",
+      "location": "Scottsdale, AZ",
+      "city": "Scottsdale",
+      "region": "AZ",
+      "postal_code": "85260",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "modern canvases",
+        "classes",
+        "kits",
+        "Scottsdale LNS"
+      ],
+      "latitude": 33.582,
+      "longitude": -111.892,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
+    },
+    {
       "name": "In Stitches Needlepoint",
       "handle": "institchesneedlepoint",
       "store_type": "local",
@@ -102,6 +128,29 @@
       ],
       "latitude": 33.494,
       "longitude": -111.926
+    },
+    {
+      "name": "Needle Nook of La Jolla",
+      "handle": "needlenooklajolla",
+      "store_type": "both",
+      "description": "La Jolla (San Diego) needlepoint destination for canvases, threads, and mail order.",
+      "website_url": "https://www.needlenook.com",
+      "location": "La Jolla, CA",
+      "city": "La Jolla",
+      "region": "CA",
+      "postal_code": "92037",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "painted canvases",
+        "threads",
+        "San Diego LNS"
+      ],
+      "latitude": 32.8328,
+      "longitude": -117.2713,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
     },
     {
       "name": "Penny Royal Needleworks",
@@ -123,6 +172,76 @@
       "longitude": -122.118
     },
     {
+      "name": "Old World Designs",
+      "handle": "oldworlddesigns",
+      "store_type": "both",
+      "description": "Menlo Park Bay Area needlepoint shop for hand-painted canvases, fibers, classes, and mail order.",
+      "website_url": "https://www.oldworlddesigns.com",
+      "location": "Menlo Park, CA",
+      "city": "Menlo Park",
+      "region": "CA",
+      "postal_code": "94025",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "painted canvases",
+        "fibers",
+        "classes",
+        "Bay Area LNS"
+      ],
+      "latitude": 37.4515,
+      "longitude": -122.1844,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
+    },
+    {
+      "name": "Needlepoint Inc.",
+      "handle": "needlepointinc",
+      "store_type": "both",
+      "description": "San Francisco needlepoint shop for canvases, silks, finishing gallery, and in-store stitch help.",
+      "website_url": "https://www.needlepointinc.com",
+      "location": "San Francisco, CA",
+      "city": "San Francisco",
+      "region": "CA",
+      "postal_code": "94111",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "painted canvases",
+        "silk",
+        "finishing",
+        "SF LNS"
+      ],
+      "latitude": 37.7965,
+      "longitude": -122.401,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
+    },
+    {
+      "name": "Aristeia Needlepoint",
+      "handle": "aristeia",
+      "store_type": "local",
+      "description": "Santa Monica / Los Angeles area needlepoint shop (Anne Fisher retailer directory).",
+      "website_url": "https://www.aristeianeedlepoint.com",
+      "location": "Santa Monica, CA",
+      "city": "Santa Monica",
+      "region": "CA",
+      "postal_code": "90401",
+      "country": "US",
+      "ships_nationwide": false,
+      "specialties": [
+        "painted canvases",
+        "LA LNS"
+      ],
+      "latitude": 34.0195,
+      "longitude": -118.4912,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
+    },
+    {
       "name": "The Stitch Niche",
       "handle": "stitchniche",
       "store_type": "local",
@@ -141,6 +260,116 @@
       ],
       "latitude": 39.711,
       "longitude": -104.956
+    },
+    {
+      "name": "The Point of It All",
+      "handle": "pointofitall",
+      "store_type": "both",
+      "description": "Washington, DC premier needlepoint shop for hand-painted canvases, fibers, and finishing.",
+      "website_url": "https://www.thepointofitallonline.com",
+      "location": "Washington, DC",
+      "city": "Washington",
+      "region": "DC",
+      "postal_code": "20016",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "painted canvases",
+        "fibers",
+        "finishing",
+        "DC LNS"
+      ],
+      "latitude": 38.9255,
+      "longitude": -77.1015,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
+    },
+    {
+      "name": "The Flying Needles",
+      "handle": "flyingneedles",
+      "store_type": "local",
+      "description": "Belleair Bluffs, Florida needlepoint shop (The Flying Needles) with canvases and local stitch community.",
+      "website_url": "https://www.theflyingneedles.com",
+      "location": "Belleair Bluffs, FL",
+      "city": "Belleair Bluffs",
+      "region": "FL",
+      "postal_code": "33770",
+      "country": "US",
+      "ships_nationwide": false,
+      "specialties": [
+        "painted canvases",
+        "classes",
+        "Texas LNS"
+      ],
+      "latitude": 27.9211,
+      "longitude": -82.8193
+    },
+    {
+      "name": "Absolutely Needlepoint \u2014 Miami",
+      "handle": "absolutelyneedlepoint-miami",
+      "store_type": "both",
+      "description": "Miami needlepoint shop carrying painted canvases and threads (Anne Fisher retailer list).",
+      "website_url": "https://www.absolutelyneedlepoint.com",
+      "location": "Miami, FL",
+      "city": "Miami",
+      "region": "FL",
+      "postal_code": "33133",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "painted canvases",
+        "Miami LNS"
+      ],
+      "latitude": 25.7617,
+      "longitude": -80.1918,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
+    },
+    {
+      "name": "Needlepoint in Paradise",
+      "handle": "needlepointinparadise",
+      "store_type": "both",
+      "description": "Naples, Florida needlepoint shop with canvases and fibers for snowbirds and locals.",
+      "website_url": "https://www.needlepointinparadise.com",
+      "location": "Naples, FL",
+      "city": "Naples",
+      "region": "FL",
+      "postal_code": "34102",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "painted canvases",
+        "Florida LNS"
+      ],
+      "latitude": 26.142,
+      "longitude": -81.7948,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
+    },
+    {
+      "name": "The Black Sheep",
+      "handle": "blacksheeporlando",
+      "store_type": "local",
+      "description": "Orlando needlepoint shop listed on national LNS retailer directories.",
+      "website_url": "https://www.theblacksheeporlando.com",
+      "location": "Orlando, FL",
+      "city": "Orlando",
+      "region": "FL",
+      "postal_code": "32803",
+      "country": "US",
+      "ships_nationwide": false,
+      "specialties": [
+        "needlepoint",
+        "Orlando LNS"
+      ],
+      "latitude": 28.5383,
+      "longitude": -81.3792,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
     },
     {
       "name": "Stitch Therapy Needlepoint",
@@ -183,6 +412,30 @@
       "longitude": -84.386
     },
     {
+      "name": "The Nimble Needle",
+      "handle": "nimbleneedleatlanta",
+      "store_type": "both",
+      "description": "Full-service Sandy Springs (Atlanta) needlepoint shop with canvases, threads, classes, stitch guides, and finishing.",
+      "website_url": "https://www.atlantanimbleneedle.com",
+      "location": "Sandy Springs, GA",
+      "city": "Sandy Springs",
+      "region": "GA",
+      "postal_code": "30328",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "painted canvases",
+        "classes",
+        "finishing",
+        "Atlanta LNS"
+      ],
+      "latitude": 33.917,
+      "longitude": -84.379,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
+    },
+    {
       "name": "Maydel",
       "handle": "maydel",
       "store_type": "local",
@@ -202,6 +455,96 @@
       ],
       "latitude": 41.9403,
       "longitude": -87.6688
+    },
+    {
+      "name": "The Canvasback",
+      "handle": "canvasback",
+      "store_type": "both",
+      "description": "Northfield, Illinois needlepoint shop (Anne Fisher / Voila retailer directory).",
+      "website_url": "https://www.canvasback-needlepoint.com",
+      "location": "Northfield, IL",
+      "city": "Northfield",
+      "region": "IL",
+      "postal_code": "60093",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "painted canvases",
+        "Chicago metro LNS"
+      ],
+      "latitude": 42.0998,
+      "longitude": -87.7809,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
+    },
+    {
+      "name": "Stitch Boutique \u2014 Boston",
+      "handle": "stitchboutique-boston",
+      "store_type": "both",
+      "description": "Stitch Boutique Boston studio for canvases, threads, and the New England stitch community.",
+      "website_url": "https://stitchboutique.com",
+      "location": "Boston, MA",
+      "city": "Boston",
+      "region": "MA",
+      "postal_code": "02116",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "painted canvases",
+        "Boston LNS",
+        "community"
+      ],
+      "latitude": 42.349,
+      "longitude": -71.079,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
+    },
+    {
+      "name": "Stitch Boutique \u2014 Wellesley",
+      "handle": "stitchboutique-wellesley",
+      "store_type": "both",
+      "description": "New England full-service needlepoint community shop in Wellesley, MA (Stitch Boutique).",
+      "website_url": "https://stitchboutique.com",
+      "location": "Wellesley, MA",
+      "city": "Wellesley",
+      "region": "MA",
+      "postal_code": "02482",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "painted canvases",
+        "threads",
+        "New England LNS"
+      ],
+      "latitude": 42.2965,
+      "longitude": -71.2925,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
+    },
+    {
+      "name": "Stitch Boutique \u2014 Winchester",
+      "handle": "stitchboutique-winchester",
+      "store_type": "local",
+      "description": "Stitch Boutique Winchester, MA location serving the Greater Boston needlepoint community.",
+      "website_url": "https://stitchboutique.com",
+      "location": "Winchester, MA",
+      "city": "Winchester",
+      "region": "MA",
+      "postal_code": "01890",
+      "country": "US",
+      "ships_nationwide": false,
+      "specialties": [
+        "painted canvases",
+        "Boston metro LNS"
+      ],
+      "latitude": 42.452,
+      "longitude": -71.137,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
     },
     {
       "name": "The Elegant Needle",
@@ -244,6 +587,30 @@
       "longitude": -76.63
     },
     {
+      "name": "3 Kittens Needle Arts",
+      "handle": "3kittensneedlearts",
+      "store_type": "both",
+      "description": "Twin Cities needlepoint shop in Mendota Heights with canvases, classes, trunk shows, and finishing.",
+      "website_url": "https://www.3kittensneedlearts.com",
+      "location": "Mendota Heights, MN",
+      "city": "Mendota Heights",
+      "region": "MN",
+      "postal_code": "55118",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "painted canvases",
+        "classes",
+        "finishing",
+        "Twin Cities LNS"
+      ],
+      "latitude": 44.883,
+      "longitude": -93.138,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
+    },
+    {
       "name": "Needlework Unlimited",
       "handle": "needleworkunlimited",
       "store_type": "local",
@@ -262,6 +629,26 @@
       ],
       "latitude": 44.948,
       "longitude": -93.299
+    },
+    {
+      "name": "Needlepoint Clubhouse",
+      "handle": "needlepointclubhouse",
+      "store_type": "both",
+      "description": "Suburban St. Louis needlepoint shop (Manchester Road) with canvases, accessories, and nationwide shipping.",
+      "website_url": "https://www.needlepointclubhouse.com",
+      "location": "St. Louis, MO",
+      "city": "St. Louis",
+      "region": "MO",
+      "postal_code": "63119",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "online",
+        "kits",
+        "community"
+      ],
+      "latitude": 38.592,
+      "longitude": -90.348
     },
     {
       "name": "Sign of the Arrow",
@@ -305,6 +692,30 @@
       "longitude": -78.6437
     },
     {
+      "name": "Personal Threads Boutique",
+      "handle": "personalthreads",
+      "store_type": "both",
+      "description": "Omaha yarn and needlepoint boutique with canvases, threads, classes, and fiber arts supplies.",
+      "website_url": "https://www.personalthreads.com",
+      "location": "Omaha, NE",
+      "city": "Omaha",
+      "region": "NE",
+      "postal_code": "68114",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "needlepoint",
+        "yarn",
+        "classes",
+        "Omaha LNS"
+      ],
+      "latitude": 41.265,
+      "longitude": -96.043,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
+    },
+    {
       "name": "Annie & Company Needlepoint",
       "handle": "annieandcompany",
       "store_type": "local",
@@ -343,6 +754,30 @@
       ],
       "latitude": 36.102,
       "longitude": -95.976
+    },
+    {
+      "name": "Rittenhouse Needlepoint",
+      "handle": "rittenhouseneedlepoint",
+      "store_type": "both",
+      "description": "Philadelphia full-service needlepoint shop with canvases, fibers, cross stitch, and in-house finishing.",
+      "website_url": "https://www.rittenhouseneedlepoint.com",
+      "location": "Philadelphia, PA",
+      "city": "Philadelphia",
+      "region": "PA",
+      "postal_code": "19107",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "painted canvases",
+        "finishing",
+        "cross stitch",
+        "Philadelphia LNS"
+      ],
+      "latitude": 39.9536,
+      "longitude": -75.159,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
     },
     {
       "name": "Needlepoint.Com \u2014 Charleston",
@@ -429,24 +864,50 @@
       "source_notes": "Verified via official Shopify site (Nashville store open) + Maps listings alongside Kick Ass / Nashville Needleworks"
     },
     {
-      "name": "The Flying Needles",
-      "handle": "flyingneedles",
-      "store_type": "local",
-      "description": "Texas Hill Country needlepoint shop with canvases, threads, and stitcher gatherings.",
-      "website_url": "https://www.theflyingneedles.com",
-      "location": "Boerne, TX",
-      "city": "Boerne",
+      "name": "The Needle Works",
+      "handle": "theneedleworks",
+      "store_type": "both",
+      "description": "Austin's long-established needlepoint shop (since 1978) for hand-painted canvases, threads, classes, and mail order.",
+      "website_url": "https://www.theneedleworks.com",
+      "location": "Austin, TX",
+      "city": "Austin",
       "region": "TX",
-      "postal_code": "78006",
+      "postal_code": "78701",
       "country": "US",
-      "ships_nationwide": false,
+      "ships_nationwide": true,
       "specialties": [
         "painted canvases",
+        "threads",
         "classes",
-        "Texas LNS"
+        "Austin LNS"
       ],
-      "latitude": 29.7947,
-      "longitude": -98.732
+      "latitude": 30.2672,
+      "longitude": -97.7431,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
+    },
+    {
+      "name": "Chaparral Needlepoint",
+      "handle": "chaparralneedlepoint",
+      "store_type": "both",
+      "description": "Dallas needlepoint shop known for painted canvases and Texas stitch community.",
+      "website_url": "https://www.chaparralneedlepoint.com",
+      "location": "Dallas, TX",
+      "city": "Dallas",
+      "region": "TX",
+      "postal_code": "75205",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "painted canvases",
+        "Dallas LNS"
+      ],
+      "latitude": 32.8326,
+      "longitude": -96.7915,
+      "avatar_url": "/assets/needlepoint-hero.png",
+      "cover_image_url": "/assets/needlepoint-hero.png",
+      "source_notes": "xAI search + Firecrawl extract / Anne Fisher + Voila retailer directories (2026-07-25 batch)"
     },
     {
       "name": "Third Coast Stitches",

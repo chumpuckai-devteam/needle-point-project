@@ -17,6 +17,8 @@ if (!existsSync(path)) {
 const { stores } = JSON.parse(readFileSync(path, "utf8"));
 const errors = [];
 const handles = new Set();
+const names = new Set();
+const localKeys = new Set(); // name|city|region for brick-and-mortar uniqueness
 
 for (const [i, s] of (stores || []).entries()) {
   const label = s.handle || s.name || `#${i}`;
@@ -24,6 +26,14 @@ for (const [i, s] of (stores || []).entries()) {
   if (!s.handle?.trim()) errors.push(`${label}: missing handle`);
   if (handles.has(s.handle)) errors.push(`${label}: duplicate handle`);
   handles.add(s.handle);
+  const nameKey = String(s.name || "").toLowerCase().trim();
+  if (nameKey && names.has(nameKey)) errors.push(`${label}: duplicate name "${s.name}"`);
+  names.add(nameKey);
+  if (s.store_type !== "online") {
+    const lk = `${nameKey}|${String(s.city || "").toLowerCase()}|${String(s.region || "").toLowerCase()}`;
+    if (localKeys.has(lk)) errors.push(`${label}: duplicate local place ${lk}`);
+    localKeys.add(lk);
+  }
   const web = String(s.website_url || "").toLowerCase();
   if (!web.startsWith("http")) errors.push(`${label}: website_url must be http(s)`);
   if (web.includes("example.com")) errors.push(`${label}: example.com is forbidden`);
