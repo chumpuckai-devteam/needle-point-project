@@ -1,8 +1,288 @@
 {
   "version": 2,
   "generated": "2026-07-25",
-  "source": "Curated public LNS directory \u2014 real shop names/websites only; coords approximate city-center pending geocode polish",
+  "source": "Curated real LNS only \u2014 see scripts/data/SOURCING.md. No synthetic city fakes.",
   "stores": [
+    {
+      "name": "Kirk & Bradley",
+      "handle": "kirkandbradley",
+      "store_type": "online",
+      "description": "Designer needlepoint canvases and kits available through retailers and online partners.",
+      "website_url": "https://www.kirkandbradley.com",
+      "location": "Ships nationwide",
+      "city": "",
+      "region": "",
+      "postal_code": "",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "designer canvases",
+        "kits",
+        "online"
+      ],
+      "latitude": null,
+      "longitude": null
+    },
+    {
+      "name": "Needlepoint Clubhouse",
+      "handle": "needlepointclubhouse",
+      "store_type": "online",
+      "description": "Online needlepoint club and shop for canvases, threads, and community stitch-alongs.",
+      "website_url": "https://www.needlepointclubhouse.com",
+      "location": "Ships nationwide",
+      "city": "",
+      "region": "",
+      "postal_code": "",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "online",
+        "kits",
+        "community"
+      ],
+      "latitude": null,
+      "longitude": null
+    },
+    {
+      "name": "Needlepoint.com Online",
+      "handle": "needlepointcom",
+      "store_type": "online",
+      "description": "National online needlepoint retailer for kits, canvases, accessories, and inspiration.",
+      "website_url": "https://needlepoint.com",
+      "location": "Ships nationwide",
+      "city": "",
+      "region": "",
+      "postal_code": "",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "online",
+        "kits",
+        "accessories"
+      ],
+      "latitude": null,
+      "longitude": null
+    },
+    {
+      "name": "Needleworks of Alabama",
+      "handle": "needleworksofalabama",
+      "store_type": "local",
+      "description": "Homewood, AL local needlepoint shop serving the Birmingham area.",
+      "website_url": "https://www.needleworksofalabama.com",
+      "location": "Homewood, AL",
+      "city": "Homewood",
+      "region": "AL",
+      "postal_code": "35209",
+      "country": "US",
+      "ships_nationwide": false,
+      "specialties": [
+        "local shop",
+        "painted canvases",
+        "threads"
+      ],
+      "latitude": 33.4718,
+      "longitude": -86.8008
+    },
+    {
+      "name": "In Stitches Needlepoint",
+      "handle": "institchesneedlepoint",
+      "store_type": "local",
+      "description": "Phoenix-area needlepoint shop for canvases, threads, and classes.",
+      "website_url": "https://www.institchesneedlepoint.com",
+      "location": "Scottsdale, AZ",
+      "city": "Scottsdale",
+      "region": "AZ",
+      "postal_code": "85251",
+      "country": "US",
+      "ships_nationwide": false,
+      "specialties": [
+        "painted canvases",
+        "classes",
+        "Arizona"
+      ],
+      "latitude": 33.494,
+      "longitude": -111.926
+    },
+    {
+      "name": "Penny Royal Needleworks",
+      "handle": "pennyroyal",
+      "store_type": "local",
+      "description": "California needlepoint shop with painted canvases, threads, and finishing.",
+      "website_url": "https://www.pennyroyalneedleworks.com",
+      "location": "Lafayette, CA",
+      "city": "Lafayette",
+      "region": "CA",
+      "postal_code": "94549",
+      "country": "US",
+      "ships_nationwide": false,
+      "specialties": [
+        "painted canvases",
+        "Bay Area LNS"
+      ],
+      "latitude": 37.8858,
+      "longitude": -122.118
+    },
+    {
+      "name": "The Stitch Niche",
+      "handle": "stitchniche",
+      "store_type": "local",
+      "description": "Denver-area needlepoint and needlework shop for canvases and specialty threads.",
+      "website_url": "https://www.thestitchniche.com",
+      "location": "Denver, CO",
+      "city": "Denver",
+      "region": "CO",
+      "postal_code": "80209",
+      "country": "US",
+      "ships_nationwide": false,
+      "specialties": [
+        "needlepoint",
+        "threads",
+        "Colorado"
+      ],
+      "latitude": 39.711,
+      "longitude": -104.956
+    },
+    {
+      "name": "Stitch Therapy Needlepoint",
+      "handle": "stitchtherapy",
+      "store_type": "both",
+      "description": "Palm Beach Gardens needlepoint shop with designer canvases and nationwide shipping options.",
+      "website_url": "https://www.stitchtherapynp.com",
+      "location": "Palm Beach Gardens, FL",
+      "city": "Palm Beach Gardens",
+      "region": "FL",
+      "postal_code": "33410",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "painted canvases",
+        "finishing",
+        "Florida LNS"
+      ],
+      "latitude": 26.846,
+      "longitude": -80.086
+    },
+    {
+      "name": "Labors of Love Needlepoint",
+      "handle": "laborsoflove",
+      "store_type": "local",
+      "description": "Atlanta needlepoint shop with canvases, threads, and custom finishing.",
+      "website_url": "https://www.laborsofloveneedlepoint.com",
+      "location": "Atlanta, GA",
+      "city": "Atlanta",
+      "region": "GA",
+      "postal_code": "30305",
+      "country": "US",
+      "ships_nationwide": false,
+      "specialties": [
+        "painted canvases",
+        "finishing",
+        "Atlanta"
+      ],
+      "latitude": 33.84,
+      "longitude": -84.386
+    },
+    {
+      "name": "Maydel",
+      "handle": "maydel",
+      "store_type": "local",
+      "description": "Chicago needlework shop for tapestry, needlepoint, embroidery, goldwork, and classes on Lincoln Avenue.",
+      "website_url": "https://maydel.com",
+      "location": "Chicago, IL",
+      "city": "Chicago",
+      "region": "IL",
+      "postal_code": "60657",
+      "country": "US",
+      "ships_nationwide": false,
+      "specialties": [
+        "needlepoint",
+        "embroidery",
+        "classes",
+        "goldwork"
+      ],
+      "latitude": 41.9403,
+      "longitude": -87.6688
+    },
+    {
+      "name": "The Elegant Needle",
+      "handle": "elegantneedle",
+      "store_type": "local",
+      "description": "Bethesda-area needlepoint boutique serving the Washington, DC metro.",
+      "website_url": "https://www.theelegantneedle.com",
+      "location": "Bethesda, MD",
+      "city": "Bethesda",
+      "region": "MD",
+      "postal_code": "20814",
+      "country": "US",
+      "ships_nationwide": false,
+      "specialties": [
+        "painted canvases",
+        "finishing",
+        "DC metro"
+      ],
+      "latitude": 38.9847,
+      "longitude": -77.0947
+    },
+    {
+      "name": "Bedecked and Beadazzled",
+      "handle": "bedeckedandbeadazzled",
+      "store_type": "both",
+      "description": "Maryland needlepoint studio (Ruth Schmuff) known for stitch guides, canvases, and teaching.",
+      "website_url": "https://www.bedeckedandbeadazzled.com",
+      "location": "Timonium, MD",
+      "city": "Timonium",
+      "region": "MD",
+      "postal_code": "21093",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "stitch guides",
+        "painted canvases",
+        "classes"
+      ],
+      "latitude": 39.441,
+      "longitude": -76.63
+    },
+    {
+      "name": "Needlework Unlimited",
+      "handle": "needleworkunlimited",
+      "store_type": "local",
+      "description": "Minneapolis needlework destination for needlepoint, embroidery, and stitcher community events.",
+      "website_url": "https://www.needleworkunlimited.com",
+      "location": "Minneapolis, MN",
+      "city": "Minneapolis",
+      "region": "MN",
+      "postal_code": "55408",
+      "country": "US",
+      "ships_nationwide": false,
+      "specialties": [
+        "needlepoint",
+        "embroidery",
+        "classes"
+      ],
+      "latitude": 44.948,
+      "longitude": -93.299
+    },
+    {
+      "name": "Sign of the Arrow",
+      "handle": "signofthearrow",
+      "store_type": "local",
+      "description": "Long-standing St. Louis needlepoint boutique with painted canvases, threads, and finishing.",
+      "website_url": "http://www.signofthearrow.com",
+      "location": "St. Louis, MO",
+      "city": "St. Louis",
+      "region": "MO",
+      "postal_code": "63124",
+      "country": "US",
+      "ships_nationwide": false,
+      "specialties": [
+        "painted canvases",
+        "finishing",
+        "threads"
+      ],
+      "latitude": 38.642,
+      "longitude": -90.412
+    },
     {
       "name": "Needlepoint.Com \u2014 Raleigh",
       "handle": "needlepointcom-raleigh",
@@ -23,6 +303,46 @@
       ],
       "latitude": 35.8399,
       "longitude": -78.6437
+    },
+    {
+      "name": "Annie & Company Needlepoint",
+      "handle": "annieandcompany",
+      "store_type": "local",
+      "description": "New York City needlepoint shop with canvases, threads, and finishing services.",
+      "website_url": "https://www.annieandcompany.com",
+      "location": "New York, NY",
+      "city": "New York",
+      "region": "NY",
+      "postal_code": "10021",
+      "country": "US",
+      "ships_nationwide": false,
+      "specialties": [
+        "painted canvases",
+        "finishing",
+        "NYC shop"
+      ],
+      "latitude": 40.769,
+      "longitude": -73.96
+    },
+    {
+      "name": "The Silver Needle",
+      "handle": "silverneedle",
+      "store_type": "both",
+      "description": "Tulsa needlepoint shop known for canvases, specialty threads, and mail order.",
+      "website_url": "https://www.silverneedle.com",
+      "location": "Tulsa, OK",
+      "city": "Tulsa",
+      "region": "OK",
+      "postal_code": "74105",
+      "country": "US",
+      "ships_nationwide": true,
+      "specialties": [
+        "painted canvases",
+        "threads",
+        "mail order"
+      ],
+      "latitude": 36.102,
+      "longitude": -95.976
     },
     {
       "name": "Needlepoint.Com \u2014 Charleston",
@@ -50,8 +370,8 @@
       "store_type": "both",
       "description": "Nashville needlepoint shop with canvases, threads, and online shopping open around the clock.",
       "website_url": "https://www.nashvilleneedleworks.com",
-      "location": "Nashville, TN",
-      "city": "Nashville",
+      "location": "Brentwood, TN",
+      "city": "Brentwood",
       "region": "TN",
       "postal_code": "37205",
       "country": "US",
@@ -61,169 +381,52 @@
         "threads",
         "online shop"
       ],
-      "latitude": 36.1326,
-      "longitude": -86.856
+      "latitude": 36.0331,
+      "longitude": -86.7828
     },
     {
-      "name": "Maydel",
-      "handle": "maydel",
-      "store_type": "local",
-      "description": "Chicago needlework shop for tapestry, needlepoint, embroidery, goldwork, and classes on Lincoln Avenue.",
-      "website_url": "https://maydel.com",
-      "location": "Chicago, IL",
-      "city": "Chicago",
-      "region": "IL",
-      "postal_code": "60657",
+      "name": "Kick Ass Needlepoint",
+      "handle": "kickassneedlepoint",
+      "store_type": "both",
+      "description": "Nashville storefront for modern needlepoint canvases, leather goods, classes, and nationwide shipping. Apple Maps / Maps listing for mid-TN LNS density.",
+      "website_url": "https://kickassneedlepoint.com",
+      "location": "Nashville, TN",
+      "city": "Nashville",
+      "region": "TN",
+      "postal_code": "37203",
       "country": "US",
-      "ships_nationwide": false,
+      "ships_nationwide": true,
       "specialties": [
-        "needlepoint",
-        "embroidery",
+        "modern canvases",
         "classes",
-        "goldwork"
+        "online shop",
+        "Nashville LNS"
       ],
-      "latitude": 41.9403,
-      "longitude": -87.6688
+      "latitude": 36.1627,
+      "longitude": -86.7816,
+      "source_notes": "Verified via official site + Apple/Google Maps Nashville listings; place shortlink FPqJBcSE64-iQS pointed here in product feedback thread"
     },
     {
-      "name": "Sign of the Arrow",
-      "handle": "signofthearrow",
-      "store_type": "local",
-      "description": "Long-standing St. Louis needlepoint boutique with painted canvases, threads, and finishing.",
-      "website_url": "http://www.signofthearrow.com",
-      "location": "St. Louis, MO",
-      "city": "St. Louis",
-      "region": "MO",
-      "postal_code": "63124",
-      "country": "US",
-      "ships_nationwide": false,
-      "specialties": [
-        "painted canvases",
-        "finishing",
-        "threads"
-      ],
-      "latitude": 38.642,
-      "longitude": -90.412
-    },
-    {
-      "name": "The Silver Needle",
-      "handle": "silverneedle",
+      "name": "The Stitching Belle",
+      "handle": "thestitchingbelle",
       "store_type": "both",
-      "description": "Tulsa needlepoint shop known for canvases, specialty threads, and mail order.",
-      "website_url": "https://www.silverneedle.com",
-      "location": "Tulsa, OK",
-      "city": "Tulsa",
-      "region": "OK",
-      "postal_code": "74105",
+      "description": "Nashville needlework shop with painted canvases, threads, notions, and an open in-person store plus online shop.",
+      "website_url": "https://www.thestitchingbelle.com",
+      "location": "Nashville, TN",
+      "city": "Nashville",
+      "region": "TN",
+      "postal_code": "37205",
       "country": "US",
       "ships_nationwide": true,
       "specialties": [
         "painted canvases",
         "threads",
-        "mail order"
+        "notions",
+        "Nashville LNS"
       ],
-      "latitude": 36.102,
-      "longitude": -95.976
-    },
-    {
-      "name": "Needlework Unlimited",
-      "handle": "needleworkunlimited",
-      "store_type": "local",
-      "description": "Minneapolis needlework destination for needlepoint, embroidery, and stitcher community events.",
-      "website_url": "https://www.needleworkunlimited.com",
-      "location": "Minneapolis, MN",
-      "city": "Minneapolis",
-      "region": "MN",
-      "postal_code": "55408",
-      "country": "US",
-      "ships_nationwide": false,
-      "specialties": [
-        "needlepoint",
-        "embroidery",
-        "classes"
-      ],
-      "latitude": 44.948,
-      "longitude": -93.299
-    },
-    {
-      "name": "Annie & Company Needlepoint",
-      "handle": "annieandcompany",
-      "store_type": "local",
-      "description": "New York City needlepoint shop with canvases, threads, and finishing services.",
-      "website_url": "https://www.annieandcompany.com",
-      "location": "New York, NY",
-      "city": "New York",
-      "region": "NY",
-      "postal_code": "10021",
-      "country": "US",
-      "ships_nationwide": false,
-      "specialties": [
-        "painted canvases",
-        "finishing",
-        "NYC shop"
-      ],
-      "latitude": 40.769,
-      "longitude": -73.96
-    },
-    {
-      "name": "Bedecked and Beadazzled",
-      "handle": "bedeckedandbeadazzled",
-      "store_type": "both",
-      "description": "Maryland needlepoint studio (Ruth Schmuff) known for stitch guides, canvases, and teaching.",
-      "website_url": "https://www.bedeckedandbeadazzled.com",
-      "location": "Timonium, MD",
-      "city": "Timonium",
-      "region": "MD",
-      "postal_code": "21093",
-      "country": "US",
-      "ships_nationwide": true,
-      "specialties": [
-        "stitch guides",
-        "painted canvases",
-        "classes"
-      ],
-      "latitude": 39.441,
-      "longitude": -76.63
-    },
-    {
-      "name": "The Needlepoint Joint",
-      "handle": "needlepointjoint",
-      "store_type": "both",
-      "description": "Ogden, Utah needlepoint shop with a deep canvas and thread selection plus online ordering.",
-      "website_url": "https://www.needlepointjoint.com",
-      "location": "Ogden, UT",
-      "city": "Ogden",
-      "region": "UT",
-      "postal_code": "84401",
-      "country": "US",
-      "ships_nationwide": true,
-      "specialties": [
-        "painted canvases",
-        "threads",
-        "online shop"
-      ],
-      "latitude": 41.223,
-      "longitude": -111.974
-    },
-    {
-      "name": "Needleworks of Alabama",
-      "handle": "needleworksofalabama",
-      "store_type": "local",
-      "description": "Homewood, AL local needlepoint shop serving the Birmingham area.",
-      "website_url": "https://www.needleworksofalabama.com",
-      "location": "Homewood, AL",
-      "city": "Homewood",
-      "region": "AL",
-      "postal_code": "35209",
-      "country": "US",
-      "ships_nationwide": false,
-      "specialties": [
-        "local shop",
-        "painted canvases",
-        "threads"
-      ],
-      "latitude": 33.4718,
-      "longitude": -86.8008
+      "latitude": 36.135,
+      "longitude": -86.822,
+      "source_notes": "Verified via official Shopify site (Nashville store open) + Maps listings alongside Kick Ass / Nashville Needleworks"
     },
     {
       "name": "The Flying Needles",
@@ -266,143 +469,24 @@
       "longitude": -95.444
     },
     {
-      "name": "Stitch Therapy Needlepoint",
-      "handle": "stitchtherapy",
+      "name": "The Needlepoint Joint",
+      "handle": "needlepointjoint",
       "store_type": "both",
-      "description": "Palm Beach Gardens needlepoint shop with designer canvases and nationwide shipping options.",
-      "website_url": "https://www.stitchtherapynp.com",
-      "location": "Palm Beach Gardens, FL",
-      "city": "Palm Beach Gardens",
-      "region": "FL",
-      "postal_code": "33410",
+      "description": "Ogden, Utah needlepoint shop with a deep canvas and thread selection plus online ordering.",
+      "website_url": "https://www.needlepointjoint.com",
+      "location": "Ogden, UT",
+      "city": "Ogden",
+      "region": "UT",
+      "postal_code": "84401",
       "country": "US",
       "ships_nationwide": true,
       "specialties": [
         "painted canvases",
-        "finishing",
-        "Florida LNS"
-      ],
-      "latitude": 26.846,
-      "longitude": -80.086
-    },
-    {
-      "name": "Needlepoint Clubhouse",
-      "handle": "needlepointclubhouse",
-      "store_type": "online",
-      "description": "Online needlepoint club and shop for canvases, threads, and community stitch-alongs.",
-      "website_url": "https://www.needlepointclubhouse.com",
-      "location": "Ships nationwide",
-      "city": "",
-      "region": "",
-      "postal_code": "",
-      "country": "US",
-      "ships_nationwide": true,
-      "specialties": [
-        "online",
-        "kits",
-        "community"
-      ],
-      "latitude": null,
-      "longitude": null
-    },
-    {
-      "name": "Kirk & Bradley",
-      "handle": "kirkandbradley",
-      "store_type": "online",
-      "description": "Designer needlepoint canvases and kits available through retailers and online partners.",
-      "website_url": "https://www.kirkandbradley.com",
-      "location": "Ships nationwide",
-      "city": "",
-      "region": "",
-      "postal_code": "",
-      "country": "US",
-      "ships_nationwide": true,
-      "specialties": [
-        "designer canvases",
-        "kits",
-        "online"
-      ],
-      "latitude": null,
-      "longitude": null
-    },
-    {
-      "name": "Penny Royal Needleworks",
-      "handle": "pennyroyal",
-      "store_type": "local",
-      "description": "California needlepoint shop with painted canvases, threads, and finishing.",
-      "website_url": "https://www.pennyroyalneedleworks.com",
-      "location": "Lafayette, CA",
-      "city": "Lafayette",
-      "region": "CA",
-      "postal_code": "94549",
-      "country": "US",
-      "ships_nationwide": false,
-      "specialties": [
-        "painted canvases",
-        "Bay Area LNS"
-      ],
-      "latitude": 37.8858,
-      "longitude": -122.118
-    },
-    {
-      "name": "The Elegant Needle",
-      "handle": "elegantneedle",
-      "store_type": "local",
-      "description": "Bethesda-area needlepoint boutique serving the Washington, DC metro.",
-      "website_url": "https://www.theelegantneedle.com",
-      "location": "Bethesda, MD",
-      "city": "Bethesda",
-      "region": "MD",
-      "postal_code": "20814",
-      "country": "US",
-      "ships_nationwide": false,
-      "specialties": [
-        "painted canvases",
-        "finishing",
-        "DC metro"
-      ],
-      "latitude": 38.9847,
-      "longitude": -77.0947
-    },
-    {
-      "name": "Labors of Love Needlepoint",
-      "handle": "laborsoflove",
-      "store_type": "local",
-      "description": "Atlanta needlepoint shop with canvases, threads, and custom finishing.",
-      "website_url": "https://www.laborsofloveneedlepoint.com",
-      "location": "Atlanta, GA",
-      "city": "Atlanta",
-      "region": "GA",
-      "postal_code": "30305",
-      "country": "US",
-      "ships_nationwide": false,
-      "specialties": [
-        "painted canvases",
-        "finishing",
-        "Atlanta"
-      ],
-      "latitude": 33.84,
-      "longitude": -84.386
-    },
-    {
-      "name": "The Stitch Niche",
-      "handle": "stitchniche",
-      "store_type": "local",
-      "description": "Denver-area needlepoint and needlework shop for canvases and specialty threads.",
-      "website_url": "https://www.thestitchniche.com",
-      "location": "Denver, CO",
-      "city": "Denver",
-      "region": "CO",
-      "postal_code": "80209",
-      "country": "US",
-      "ships_nationwide": false,
-      "specialties": [
-        "needlepoint",
         "threads",
-        "Colorado"
+        "online shop"
       ],
-      "latitude": 39.711,
-      "longitude": -104.956
+      "latitude": 41.223,
+      "longitude": -111.974
     },
     {
       "name": "Stitches of Light",
@@ -422,46 +506,6 @@
       ],
       "latitude": 47.661,
       "longitude": -122.313
-    },
-    {
-      "name": "In Stitches Needlepoint",
-      "handle": "institchesneedlepoint",
-      "store_type": "local",
-      "description": "Phoenix-area needlepoint shop for canvases, threads, and classes.",
-      "website_url": "https://www.institchesneedlepoint.com",
-      "location": "Scottsdale, AZ",
-      "city": "Scottsdale",
-      "region": "AZ",
-      "postal_code": "85251",
-      "country": "US",
-      "ships_nationwide": false,
-      "specialties": [
-        "painted canvases",
-        "classes",
-        "Arizona"
-      ],
-      "latitude": 33.494,
-      "longitude": -111.926
-    },
-    {
-      "name": "Needlepoint.com Online",
-      "handle": "needlepointcom",
-      "store_type": "online",
-      "description": "National online needlepoint retailer for kits, canvases, accessories, and inspiration.",
-      "website_url": "https://needlepoint.com",
-      "location": "Ships nationwide",
-      "city": "",
-      "region": "",
-      "postal_code": "",
-      "country": "US",
-      "ships_nationwide": true,
-      "specialties": [
-        "online",
-        "kits",
-        "accessories"
-      ],
-      "latitude": null,
-      "longitude": null
     }
   ]
 }
