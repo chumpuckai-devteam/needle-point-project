@@ -4614,12 +4614,18 @@ a.primary,
   padding: 0;
   border: 1px solid var(--np-line, #e5ddd3);
   border-radius: 16px;
-  background: #fff;
+  background: var(--np-panel, #fffdf9);
   overflow: hidden;
   cursor: pointer;
-  color: inherit;
+  color: var(--np-ink, #1f2a24);
   display: grid;
   min-width: 0;
+}
+
+.sal-card:hover,
+.sal-card:focus-visible {
+  border-color: var(--np-teal, #2f6f5e);
+  outline: none;
 }
 
 .sal-card-cover {
@@ -4629,7 +4635,7 @@ a.primary,
   max-height: min(42vh, 280px);
   background-size: cover;
   background-position: center;
-  background-color: #efe8dc;
+  background-color: var(--np-panel-soft, #efe8dc);
 }
 
 .sal-status {
@@ -4639,7 +4645,7 @@ a.primary,
   padding: 4px 10px;
   border-radius: 999px;
   background: rgba(255, 253, 249, 0.92);
-  color: var(--np-ink, #1f2a24);
+  color: #1f2a24;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -4651,11 +4657,22 @@ a.primary,
   display: grid;
   gap: 6px;
   min-width: 0;
+  background: var(--np-panel, #fffdf9);
+  color: var(--np-ink, #1f2a24);
+}
+
+.sal-card-body .eyebrow {
+  margin: 0;
+  color: var(--np-muted, #766a61);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .sal-card-body strong {
   font-size: 1.02rem;
   line-height: 1.25;
+  color: var(--np-ink, #1f2a24);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -4684,6 +4701,7 @@ a.primary,
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  color: inherit;
 }
 
 /* Hard stop horizontal overflow from uncropped media */
@@ -4748,8 +4766,8 @@ a.primary,
   flex-direction: column;
   overflow: hidden;
   padding: 0;
-  background: var(--panel, #fffdf9);
-  color: var(--ink, #2f3a2e);
+  background: var(--np-panel, #fffdf9);
+  color: var(--np-ink, #2f3a2e);
 }
 .meetup-card-cover {
   display: block;
@@ -4769,8 +4787,8 @@ a.primary,
   display: grid;
   gap: 0.4rem;
   align-content: start;
-  background: var(--panel, #fffdf9);
-  color: var(--ink, #2f3a2e);
+  background: var(--np-panel, #fffdf9);
+  color: var(--np-ink, #2f3a2e);
 }
 .meetup-card-body .eyebrow {
   margin: 0;
@@ -6405,6 +6423,37 @@ html[data-theme="dark"] .store-chip {
   background: var(--np-teal-soft);
   border-color: var(--np-line);
   color: var(--np-ink);
+}
+
+/* Stitch-along cards: never white surface + light ink */
+html[data-theme="dark"] .sal-card,
+html[data-theme="dark"] .sal-card-body {
+  background: var(--np-panel);
+  color: var(--np-ink);
+  border-color: var(--np-line);
+}
+html[data-theme="dark"] .sal-card-body strong {
+  color: var(--np-ink);
+}
+html[data-theme="dark"] .sal-card-body .eyebrow,
+html[data-theme="dark"] .sal-card-body p,
+html[data-theme="dark"] .sal-card-meta {
+  color: var(--np-muted);
+}
+html[data-theme="dark"] .sal-status {
+  background: rgba(26, 35, 32, 0.92);
+  color: var(--np-gold, #dfc08a);
+  border: 1px solid var(--np-line);
+}
+html[data-theme="dark"] .meetup-card,
+html[data-theme="dark"] .meetup-card-body {
+  background: var(--np-panel);
+  color: var(--np-ink);
+  border-color: var(--np-line);
+}
+html[data-theme="dark"] .meetup-card-body .eyebrow,
+html[data-theme="dark"] .meetup-card-body p {
+  color: var(--np-muted);
 }
 
 @media (max-width: 560px) {
