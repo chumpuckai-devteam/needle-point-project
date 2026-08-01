@@ -122,7 +122,7 @@ export function HomeView(props: {
 
       {!canPost ? (
         <div className="guest-theme-slot" data-testid="guest-theme-toggle">
-          <ThemeToggle compact showHeading={false} />
+          <ThemeToggle compact showHeading={false} iconsOnly />
         </div>
       ) : null}
 

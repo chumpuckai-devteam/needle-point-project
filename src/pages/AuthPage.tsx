@@ -44,7 +44,7 @@ export function AuthPage() {
           <p className="auth-lead">Supabase is not configured in this build, so you are using a local demo session.</p>
           <AuthForm mode="signin" />
           <HelpTipsRecallPanel />
-          <ThemeToggle />
+          <ThemeToggle iconsOnly showHeading={false} />
         </div>
       </section>
     );
@@ -105,7 +105,7 @@ export function AuthPage() {
           </button>{" "}
           (skippable, browse-only).
         </p>
-        <ThemeToggle />
+        <ThemeToggle iconsOnly showHeading={false} />
       </div>
     </section>
   );
@@ -301,7 +301,7 @@ function AccountSettings({
         </div>
       </div>
       <HelpTipsRecallPanel />
-      <ThemeToggle />
+      <ThemeToggle iconsOnly showHeading={false} />
       <MyReportsPanel enabled />
       {isModerator ? (
         <div className="panel" data-testid="moderation-entry">
