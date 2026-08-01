@@ -4,6 +4,7 @@ import {
   haversineMiles,
   isLocalCapable,
   isOnlineCapable,
+  isOnlineOnly,
   LOCAL_DRIVING_RADIUS_MILES,
   type GeoPoint,
   type RankedStore,
@@ -185,7 +186,7 @@ function pinsFromList(items: StoreDiscoveryListItem[]): StoreDiscoveryMapPin[] {
 
 function sortOnline(stores: Store[]): StoreDiscoveryListItem[] {
   return [...stores]
-    .filter(isOnlineCapable)
+    .filter(isOnlineOnly)
     .sort((a, b) => {
       const scoreDiff = onlineScore(b) - onlineScore(a);
       if (scoreDiff !== 0) return scoreDiff;

@@ -699,6 +699,8 @@ export function StoresView({
             <button className="primary" type="submit" disabled={searchBusy || locationStatus === "loading"}>
               {searchBusy ? "Searching…" : "Find shops"}
             </button>
+            {/* One location path: coach when undecided; form CTA after Allow/denied/refresh */}
+            {locationConsent !== null || userPoint || locationStatus === "loading" || locationStatus === "denied" || locationStatus === "error" || locationStatus === "unsupported" ? (
             <button
               className="secondary"
               type="button"
@@ -712,6 +714,7 @@ export function StoresView({
               <Navigation size={16} aria-hidden />
               {locationStatus === "loading" ? "Locating…" : userPoint ? "Refresh location" : "Use my location"}
             </button>
+            ) : null}
             {hasActiveSearch || searchInput ? (
               <button className="secondary" type="button" onClick={clearSearch} disabled={searchBusy}>
                 Clear
@@ -873,15 +876,13 @@ export function StoresView({
                 <span className="store-city-count">
                   {card.shopCount} shop{card.shopCount === 1 ? "" : "s"}
                 </span>
-                {card.specialties.length ? (
-                  <div className="tag-row">
-                    {card.specialties.map((specialty) => (
-                      <span key={specialty}>{specialty}</span>
-                    ))}
-                  </div>
-                ) : null}
                 {card.exampleShops.length ? (
-                  <p className="store-city-examples">{card.exampleShops.map((shop) => shop.name).join(" · ")}</p>
+                  <p className="store-city-examples">
+                    {card.exampleShops
+                      .slice(0, 2)
+                      .map((shop) => shop.name)
+                      .join(" · ")}
+                  </p>
                 ) : null}
               </button>
             ))}
@@ -1049,10 +1050,11 @@ export function StoresView({
           ) : null}
 
           {discovery.onlineFallback.length > 0 ? (
-            <section ref={onlineSectionRef} className="store-online-fallback" aria-label="Online shops that ship">
-              <SectionTitle headingId={ONLINE_HEADING_ID} title="Online shops that ship" />
+            <section ref={onlineSectionRef} className="store-online-fallback" aria-label="Online shops">
+              <SectionTitle headingId={ONLINE_HEADING_ID} title="Online shops" />
               <p className="store-online-fallback-copy store-online-helper">
-                Shop profiles link out to each shop&apos;s own site. Needlepoint does not handle checkout.
+                National / online-only shops (no storefront pin required). Local shops that also ship stay in city browse
+                and nearby results. Profiles link out to each shop&apos;s own site — Needlepoint does not handle checkout.
               </p>
               <StoreCardGrid stores={discovery.onlineFallback} browseReturnTo={browseReturnTo} showDistance={false} listRefs={listRefs} />
             </section>

@@ -16,7 +16,7 @@ export const uiCopy = {
         guestCta: "Sign in",
       },
       followedEmptyInline:
-        "No followed makers have new stitches yet — here are fresh public projects while you find more people to follow.",
+        "Browsing the community feed — follow makers to prioritize their stitches here.",
       followedEmptyCta: "Browse Discover",
       refreshError: {
         title: "Needlepoint Palace couldn't refresh",
@@ -26,8 +26,8 @@ export const uiCopy = {
     },
     followedShops: {
       empty: {
-        title: "No favorite shops pinned yet",
-        body: "Follow local or online shops and their new canvases will sit here in Needlepoint Palace.",
+        title: "Pin shops you love",
+        body: "Optional — follow shops from the directory and they’ll appear here.",
         cta: "Browse shops",
       },
     },

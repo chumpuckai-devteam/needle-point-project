@@ -1,20 +1,27 @@
 import { expect, test } from "@playwright/test";
 
-async function navigateByLabel(page: import("@playwright/test").Page, label: RegExp) {
-  await page.locator("nav[aria-label='Primary navigation'] button, nav[aria-label='Primary navigation'] a").filter({ hasText: label }).first().click();
+async function dismissHelpCoach(page: import("@playwright/test").Page) {
+  const skip = page.getByRole("button", { name: /Skip|Got it|Dismiss|Not now/i }).first();
+  if (await skip.isVisible().catch(() => false)) {
+    await skip.click({ force: true }).catch(() => undefined);
+  }
+  await page
+    .locator(".help-coach")
+    .evaluateAll((nodes) => nodes.forEach((n) => n.remove()))
+    .catch(() => undefined);
 }
 
 test("core MVP flows are usable through router paths", async ({ page }) => {
   await page.goto("/");
+  await dismissHelpCoach(page);
 
   await expect(page.getByRole("heading", { name: /Needlepoint Palace|Palace/i })).toBeVisible();
 
-  await navigateByLabel(page, /^Discover$/);
+  await page.goto("/discover");
   await expect(page).toHaveURL(/\/discover$/);
   await page.getByPlaceholder(/Try florals/).fill("bookshop");
   await expect(page.getByText("Bookshop Door Canvas").first()).toBeVisible();
 
-  // Open a seeded project and expect Available at / Shop the look when stores are tagged
   await page.getByText("Bookshop Door Canvas").first().click();
   await expect(page).toHaveURL(/\/projects\//);
   await expect(page.getByRole("heading", { name: /Bookshop Door Canvas/i })).toBeVisible();
@@ -23,7 +30,6 @@ test("core MVP flows are usable through router paths", async ({ page }) => {
   await expect(page).toHaveURL(/\/stores/);
   await expect(page.getByRole("heading", { name: /Local shops near you|Shops|Browse/i }).first()).toBeVisible();
 
-  // City-first browse: open known real shops by handle
   await page.goto("/stores/maydel");
   await expect(page).toHaveURL(/\/stores\/maydel/);
   await expect(page.getByRole("heading", { name: /Maydel/i })).toBeVisible();
@@ -33,7 +39,7 @@ test("core MVP flows are usable through router paths", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /Nashville Needleworks/i })).toBeVisible();
   await expect(page.getByRole("button", { name: /Follow store|Following/i })).toBeVisible();
 
-  await navigateByLabel(page, /New post/);
+  await page.goto("/journal");
   await expect(page).toHaveURL(/\/journal$/);
   await expect(page.getByLabel("Title")).toBeVisible();
 

@@ -31,6 +31,16 @@ export function isLocalCapable(store: Store): boolean {
   return store.storeType === "local" || store.storeType === "both";
 }
 
+/** Pure online / national e‑commerce (one catalog row — no city pin required). */
+export function isOnlineOnly(store: Store): boolean {
+  return store.storeType === "online";
+}
+
+/**
+ * Can appear in “ships” / mail-order rails.
+ * Prefer isOnlineOnly for the dedicated Online section so brick-and-mortar
+ * with shipsNationwide do not flood “Online shops”.
+ */
 export function isOnlineCapable(store: Store): boolean {
   return store.storeType === "online" || store.storeType === "both" || store.shipsNationwide;
 }
