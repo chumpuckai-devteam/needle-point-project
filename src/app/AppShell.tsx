@@ -1,5 +1,5 @@
 import { createProjectOnline, fetchRecommendedProjects, dismissRecommendedProjectOnline, addProgressUpdateOnline, updateProjectOnline } from "../api/projects";
-import { fetchProfiles, toggleFollowOnline } from "../api/profiles";
+import { fetchFollowedCreatorIds, fetchProfiles, toggleFollowOnline } from "../api/profiles";
 import { addCommentOnline, toggleProjectLikeOnline, toggleSaveOnline } from "../api/social";
 import {
   addProjectToCollectionOnline,
@@ -68,6 +68,7 @@ import {
   uploadStoreProfileImage,
   type StoreProductInput,
   type StoreProfileInput,
+  fetchProjectStoreLinksMap,
 } from "../api/stores";
 import { creators as seedCreators, initialCollections, initialProjects, initialStitchAlongs, stitchAlong as seedStitchAlong } from "../data";
 import type { Collection, Creator, MediaKind, Project, StitchAlong, StitchingMeetup, Store } from "../types";
@@ -252,6 +253,7 @@ export function AppShell() {
           fetchProfiles(),
           fetchStores(),
           user?.id ? fetchFollowedStoreIds(user.id) : Promise.resolve([] as string[]),
+          user?.id ? fetchFollowedCreatorIds(user.id) : Promise.resolve([] as string[]),
           listPublicStitchAlongsOnline(user?.id ?? null),
           listUpcomingMeetupsOnline({ limit: 50 }),
           user?.id ? fetchMyMeetupRsvpsOnline(user.id) : Promise.resolve({} as Record<string, MyMeetupRsvpRow>),
@@ -262,9 +264,10 @@ export function AppShell() {
         const remoteProfiles = settled[1].status === "fulfilled" ? settled[1].value : [];
         const remoteStores = settled[2].status === "fulfilled" ? settled[2].value : [];
         const remoteStoreFollows = settled[3].status === "fulfilled" ? settled[3].value : [];
-        const remoteStitchAlongs = settled[4].status === "fulfilled" ? settled[4].value : [];
-        const remoteMeetups = settled[5].status === "fulfilled" ? settled[5].value : [];
-        const remoteMeetupRsvps = settled[6].status === "fulfilled" ? settled[6].value : {};
+        const remoteCreatorFollows = settled[4].status === "fulfilled" ? settled[4].value : [];
+        const remoteStitchAlongs = settled[5].status === "fulfilled" ? settled[5].value : [];
+        const remoteMeetups = settled[6].status === "fulfilled" ? settled[6].value : [];
+        const remoteMeetupRsvps = settled[7].status === "fulfilled" ? settled[7].value : {};
 
         const hardFailures = settled
           .map((result, index) => ({ result, index }))
@@ -317,7 +320,14 @@ export function AppShell() {
             }),
           );
         }
-        if (user?.id) setFollowedStores(remoteStoreFollows);
+        if (user?.id) {
+          setFollowedStores(remoteStoreFollows);
+          setFollowedCreators(remoteCreatorFollows);
+        } else if (isSupabaseConfigured) {
+          // Live guest: do not inherit another account's localStorage follow graph
+          setFollowedCreators([]);
+          setFollowedStores([]);
+        }
         setRemoteError("");
       } catch (error) {
         if (!cancelled) {
@@ -339,15 +349,9 @@ export function AppShell() {
     let cancelled = false;
     (async () => {
       try {
-        const client = requireSupabase();
-        const { data, error } = await client.from("project_stores").select("project_id, store_id");
-        if (error || cancelled || !data) return;
-        const byProject = new Map<string, string[]>();
-        for (const row of data) {
-          const list = byProject.get(row.project_id) ?? [];
-          list.push(row.store_id);
-          byProject.set(row.project_id, list);
-        }
+        const ids = projectIdsKey.split("|").filter(Boolean);
+        const byProject = await fetchProjectStoreLinksMap(ids.length ? ids : undefined);
+        if (cancelled) return;
         setProjects((current) => {
           let changed = false;
           const next = current.map((project) => {
@@ -362,14 +366,14 @@ export function AppShell() {
           });
           return changed ? next : current;
         });
-      } catch {
-        /* store tables may not exist yet during first deploy */
+      } catch (error) {
+        console.warn("[needlepoint] project_stores hydrate failed", error);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [projectIdsKey, storeIdsKey]);
+  }, [projectIdsKey]);
 
   const creatorById = useCallback(
     (id: string) => creators.find((creator) => creator.id === id) ?? creators[0] ?? seedCreators[0],
@@ -667,6 +671,10 @@ export function AppShell() {
     setFollowedCreators((current) => (currently ? current.filter((creatorId) => creatorId !== id) : [...current, id]));
     if (isSupabaseConfigured && user) {
       void toggleFollowOnline(user.id, id, currently).catch((error) => {
+        // Roll back optimistic follow
+        setFollowedCreators((current) =>
+          currently ? (current.includes(id) ? current : [...current, id]) : current.filter((creatorId) => creatorId !== id),
+        );
         setRemoteError(friendlyUserError(error, "Follow failed"));
       });
     }
@@ -1223,7 +1231,7 @@ export function AppShell() {
     }
   }
 
-  function addComment(projectId: string, bodyOverride?: string) {
+  function addComment(projectId: string, bodyOverride?: string): void | Promise<void> {
     if (!requireAuth("comment on posts")) return;
     const body = (bodyOverride ?? commentText).trim();
     if (!body) return;
@@ -1254,7 +1262,7 @@ export function AppShell() {
       return;
     }
     if (isSupabaseConfigured && user && !latestUpdateId.startsWith("u") && !latestUpdateId.startsWith("local-")) {
-      void addCommentOnline(latestUpdateId, user.id, body)
+      return addCommentOnline(latestUpdateId, user.id, body)
         .then((realId) => {
           if (!realId) return;
           setProjects((current) =>
@@ -1278,7 +1286,26 @@ export function AppShell() {
           );
         })
         .catch((error) => {
+          setProjects((current) =>
+            current.map((item) =>
+              item.id === projectId
+                ? {
+                    ...item,
+                    updates: item.updates.map((update, index) =>
+                      index === 0
+                        ? {
+                            ...update,
+                            comments: update.comments.filter((comment) => comment.id !== tempId),
+                          }
+                        : update,
+                    ),
+                  }
+                : item,
+            ),
+          );
+          setCommentText(body);
           setRemoteError(friendlyUserError(error, "Comment failed"));
+          throw error;
         });
     }
   }

@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, requireSupabase } from "../lib/supabase";
+import { friendlyUserError } from "../lib/userFacingError";
 import type { StitchingMeetup, StitchingMeetupRsvpStatus } from "../types";
 
 export type StitchingMeetupInput = {
@@ -287,7 +288,7 @@ export async function createMeetupOnline(userId: string, input: StitchingMeetupI
     p_host_store_id: values.host_store_id,
     p_request_store_venue: Boolean(input.requestStoreVenue),
   });
-  if (error) throw new Error(error.message || "Could not create meetup");
+  if (error) throw new Error(friendlyUserError(error, "Could not create meetup"));
   void userId;
   return mapMeetupRow(data as DbMeetupRow);
 }
@@ -296,7 +297,7 @@ export async function listPendingMeetupStoreLinksOnline(storeId: string): Promis
   if (!isSupabaseConfigured || !storeId) return [];
   const client = requireSupabase();
   const { data, error } = await client.rpc("list_pending_meetup_store_links", { p_store_id: storeId });
-  if (error) throw new Error(error.message || "Could not load venue requests");
+  if (error) throw new Error(friendlyUserError(error, "Could not load venue requests"));
   return ((data as DbMeetupRow[] | null) ?? []).map((row) => mapMeetupRow(row));
 }
 
@@ -306,7 +307,7 @@ export async function respondMeetupStoreLinkOnline(meetupId: string, approve: bo
     p_meetup_id: meetupId,
     p_approve: approve,
   });
-  if (error) throw new Error(error.message || "Could not update venue request");
+  if (error) throw new Error(friendlyUserError(error, "Could not update venue request"));
   return mapMeetupRow(data as DbMeetupRow);
 }
 
@@ -359,7 +360,7 @@ export async function registerForMeetupOnline(meetupId: string): Promise<MeetupR
   const client = requireSupabase();
   const { data, error } = await client.rpc("register_for_meetup", { p_meetup_id: meetupId });
   if (error) {
-    const msg = error.message || "Could not register";
+    const msg = friendlyUserError(error, "Could not register");
     if (/full|waitlist/i.test(msg)) throw new Error(msg.includes("waitlist") ? msg : "This meetup is full — join the waitlist.");
     if (/Sign in/i.test(msg)) throw new Error("Sign in to register for a meetup.");
     if (/not open|closed/i.test(msg)) throw new Error(msg);
@@ -372,7 +373,7 @@ export async function joinMeetupWaitlistOnline(meetupId: string): Promise<Meetup
   const client = requireSupabase();
   const { data, error } = await client.rpc("join_meetup_waitlist", { p_meetup_id: meetupId });
   if (error) {
-    const msg = error.message || "Could not join waitlist";
+    const msg = friendlyUserError(error, "Could not join waitlist");
     if (/Sign in/i.test(msg)) throw new Error("Sign in to join the waitlist.");
     throw new Error(msg);
   }
@@ -382,7 +383,7 @@ export async function joinMeetupWaitlistOnline(meetupId: string): Promise<Meetup
 export async function cancelMeetupRegistrationOnline(meetupId: string): Promise<MeetupRegistrationResult> {
   const client = requireSupabase();
   const { data, error } = await client.rpc("cancel_meetup_registration", { p_meetup_id: meetupId });
-  if (error) throw new Error(error.message || "Could not cancel registration");
+  if (error) throw new Error(friendlyUserError(error, "Could not cancel registration"));
   return mapRegistrationRpc(data);
 }
 
@@ -394,7 +395,7 @@ export async function confirmMeetupSeatOnline(meetupId: string): Promise<{
 }> {
   const client = requireSupabase();
   const { data, error } = await client.rpc("confirm_meetup_seat", { p_meetup_id: meetupId });
-  if (error) throw new Error(error.message || "Could not confirm seat");
+  if (error) throw new Error(friendlyUserError(error, "Could not confirm seat"));
   const row = Array.isArray(data) ? data[0] : data;
   return {
     checkInCode: ((row as { check_in_code?: string | null })?.check_in_code as string | null) ?? null,
@@ -420,7 +421,7 @@ export async function listMeetupRegistrationsOnline(meetupId: string): Promise<M
   if (!isSupabaseConfigured || !meetupId) return [];
   const client = requireSupabase();
   const { data, error } = await client.rpc("list_meetup_registrations", { p_meetup_id: meetupId });
-  if (error) throw new Error(error.message || "Could not load roster");
+  if (error) throw new Error(friendlyUserError(error, "Could not load roster"));
   return ((data as {
     user_id: string;
     handle: string;
@@ -458,7 +459,7 @@ export async function setMeetupGuestCheckInOnline(
     p_guest_user_id: guestUserId,
     p_checked_in: checkedIn,
   });
-  if (error) throw new Error(error.message || "Could not update check-in");
+  if (error) throw new Error(friendlyUserError(error, "Could not update check-in"));
   const row = Array.isArray(data) ? data[0] : data;
   return {
     userId: String((row as { user_id?: string })?.user_id ?? guestUserId),
@@ -478,7 +479,7 @@ export async function setMeetupCheckInByCodeOnline(
     p_check_in_code: checkInCode,
     p_checked_in: checkedIn,
   });
-  if (error) throw new Error(error.message || "Could not check in by code");
+  if (error) throw new Error(friendlyUserError(error, "Could not check in by code"));
   const row = Array.isArray(data) ? data[0] : data;
   return {
     userId: String((row as { user_id?: string })?.user_id ?? ""),
@@ -524,7 +525,7 @@ export async function fetchHostMeetupDrawStats(
     p_start_at: input.startAt ?? null,
     p_end_at: input.endAt ?? null,
   });
-  if (error) throw new Error(error.message || "Could not load host meetup stats");
+  if (error) throw new Error(friendlyUserError(error, "Could not load host meetup stats"));
   const row = (Array.isArray(data) ? data[0] : data) as {
     meetups_hosted?: number | string | null;
     registrations?: number | string | null;

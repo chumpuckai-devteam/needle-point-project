@@ -153,7 +153,7 @@ function AccountSettings({
     let cancelled = false;
     (async () => {
       try {
-        const profile = await fetchProfileById(userId);
+        const profile = await fetchProfileById(userId, userId);
         if (cancelled) return;
         if (!profile) {
           setLoadFailed(true);

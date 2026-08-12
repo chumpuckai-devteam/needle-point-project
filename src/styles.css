@@ -6557,9 +6557,48 @@ html[data-theme="dark"] .primary:disabled {
   color: #f7fffd !important;
 }
 html[data-theme="dark"] .product-card-meta a {
-  background: var(--np-teal-soft);
-  border-color: color-mix(in srgb, var(--np-teal) 35%, var(--np-line));
   color: var(--np-teal);
+}
+
+/* Mobile More + shop search: no dark-ink-on-dark-panel */
+html[data-theme="dark"] .mobile-more-sheet {
+  background: #1c2622 !important;
+  color: #f3f6f4 !important;
+  border-color: #3d4c45 !important;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45);
+}
+html[data-theme="dark"] .mobile-more-sheet-head h2,
+html[data-theme="dark"] .mobile-more-item,
+html[data-theme="dark"] .mobile-more-item-label {
+  color: #f3f6f4 !important;
+}
+html[data-theme="dark"] .mobile-more-help,
+html[data-theme="dark"] .mobile-more-close {
+  color: #b7c2bb !important;
+}
+html[data-theme="dark"] .mobile-more-item {
+  background: #141c19 !important;
+  border-color: #3d4c45 !important;
+}
+html[data-theme="dark"] .mobile-more-item svg {
+  color: #8fceb0 !important;
+}
+html[data-theme="dark"] .mobile-more-item.active {
+  background: rgba(143, 206, 176, 0.14) !important;
+  border-color: #8fceb0 !important;
+  color: #f3f6f4 !important;
+}
+html[data-theme="dark"] .store-search-card input,
+html[data-theme="dark"] .store-search-card select,
+html[data-theme="dark"] .stores-page input[type="search"],
+html[data-theme="dark"] .stores-page input[type="text"] {
+  background: var(--np-panel-soft, #1a2320);
+  color: var(--np-ink, #f3f6f4);
+  border-color: var(--np-line);
+}
+html[data-theme="dark"] .store-search-card input::placeholder {
+  color: var(--np-muted, #9aaba2);
+  opacity: 1;
 }
 html[data-theme="dark"] .store-chip {
   background: var(--np-teal-soft);

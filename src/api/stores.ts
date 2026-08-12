@@ -834,6 +834,28 @@ export async function fetchStoresForProject(projectId: string): Promise<{ store:
     .filter((item): item is { store: Store; role: StoreRole } => Boolean(item));
 }
 
+/**
+ * Map project_id → store_ids for hydrate. Prefer scoped project ids when known
+ * so we never over-fetch beyond visible projects (RLS still applies).
+ */
+export async function fetchProjectStoreLinksMap(projectIds?: string[]): Promise<Map<string, string[]>> {
+  const map = new Map<string, string[]>();
+  if (!isSupabaseConfigured) return map;
+  const client = requireSupabase();
+  let query = client.from("project_stores").select("project_id, store_id");
+  if (projectIds?.length) {
+    query = query.in("project_id", projectIds);
+  }
+  const { data, error } = await query;
+  if (error) throw error;
+  for (const row of data ?? []) {
+    const list = map.get(row.project_id) ?? [];
+    list.push(row.store_id);
+    map.set(row.project_id, list);
+  }
+  return map;
+}
+
 export async function setProjectStores(projectId: string, storeIds: string[], role: StoreRole = "available_at") {
   if (!isSupabaseConfigured) return;
   const client = requireSupabase();
