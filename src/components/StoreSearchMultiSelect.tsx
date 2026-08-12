@@ -61,7 +61,7 @@ export function StoreSearchMultiSelect({
       {selected.length > 0 ? (
         <ul className="store-search-chips" aria-label="Selected stores">
           {selected.map((store) => (
-            <li key={store.id}>
+            <li key={store.id} className="store-search-chip-item">
               <button
                 type="button"
                 className="store-search-chip"
@@ -69,8 +69,7 @@ export function StoreSearchMultiSelect({
                 aria-label={`Remove ${store.name}`}
               >
                 <span className="store-search-chip-name">{store.name}</span>
-                <span className="store-search-chip-handle">@{store.handle}</span>
-                <X size={14} aria-hidden />
+                <X size={16} aria-hidden className="store-search-chip-x" />
               </button>
             </li>
           ))}
