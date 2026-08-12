@@ -2578,8 +2578,7 @@ html[data-theme="dark"] .store-search-input-wrap .store-search-input::placeholde
   font-weight: 550;
 }
 
-html[data-theme="dark"] .store-search-results,
-html[data-theme="dark"] .store-search-input {
+html[data-theme="dark"] .store-search-results {
   background: #1c2622;
   color: #f3f6f4;
   border-color: #3d4c45;
@@ -2589,8 +2588,7 @@ html[data-theme="dark"] .store-search-result-name {
   color: #f3f6f4;
 }
 html[data-theme="dark"] .store-search-result-meta,
-html[data-theme="dark"] .store-search-empty,
-html[data-theme="dark"] .store-search-input::placeholder {
+html[data-theme="dark"] .store-search-empty {
   color: #b7c2bb;
 }
 html[data-theme="dark"] .store-search-chip {
