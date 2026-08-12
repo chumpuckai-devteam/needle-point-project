@@ -2446,40 +2446,80 @@ a.store-card:focus-visible {
   opacity: 0.85;
 }
 .store-search-input-wrap {
+  /* Flex row: icon sits beside the field, never over the text */
   position: relative;
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0;
   min-width: 0;
   max-width: 100%;
-}
-.store-search-icon {
-  position: absolute;
-  left: 0.85rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 1rem;
-  height: 1rem;
-  color: var(--np-muted, #4a5c52);
-  pointer-events: none;
-  z-index: 1;
-}
-.store-search-input {
   width: 100%;
-  max-width: 100%;
   box-sizing: border-box;
   min-height: 48px;
-  /* Room for 16px icon + left inset + gap so placeholder never sits under the glass */
-  padding: 12px 14px 12px 3rem;
   border-radius: 14px;
   border: 1px solid var(--np-line, #c9c0a8);
   background: var(--np-input-bg, var(--np-panel, #fff));
   color: var(--np-ink, #14201a);
+  overflow: hidden;
+}
+.store-search-icon {
+  position: static;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 48px;
+  margin: 0;
+  transform: none;
+  color: var(--np-muted, #4a5c52);
+  pointer-events: none;
+  z-index: 0;
+}
+/* Beat global `label input { padding: 0 10px }` which was covering the icon */
+label.store-search-input-wrap input.store-search-input,
+.store-search-input-wrap .store-search-input {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-height: 48px;
+  margin: 0;
+  /* No left icon padding — icon is a sibling, not an overlay */
+  padding: 12px 14px 12px 0 !important;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  color: var(--np-ink, #14201a);
   font: inherit;
+  font-size: 16px; /* avoid iOS zoom */
   -webkit-appearance: none;
   appearance: none;
+  outline: none;
+  box-shadow: none;
 }
-.store-search-input::placeholder {
+label.store-search-input-wrap input.store-search-input::placeholder,
+.store-search-input-wrap .store-search-input::placeholder {
   color: var(--np-muted, #5a6b62);
   opacity: 1;
+}
+html[data-theme="dark"] .store-search-input-wrap {
+  background: #1c2622;
+  border-color: #3d4c45;
+  color: #f3f6f4;
+}
+html[data-theme="dark"] .store-search-icon {
+  color: #b7c2bb;
+}
+html[data-theme="dark"] label.store-search-input-wrap input.store-search-input,
+html[data-theme="dark"] .store-search-input-wrap .store-search-input {
+  background: transparent !important;
+  color: #f3f6f4;
+}
+html[data-theme="dark"] label.store-search-input-wrap input.store-search-input::placeholder,
+html[data-theme="dark"] .store-search-input-wrap .store-search-input::placeholder {
+  color: #b7c2bb;
 }
 .store-search-results {
   display: grid;

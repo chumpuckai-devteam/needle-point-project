@@ -77,16 +77,19 @@ export function StoreSearchMultiSelect({
       ) : null}
 
       <label className="store-search-input-wrap" htmlFor={`${testId}-input`}>
-        <Search size={16} aria-hidden className="store-search-icon" />
+        <span className="store-search-icon" aria-hidden>
+          <Search size={18} strokeWidth={2} />
+        </span>
         <input
           id={`${testId}-input`}
-          type="search"
+          type="text"
           className="store-search-input"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search shops by name or @handle…"
+          placeholder="Search shops by name…"
           autoComplete="off"
           enterKeyHint="search"
+          inputMode="search"
         />
       </label>
 
