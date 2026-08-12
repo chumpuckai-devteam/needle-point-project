@@ -4,6 +4,7 @@ import type { Difficulty, Project, Status, Store } from "../types";
 import type { DraftProject, View } from "../appModel";
 import { difficultyOptions, statusOptions, visibilityHelp, visibilityLabel } from "../appModel";
 import { EmptyState, Field, SectionHeader, SectionTitle, Skeleton } from "../components/ui";
+import { StoreSearchMultiSelect } from "../components/StoreSearchMultiSelect";
 import { uiCopy } from "../lib/uiCopy";
 
 export function JournalView({
@@ -138,37 +139,22 @@ export function JournalView({
             />
           </label>
           {stores.length > 0 && (
-                     <div className="full-field store-picker">
-                       <span className="field-label">Available at (stores)</span>
-                       <div className="store-picker-options">
-                         {stores.map((store) => {
-                           const checked = draft.storeIds.includes(store.id);
-                           return (
-                             <label key={store.id} className="checkbox-field">
-                               <input
-                                 type="checkbox"
-                                 checked={checked}
-                                 onChange={() =>
-                                   setDraft({
-                                     ...draft,
-                                     storeIds: checked ? draft.storeIds.filter((id) => id !== store.id) : [...draft.storeIds, store.id],
-                                     productIds: checked
-                                       ? draft.productIds.filter((id) => !(store.products ?? []).some((p) => p.id === id))
-                                       : draft.productIds,
-                                   })
-                                 }
-                               />
-                               <span>
-                                 {store.name}
-                                 <small> @{store.handle}</small>
-                               </span>
-                             </label>
-                           );
-                         })}
-                       </div>
-                       <p className="field-help">Tag local or online shops that supply this canvas / kit / finishing. Private projects still hide shop links from others.</p>
-                     </div>
-                   )}
+            <StoreSearchMultiSelect
+              stores={stores}
+              selectedIds={draft.storeIds}
+              onChange={(storeIds) => {
+                const allowedProductIds = new Set(
+                  stores.filter((s) => storeIds.includes(s.id)).flatMap((s) => (s.products ?? []).map((p) => p.id)),
+                );
+                setDraft({
+                  ...draft,
+                  storeIds,
+                  productIds: draft.productIds.filter((id) => allowedProductIds.has(id)),
+                });
+              }}
+              testId="journal-store-search"
+            />
+          )}
                    {draft.storeIds.length > 0 ? (
                      <div className="full-field product-picker" data-testid="journal-shop-look-products">
                        <span className="field-label">Shop the look products (optional)</span>

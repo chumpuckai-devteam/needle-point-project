@@ -5,6 +5,7 @@ import type { DraftProject, View } from "../appModel";
 import type { ReportInput } from "../api/reports";
 import { difficultyOptions, statusOptions, visibilityHelp, visibilityLabel } from "../appModel";
 import { EmptyState, Field, Meta, SectionTitle } from "../components/ui";
+import { StoreSearchMultiSelect } from "../components/StoreSearchMultiSelect";
 import { ReportControl } from "../components/ReportControl";
 import { recordOutboundClickEvent } from "../api/clickEvents";
 import { mapProjectEditError, uiCopy } from "../lib/uiCopy";
@@ -410,43 +411,25 @@ export function ProjectDetail(props: {
                 <textarea id="edit-notes" value={editDraft.notes} onChange={(event) => setEditDraft({ ...editDraft, notes: event.target.value })} rows={4} />
               </label>
               {props.stores.length > 0 && (
-                <div className="full-field store-picker">
-                  <span className="field-label">Available at (stores)</span>
-                  <div className="store-picker-options">
-                    {props.stores.map((store) => {
-                      const checked = editDraft.storeIds.includes(store.id);
-                      return (
-                        <label key={store.id} className="checkbox-field">
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() =>
-                              setEditDraft((current) => {
-                                const storeIds = checked
-                                  ? current.storeIds.filter((id) => id !== store.id)
-                                  : [...current.storeIds, store.id];
-                                const allowedProductIds = new Set(
-                                  props.stores
-                                    .filter((s) => storeIds.includes(s.id))
-                                    .flatMap((s) => s.products.map((p) => p.id)),
-                                );
-                                return {
-                                  ...current,
-                                  storeIds,
-                                  productIds: current.productIds.filter((id) => allowedProductIds.has(id)),
-                                };
-                              })
-                            }
-                          />
-                          <span>
-                            {store.name}
-                            <small> @{store.handle}</small>
-                          </span>
-                        </label>
+                <StoreSearchMultiSelect
+                  stores={props.stores}
+                  selectedIds={editDraft.storeIds}
+                  onChange={(storeIds) =>
+                    setEditDraft((current) => {
+                      const allowedProductIds = new Set(
+                        props.stores
+                          .filter((s) => storeIds.includes(s.id))
+                          .flatMap((s) => s.products.map((p) => p.id)),
                       );
-                    })}
-                  </div>
-                </div>
+                      return {
+                        ...current,
+                        storeIds,
+                        productIds: current.productIds.filter((id) => allowedProductIds.has(id)),
+                      };
+                    })
+                  }
+                  testId="edit-store-search"
+                />
               )}
               {editDraft.storeIds.length > 0 ? (
                 <div className="full-field product-picker" data-testid="shop-look-product-picker">

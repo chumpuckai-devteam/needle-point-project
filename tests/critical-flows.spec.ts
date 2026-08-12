@@ -129,9 +129,11 @@ test.describe("Journal create / edit", () => {
     await page.locator("#project-difficulty").selectOption("beginner");
 
     // Tag a store so Available at stays wired on the new project.
-    const canopy = page.locator(".store-picker label.checkbox-field").filter({ hasText: /Maydel/i }).first();
-    if (await canopy.count()) {
-      await canopy.click();
+    const storeSearch = page.getByTestId("journal-store-search");
+    if (await storeSearch.count()) {
+      await storeSearch.getByPlaceholder(/Search shops/i).fill("Maydel");
+      const hit = storeSearch.locator(".store-search-result").filter({ hasText: /Maydel/i }).first();
+      if (await hit.count()) await hit.click();
     }
 
     await page.getByRole("button", { name: /Save project/i }).click();

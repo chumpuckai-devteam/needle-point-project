@@ -114,26 +114,23 @@ test.describe("Available at flow smoke (demo seed)", () => {
     await expect(page.getByRole("heading", { name: /Create a project entry/i })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByLabel(/Title/i).first()).toBeVisible();
 
-    const picker = page.locator(".store-picker");
+    const picker = page.getByTestId("journal-store-search");
     await expect(picker).toBeVisible();
     await expect(picker.getByText(/Available at \(stores\)/i)).toBeVisible();
-    await expect(picker.getByText(/Tag local or online shops/i)).toBeVisible();
+    await expect(picker.getByPlaceholder(/Search shops/i)).toBeVisible();
 
-    // Demo seed shops appear as checkbox labels
-    const options = picker.locator(".store-picker-options label.checkbox-field");
-    await expect(options.first()).toBeVisible();
-    expect(await options.count()).toBeGreaterThanOrEqual(3);
+    // Search filters + select chip
+    await picker.getByPlaceholder(/Search shops/i).fill("Maydel");
+    const maydel = picker.locator(".store-search-result").filter({ hasText: /Maydel/i }).first();
+    await expect(maydel).toBeVisible();
+    await maydel.click();
+    await expect(picker.locator(".store-search-chip").filter({ hasText: /Maydel/i })).toBeVisible();
 
-    await expect(picker.getByText(/Maydel/i).first()).toBeVisible();
-    await expect(picker.getByText(/Thread & Tonic|Thread and Tonic/i).first()).toBeVisible();
-    await expect(picker.getByText(/Nashville Needleworks/i).first()).toBeVisible();
-
-    // Toggle is interactive (draft only — no save required for smoke)
-    const canopy = options.filter({ hasText: /Maydel/i }).first();
-    const box = canopy.locator('input[type="checkbox"]');
-    await expect(box).toBeVisible();
-    const before = await box.isChecked();
-    await canopy.click();
-    await expect(box).toHaveJSProperty("checked", !before);
+    // Search again for second store
+    await picker.getByPlaceholder(/Search shops/i).fill("Nashville");
+    const nash = picker.locator(".store-search-result").filter({ hasText: /Nashville/i }).first();
+    await expect(nash).toBeVisible();
+    await nash.click();
+    await expect(picker.locator(".store-search-chip")).toHaveCount(2);
   });
 });
