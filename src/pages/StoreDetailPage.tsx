@@ -638,11 +638,8 @@ export function StoreDetailView({
             onClearExisting={() => setExistingProductImage("")}
             error={productImageError}
             onErrorChange={setProductImageError}
-            helpText={
-              canUpload
-                ? "JPG, PNG, WebP, or GIF up to 8MB. You can also paste a URL below."
-                : "Sign in with Supabase to upload files, or paste a URL."
-            }
+            showUrlField={false}
+            helpText="JPG, PNG, WebP, HEIC, or GIF · up to 8MB"
           />
           {productError ? <p className="field-help error-text">{productError}</p> : null}
           <div className="card-actions wrap">

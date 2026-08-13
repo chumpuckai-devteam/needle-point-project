@@ -98,6 +98,9 @@ export type AppRoutesProps = {
   imagePreview: string;
   onPickImage: (file: File | null) => void;
   onClearImage: () => void;
+  videoPreview: string;
+  onPickVideo: (file: File | null) => void;
+  onClearVideo: () => void;
   /** Journal list still hydrating from remote boot. */
   journalLoading: boolean;
   toggleStoreFollow: (storeId: string) => void;
@@ -282,6 +285,9 @@ export function AppRoutes(props: AppRoutesProps) {
             imagePreview={props.imagePreview}
             onPickImage={props.onPickImage}
             onClearImage={props.onClearImage}
+            videoPreview={props.videoPreview}
+            onPickVideo={props.onPickVideo}
+            onClearVideo={props.onClearVideo}
             stores={props.stores}
             journalLoading={props.journalLoading}
           />

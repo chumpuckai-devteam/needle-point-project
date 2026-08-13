@@ -1,6 +1,6 @@
 import { DragEvent, useEffect, useId, useState } from "react";
 import { Plus } from "lucide-react";
-import { validateImageFile } from "../api/images";
+import { IMAGE_ACCEPT, MEDIA_HELP, validateImageFile } from "../api/images";
 
 export type ImageFilePickerProps = {
   /** Field label above the dropzone / preview. */
@@ -9,9 +9,12 @@ export type ImageFilePickerProps = {
   existingPreview?: string;
   /** Called when user removes the image entirely (file + URL + existing). */
   onClearExisting?: () => void;
-  /** Controlled image URL fallback (paste path). */
-  urlValue: string;
-  onUrlChange: (url: string) => void;
+  /**
+   * Optional controlled URL (legacy). Prefer upload-only — when showUrlField is false
+   * this is only used as a fallback preview string from parent state.
+   */
+  urlValue?: string;
+  onUrlChange?: (url: string) => void;
   /** Selected file for parent upload on submit. null when cleared. */
   file: File | null;
   onFileChange: (file: File | null) => void;
@@ -19,9 +22,11 @@ export type ImageFilePickerProps = {
   error?: string;
   onErrorChange?: (error: string) => void;
   disabled?: boolean;
-  /** When false, file input is disabled (URL still works). */
+  /** When false, file input is disabled. */
   canUpload?: boolean;
   compact?: boolean;
+  /** @deprecated URL paste is off by default for product posts. */
+  showUrlField?: boolean;
   urlLabel?: string;
   helpText?: string;
   /** input accept attribute */
@@ -29,14 +34,14 @@ export type ImageFilePickerProps = {
 };
 
 /**
- * Validated optional image picker: file dropzone + local preview + URL fallback.
+ * Validated optional image picker: file dropzone + local preview.
  * Does not upload — parent receives File and should upload on form submit.
  */
 export function ImageFilePicker({
   label = "Photo",
   existingPreview = "",
   onClearExisting,
-  urlValue,
+  urlValue = "",
   onUrlChange,
   file,
   onFileChange,
@@ -45,9 +50,10 @@ export function ImageFilePicker({
   disabled = false,
   canUpload = true,
   compact = false,
+  showUrlField = false,
   urlLabel = "Or image URL",
-  helpText = "JPG, PNG, WebP, or GIF up to 8MB. Optional — leave blank for the default image.",
-  accept = "image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif",
+  helpText = MEDIA_HELP.photo,
+  accept = IMAGE_ACCEPT,
 }: ImageFilePickerProps) {
   const fileInputId = useId();
   const [blobPreview, setBlobPreview] = useState("");
@@ -66,11 +72,7 @@ export function ImageFilePicker({
   }, [file]);
 
   const preview = blobPreview || urlValue.trim() || existingPreview;
-  const dropzoneClass = [
-    "image-upload-dropzone",
-    compact ? "compact" : "",
-    dragging ? "is-dragging" : "",
-  ]
+  const dropzoneClass = ["image-upload-dropzone", compact ? "compact" : "", dragging ? "is-dragging" : ""]
     .filter(Boolean)
     .join(" ");
   const previewClass = compact ? "image-upload-preview compact" : "image-upload-preview";
@@ -88,14 +90,13 @@ export function ImageFilePicker({
       return;
     }
     onFileChange(next);
-    // Prefer uploaded file over a previous pasted URL until save
-    onUrlChange("");
+    onUrlChange?.("");
     setError("");
   }
 
   function clearAll() {
     onFileChange(null);
-    onUrlChange("");
+    onUrlChange?.("");
     onClearExisting?.();
     setError("");
     setDragging(false);
@@ -168,7 +169,7 @@ export function ImageFilePicker({
           <span className="action-card-icon">
             <Plus size={18} />
           </span>
-          <strong>{canUpload ? "Upload a photo" : "Add a photo URL"}</strong>
+          <strong>{canUpload ? "Upload a photo" : "Sign in to upload"}</strong>
           <span>{helpText}</span>
         </label>
       )}
@@ -183,19 +184,21 @@ export function ImageFilePicker({
           event.target.value = "";
         }}
       />
-      <label>
-        <span className="field-label">{urlLabel}</span>
-        <input
-          value={urlValue}
-          onChange={(event) => {
-            onFileChange(null);
-            onUrlChange(event.target.value);
-            setError("");
-          }}
-          placeholder="https://… or leave blank for default"
-          disabled={disabled}
-        />
-      </label>
+      {showUrlField ? (
+        <label>
+          <span className="field-label">{urlLabel}</span>
+          <input
+            value={urlValue}
+            onChange={(event) => {
+              onFileChange(null);
+              onUrlChange?.(event.target.value);
+              setError("");
+            }}
+            placeholder="https://… or leave blank for default"
+            disabled={disabled}
+          />
+        </label>
+      ) : null}
       {error ? <p className="field-help error-text">{error}</p> : null}
     </div>
   );

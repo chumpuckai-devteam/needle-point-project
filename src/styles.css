@@ -701,6 +701,15 @@ label input[type="radio"] {
   background: #ddd5ca;
 }
 
+.image-upload-preview video,
+.video-upload-preview video {
+  width: 100%;
+  max-height: 320px;
+  border-radius: 10px;
+  background: #1a1a1a;
+  display: block;
+}
+
 .file-button {
   display: inline-flex;
   align-items: center;

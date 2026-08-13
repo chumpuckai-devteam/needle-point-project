@@ -5,6 +5,7 @@ import type { DraftProject, View } from "../appModel";
 import { difficultyOptions, statusOptions, visibilityHelp, visibilityLabel } from "../appModel";
 import { EmptyState, Field, SectionHeader, SectionTitle, Skeleton } from "../components/ui";
 import { StoreSearchMultiSelect } from "../components/StoreSearchMultiSelect";
+import { IMAGE_ACCEPT, MEDIA_HELP, VIDEO_ACCEPT } from "../api/images";
 import { uiCopy } from "../lib/uiCopy";
 
 export function JournalView({
@@ -19,6 +20,9 @@ export function JournalView({
   imagePreview,
   onPickImage,
   onClearImage,
+  videoPreview,
+  onPickVideo,
+  onClearVideo,
   stores,
   journalLoading = false,
 }: {
@@ -33,12 +37,17 @@ export function JournalView({
   imagePreview: string;
   onPickImage: (file: File | null) => void;
   onClearImage: () => void;
+  videoPreview: string;
+  onPickVideo: (file: File | null) => void;
+  onClearVideo: () => void;
   stores: Store[];
   /** True until first project hydrate resolves (online boot). */
   journalLoading?: boolean;
 }) {
-  const fileInputId = useId();
-  const preview = imagePreview || draft.image;
+  const photoInputId = useId();
+  const videoInputId = useId();
+  const photoPreview = imagePreview || draft.image;
+  const vidPreview = videoPreview || draft.videoUrl;
 
   return (
     <section className="page">
@@ -46,13 +55,14 @@ export function JournalView({
       <div className="editor-layout">
         <form className="panel form-grid" onSubmit={submitProject} aria-busy={uploadBusy || undefined}>
           <Field label="Title" value={draft.title} onChange={(title) => setDraft({ ...draft, title })} placeholder="Monogram clutch canvas" required />
-          <div className="full-field image-upload-field">
-            <span className="field-label">Project photo</span>
-            {preview ? (
+
+          <div className="full-field image-upload-field" data-testid="journal-photo-upload">
+            <span className="field-label">Photo</span>
+            {photoPreview ? (
               <div className="image-upload-preview">
-                <img src={preview} alt="Project preview" />
+                <img src={photoPreview} alt="Project preview" />
                 <div className="card-actions wrap">
-                  <label className="secondary file-button" htmlFor={fileInputId}>
+                  <label className="secondary file-button" htmlFor={photoInputId}>
                     Replace photo
                   </label>
                   <button className="secondary" type="button" onClick={onClearImage}>
@@ -61,39 +71,75 @@ export function JournalView({
                 </div>
               </div>
             ) : (
-              <label className="image-upload-dropzone" htmlFor={fileInputId}>
+              <label className="image-upload-dropzone" htmlFor={photoInputId}>
                 <span className="action-card-icon">
                   <Plus size={18} />
                 </span>
-                <strong>{canUpload ? "Upload a photo" : "Add a photo URL"}</strong>
-                <span>{canUpload ? "JPG, PNG, or WebP up to 8MB. You can also paste a URL below." : "Sign in with Supabase to upload files, or paste a URL."}</span>
+                <strong>{canUpload ? "Upload a photo" : "Sign in to upload"}</strong>
+                <span>{MEDIA_HELP.photo}</span>
               </label>
             )}
             <input
-              id={fileInputId}
+              id={photoInputId}
               type="file"
-              accept="image/*"
+              accept={IMAGE_ACCEPT}
               className="visually-hidden"
               disabled={!canUpload || uploadBusy}
               onChange={(event) => {
-                const file = event.target.files?.[0] ?? null;
-                onPickImage(file);
+                onPickImage(event.target.files?.[0] ?? null);
                 event.target.value = "";
               }}
             />
-            <Field label="Or image URL" value={draft.image} onChange={(image) => setDraft({ ...draft, image })} placeholder="https://…" />
-            <Field label="Video URL (optional)" value={draft.videoUrl} onChange={(videoUrl) => setDraft({ ...draft, videoUrl })} placeholder="https://…/clip.mp4" />
-            {uploadBusy && (
-              <p className="field-help" aria-live="polite">
-                Uploading photo…
-              </p>
-            )}
-            {uploadError ? (
-              <p className="field-help field-error" role="alert">
-                {uploadError}
-              </p>
-            ) : null}
           </div>
+
+          <div className="full-field image-upload-field" data-testid="journal-video-upload">
+            <span className="field-label">Video (optional)</span>
+            {vidPreview ? (
+              <div className="image-upload-preview video-upload-preview">
+                <video src={vidPreview} controls playsInline preload="metadata" />
+                <div className="card-actions wrap">
+                  <label className="secondary file-button" htmlFor={videoInputId}>
+                    Replace video
+                  </label>
+                  <button className="secondary" type="button" onClick={onClearVideo}>
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <label className="image-upload-dropzone" htmlFor={videoInputId}>
+                <span className="action-card-icon">
+                  <Plus size={18} />
+                </span>
+                <strong>{canUpload ? "Upload a video" : "Sign in to upload"}</strong>
+                <span>{MEDIA_HELP.video}</span>
+              </label>
+            )}
+            <input
+              id={videoInputId}
+              type="file"
+              accept={VIDEO_ACCEPT}
+              className="visually-hidden"
+              disabled={!canUpload || uploadBusy}
+              onChange={(event) => {
+                onPickVideo(event.target.files?.[0] ?? null);
+                event.target.value = "";
+              }}
+            />
+            <p className="field-help">Upload from your camera roll — no links needed. Limits match Instagram-style posts.</p>
+          </div>
+
+          {uploadBusy && (
+            <p className="field-help full-field" aria-live="polite">
+              Uploading media…
+            </p>
+          )}
+          {uploadError ? (
+            <p className="field-help field-error full-field" role="alert">
+              {uploadError}
+            </p>
+          ) : null}
+
           <label htmlFor="project-status">
             <span className="label-text">Status</span>
             <select id="project-status" value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as Status })}>
@@ -104,30 +150,33 @@ export function JournalView({
           </label>
           <label htmlFor="project-difficulty">
             <span className="label-text">Difficulty</span>
-            <select id="project-difficulty" value={draft.difficulty} onChange={(event) => setDraft({ ...draft, difficulty: event.target.value as Difficulty })}>
+            <select
+              id="project-difficulty"
+              value={draft.difficulty}
+              onChange={(event) => setDraft({ ...draft, difficulty: event.target.value as Difficulty })}
+            >
               {difficultyOptions.map((option) => (
                 <option key={option}>{option}</option>
               ))}
             </select>
           </label>
-          <Field label="Category" value={draft.category} onChange={(category) => setDraft({ ...draft, category })} />
-          <Field label="Canvas type" value={draft.canvasType} onChange={(canvasType) => setDraft({ ...draft, canvasType })} />
-          <Field label="Materials" value={draft.materials} onChange={(materials) => setDraft({ ...draft, materials })} />
-          <Field label="Stitch types" value={draft.stitchTypes} onChange={(stitchTypes) => setDraft({ ...draft, stitchTypes })} />
-          <Field label="Colors" value={draft.colors} onChange={(colors) => setDraft({ ...draft, colors })} />
+          <Field label="Category" value={draft.category} onChange={(category) => setDraft({ ...draft, category })} placeholder="ornaments, florals…" />
+          <Field label="Canvas" value={draft.canvasType} onChange={(canvasType) => setDraft({ ...draft, canvasType })} placeholder="18 mesh" />
+          <Field label="Materials" value={draft.materials} onChange={(materials) => setDraft({ ...draft, materials })} placeholder="Silk, wool…" />
+          <Field label="Stitch types" value={draft.stitchTypes} onChange={(stitchTypes) => setDraft({ ...draft, stitchTypes })} placeholder="Basketweave…" />
+          <Field label="Colors" value={draft.colors} onChange={(colors) => setDraft({ ...draft, colors })} placeholder="Coral, sage…" />
           <Field label="Pattern source" value={draft.patternSource} onChange={(patternSource) => setDraft({ ...draft, patternSource })} />
-          <Field label="Pattern URL" value={draft.patternUrl} onChange={(patternUrl) => setDraft({ ...draft, patternUrl })} placeholder="https://…" />
-          <label htmlFor="project-visibility" className="full-field">
+          <label htmlFor="project-visibility">
             <span className="label-text">Visibility</span>
             <select
               id="project-visibility"
               value={draft.visibility}
               onChange={(event) => setDraft({ ...draft, visibility: event.target.value as "public" | "private" })}
             >
-              <option value="public">Public — anyone can view</option>
-              <option value="private">Private — only you</option>
+              <option value="public">{visibilityLabel("public")}</option>
+              <option value="private">{visibilityLabel("private")}</option>
             </select>
-            <span className="field-help">{visibilityHelp(draft.visibility)}</span>
+            <p className="field-help">{visibilityHelp(draft.visibility)}</p>
           </label>
           <label className="full-field" htmlFor="project-notes">
             <span className="label-text">Notes</span>
@@ -155,41 +204,41 @@ export function JournalView({
               testId="journal-store-search"
             />
           )}
-                   {draft.storeIds.length > 0 ? (
-                     <div className="full-field product-picker" data-testid="journal-shop-look-products">
-                       <span className="field-label">Shop the look products (optional)</span>
-                       <p className="field-help">Optional specific items. Leave empty to sample each shop’s catalog.</p>
-                       <div className="store-picker-options product-picker-options">
-                         {stores
-                           .filter((store) => draft.storeIds.includes(store.id))
-                           .flatMap((store) =>
-                             (store.products ?? []).map((product) => {
-                               const checked = draft.productIds.includes(product.id);
-                               return (
-                                 <label key={product.id} className="checkbox-field">
-                                   <input
-                                     type="checkbox"
-                                     checked={checked}
-                                     onChange={() =>
-                                       setDraft({
-                                         ...draft,
-                                         productIds: checked
-                                           ? draft.productIds.filter((id) => id !== product.id)
-                                           : [...draft.productIds, product.id],
-                                       })
-                                     }
-                                   />
-                                   <span>
-                                     {product.name}
-                                     <small> · @{store.handle}</small>
-                                   </span>
-                                 </label>
-                               );
-                             }),
-                           )}
-                       </div>
-                     </div>
-                   ) : null}
+          {draft.storeIds.length > 0 ? (
+            <div className="full-field product-picker" data-testid="journal-shop-look-products">
+              <span className="field-label">Shop the look products (optional)</span>
+              <p className="field-help">Optional specific items. Leave empty to sample each shop’s catalog.</p>
+              <div className="store-picker-options product-picker-options">
+                {stores
+                  .filter((store) => draft.storeIds.includes(store.id))
+                  .flatMap((store) =>
+                    (store.products ?? []).map((product) => {
+                      const checked = draft.productIds.includes(product.id);
+                      return (
+                        <label key={product.id} className="checkbox-field">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() =>
+                              setDraft({
+                                ...draft,
+                                productIds: checked
+                                  ? draft.productIds.filter((id) => id !== product.id)
+                                  : [...draft.productIds, product.id],
+                              })
+                            }
+                          />
+                          <span>
+                            {product.name}
+                            <small> · @{store.handle}</small>
+                          </span>
+                        </label>
+                      );
+                    }),
+                  )}
+              </div>
+            </div>
+          ) : null}
           <button className="primary full-field" type="submit" disabled={!draft.title.trim() || uploadBusy}>
             <Plus size={18} /> {uploadBusy ? "Saving…" : "Save project"}
           </button>

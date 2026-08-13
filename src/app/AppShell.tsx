@@ -52,7 +52,7 @@ import {
   markNotificationReadOnline,
   type AppNotification,
 } from "../api/notifications";
-import { uploadProjectImage, validateImageFile } from "../api/images";
+import { uploadProjectImage, uploadProjectVideo, validateImageFile, validateVideoFile } from "../api/images";
 import {
   claimStoreOnline,
   createStoreProductOnline,
@@ -150,6 +150,8 @@ export function AppShell() {
   const [draft, setDraft] = useState<DraftProject>(blankDraft);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
+  const [pendingVideoFile, setPendingVideoFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState("");
   const [uploadBusy, setUploadBusy] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [updateNote, setUpdateNote] = useState("");
@@ -965,6 +967,29 @@ export function AppShell() {
     setDraft((current) => ({ ...current, image: "" }));
   }
 
+  function clearDraftVideo() {
+    if (videoPreview.startsWith("blob:")) URL.revokeObjectURL(videoPreview);
+    setPendingVideoFile(null);
+    setVideoPreview("");
+    setUploadError("");
+    setDraft((current) => ({ ...current, videoUrl: "" }));
+  }
+
+  function pickDraftVideo(file: File | null) {
+    if (!file) return;
+    const invalid = validateVideoFile(file);
+    if (invalid) {
+      console.error("draft video validation failed", invalid);
+      setUploadError(invalid);
+      return;
+    }
+    if (videoPreview.startsWith("blob:")) URL.revokeObjectURL(videoPreview);
+    setPendingVideoFile(file);
+    setVideoPreview(URL.createObjectURL(file));
+    setUploadError("");
+    setDraft((current) => ({ ...current, videoUrl: "" }));
+  }
+
   async function submitProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!requireAuth("create a post")) return;
@@ -981,12 +1006,19 @@ export function AppShell() {
         image = await uploadProjectImage(user?.id || "demo-user", pendingImageFile);
       }
 
+      let videoUrl = draft.videoUrl.trim();
+      if (pendingVideoFile) {
+        if (!user && isSupabaseConfigured) {
+          throw new Error("Sign in to upload videos.");
+        }
+        videoUrl = await uploadProjectVideo(user?.id || "demo-user", pendingVideoFile);
+      }
+
       const progress = draft.status === "finished" ? 100 : draft.status === "planned" ? 5 : 20;
       const materials = splitList(draft.materials);
       const stitchTypes = splitList(draft.stitchTypes);
       const colors = splitList(draft.colors);
       const notes = draft.notes.trim();
-      const videoUrl = draft.videoUrl.trim();
       const mediaKind: MediaKind = videoUrl ? "video" : image ? "image" : "text";
       const payload = {
         title: draft.title.trim(),
@@ -1007,7 +1039,7 @@ export function AppShell() {
 
       let project: Project;
       if (isSupabaseConfigured && user) {
-        project = await createProjectOnline({ userId: user.id, ...payload });
+        project = await createProjectOnline({ userId: user.id, ...payload, videoUrl });
         project = { ...project, videoUrl, mediaKind };
         if (draft.storeIds.length) {
           await setProjectStores(project.id, draft.storeIds);
@@ -1045,8 +1077,11 @@ export function AppShell() {
 
       setProjects((current) => [project, ...current]);
       if (imagePreview.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+      if (videoPreview.startsWith("blob:")) URL.revokeObjectURL(videoPreview);
       setPendingImageFile(null);
       setImagePreview("");
+      setPendingVideoFile(null);
+      setVideoPreview("");
       setDraft(blankDraft);
       setView({ name: "project", id: project.id });
       setRemoteError("");
@@ -1110,6 +1145,7 @@ export function AppShell() {
         title: draft.title.trim(),
         notes: draft.notes.trim(),
         image,
+        videoUrl,
         status,
         difficulty: draft.difficulty,
         category: draft.category.trim() || project.category,
@@ -2192,6 +2228,9 @@ export function AppShell() {
         imagePreview={imagePreview}
         onPickImage={pickDraftImage}
         onClearImage={clearDraftImage}
+        videoPreview={videoPreview}
+        onPickVideo={pickDraftVideo}
+        onClearVideo={clearDraftVideo}
         toggleStoreFollow={toggleStoreFollow}
         viewerId={viewerId}
         isDemoMode={isDemoMode}

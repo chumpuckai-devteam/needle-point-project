@@ -14,6 +14,7 @@ type DbProjectRow = {
   pattern_source_name: string;
   pattern_source_url: string;
   primary_image_url: string;
+  video_url?: string | null;
   progress: number;
   created_at: string;
   updated_at: string;
@@ -98,13 +99,15 @@ function mapProject(
   productIds: string[] = [],
 ): Project {
   const image = row.primary_image_url || "";
+  const videoUrl = (row.video_url || "").trim();
   const recommended = row as RecommendedProjectRow;
   return {
     id: row.id,
     title: row.title,
     creatorId: row.user_id,
     image,
-    mediaKind: image ? "image" : "text",
+    videoUrl: videoUrl || undefined,
+    mediaKind: videoUrl ? "video" : image ? "image" : "text",
     status: statusFromDb[row.status],
     difficulty: difficultyFromDb[row.difficulty],
     category: row.category,
@@ -316,6 +319,7 @@ export async function createProjectOnline(input: {
   title: string;
   notes: string;
   image: string;
+  videoUrl?: string;
   status: Status;
   difficulty: Difficulty;
   category: string;
@@ -329,6 +333,7 @@ export async function createProjectOnline(input: {
   progress: number;
 }): Promise<Project> {
   const client = requireSupabase();
+  const videoUrl = (input.videoUrl || "").trim();
   const { data: row, error } = await client
     .from("projects")
     .insert({
@@ -342,6 +347,7 @@ export async function createProjectOnline(input: {
       pattern_source_name: input.patternSource,
       pattern_source_url: input.patternUrl,
       primary_image_url: input.image,
+      video_url: videoUrl,
       visibility: input.visibility,
       progress: input.progress,
     })
@@ -428,6 +434,7 @@ export async function updateProjectOnline(
     title: string;
     notes: string;
     image: string;
+    videoUrl?: string;
     status: Status;
     difficulty: Difficulty;
     category: string;
@@ -460,6 +467,7 @@ export async function updateProjectOnline(
       pattern_source_name: input.patternSource,
       pattern_source_url: input.patternUrl,
       primary_image_url: input.image,
+      video_url: (input.videoUrl || "").trim(),
       visibility: input.visibility,
       progress,
     })

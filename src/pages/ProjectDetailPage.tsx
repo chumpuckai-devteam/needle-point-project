@@ -163,14 +163,14 @@ export function ProjectDetail(props: {
                     </div>
                   ) : (
                     <label className="image-upload-dropzone compact" htmlFor={updateFileId}>
-                      <strong>{props.canUpload ? "Upload a photo" : "Add a photo URL"}</strong>
-                      <span>Optional — JPG/PNG/WebP up to 8MB</span>
+                      <strong>{props.canUpload ? "Upload a photo" : "Sign in to upload"}</strong>
+                      <span>Optional — JPG/PNG/WebP/HEIC up to 8MB</span>
                     </label>
                   )}
                   <input
                     id={updateFileId}
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif"
                     className="visually-hidden"
                     disabled={!props.canUpload || props.updateBusy}
                     onChange={(event) => {
@@ -178,7 +178,6 @@ export function ProjectDetail(props: {
                       event.target.value = "";
                     }}
                   />
-                  <Field label="Or image URL" value={props.updateImageUrl} onChange={props.setUpdateImageUrl} placeholder="https://…" />
                 </div>
                 {props.updateError ? (
                   <p className="field-help field-error" role="alert">
@@ -346,7 +345,7 @@ export function ProjectDetail(props: {
                 <input
                   id={editFileId}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif"
                   className="visually-hidden"
                   disabled={!props.canUpload || editBusy}
                   onChange={(event) => {
@@ -354,7 +353,6 @@ export function ProjectDetail(props: {
                     event.target.value = "";
                   }}
                 />
-                <Field label="Or image URL" value={editDraft.image} onChange={(image) => setEditDraft({ ...editDraft, image })} placeholder="https://…" />
               </div>
               <label htmlFor="edit-status">
                 <span className="label-text">Status</span>
